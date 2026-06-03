@@ -1,0 +1,1 @@
+{"version":3,"file":"ProductionBuilding.d.ts","sourceRoot":"","sources":["ProductionBuilding.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,YAAY,CAAC;AACtC,OAAO,EAAE,gBAAgB,EAAE,QAAQ,EAAE,MAAM,kBAAkB,CAAC;AAO9D,8BAAsB,kBAAmB,SAAQ,QAAQ;IACvD,QAAQ,CAAC,QAAQ,CAAC,QAAQ,EAAE,QAAQ,CAAC;IACrC,QAAQ,CAAC,QAAQ,+BAA+B;CACjD"}
