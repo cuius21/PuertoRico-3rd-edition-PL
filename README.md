@@ -12,7 +12,6 @@ Cyfrowa wersja gry planszowej _Puerto Rico_ (3. edycja, Lacerta), gra podstawowa
 ### Pierwsze uruchomienie
 
 ```bash
-cd files2
 npm install
 ```
 
@@ -80,7 +79,7 @@ npm run build        # kompilacja samego backendu TypeScript (tsc)
 ## Struktura projektu
 
 ```
-files2/
+/
 ├── src/                    # frontend React + Vite
 │   ├── components/         # komponenty UI
 │   ├── hooks/              # useGameRunner (integracja gry z Reactem)
