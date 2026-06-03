@@ -1,1 +1,0 @@
-{"version":3,"file":"SmallUtilityBuilding.d.ts","sourceRoot":"","sources":["SmallUtilityBuilding.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,YAAY,CAAC;AACtC,OAAO,EAAE,gBAAgB,EAAE,MAAM,kBAAkB,CAAC;AAIpD,8BAAsB,oBAAqB,SAAQ,QAAQ;IACzD,QAAQ,CAAC,QAAQ,iCAAiC;IAClD,QAAQ,CAAC,QAAQ,KAAK;IACtB,QAAQ,CAAC,cAAc,KAAK;CAC7B"}

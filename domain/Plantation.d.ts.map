@@ -1,1 +1,0 @@
-{"version":3,"file":"Plantation.d.ts","sourceRoot":"","sources":["Plantation.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,eAAe,CAAC;AAI/C,qBAAa,UAAU;IAIT,QAAQ,CAAC,IAAI,EAAE,cAAc;IAHzC,QAAQ,CAAC,cAAc,KAAK;IAC5B,eAAe,EAAE,MAAM,CAAK;gBAEP,IAAI,EAAE,cAAc;IAEzC,QAAQ,IAAI,OAAO;IAInB,iBAAiB,IAAI,OAAO;IAI5B,QAAQ,IAAI,OAAO;CAGpB"}
