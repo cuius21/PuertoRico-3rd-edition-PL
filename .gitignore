@@ -1,0 +1,46 @@
+# Zależności
+node_modules/
+
+# Build artefakty (Vite)
+dist/
+
+# Artefakty tsc (npm run build) — generowane obok plików źródłowych
+actions/*.js
+actions/*.js.map
+actions/*.d.ts
+actions/*.d.ts.map
+core/*.js
+core/*.js.map
+core/*.d.ts
+core/*.d.ts.map
+domain/*.js
+domain/*.js.map
+domain/*.d.ts
+domain/*.d.ts.map
+domain/buildings/*.js
+domain/buildings/*.js.map
+domain/buildings/*.d.ts
+domain/buildings/*.d.ts.map
+domain/buildings/catalog/*.js
+domain/buildings/catalog/*.js.map
+domain/buildings/catalog/*.d.ts
+domain/buildings/catalog/*.d.ts.map
+state/*.js
+state/*.js.map
+state/*.d.ts
+state/*.d.ts.map
+state/phases/*.js
+state/phases/*.js.map
+state/phases/*.d.ts
+state/phases/*.d.ts.map
+examples/*.js
+examples/*.js.map
+examples/*.d.ts
+examples/*.d.ts.map
+
+# Instrukcje dla Claude Code — nie dla repozytorium
+CLAUDE.md
+
+# System operacyjny
+.DS_Store
+Thumbs.db
