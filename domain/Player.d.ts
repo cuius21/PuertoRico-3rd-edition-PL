@@ -8,6 +8,7 @@ export declare class Player {
     victoryPointTokens: number;
     readonly storedGoods: Map<GoodType, number>;
     pendingWorkers: number;
+    heldWorkers: number;
     hasUsedCaptainBonusThisPhase: boolean;
     hasUsedWharfThisPhase: boolean;
     constructor(id: PlayerId, name: string, island?: Island);

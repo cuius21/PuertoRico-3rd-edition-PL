@@ -1,0 +1,5 @@
+import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
+export function RoundLogPanel({ log, roundNumber }) {
+    return (_jsxs("div", { className: "round-log-panel", children: [_jsxs("div", { className: "round-log-title", children: ["\uD83D\uDCCB Runda ", roundNumber + 1] }), _jsxs("div", { className: "round-log-entries", children: [log.length === 0 && (_jsx("div", { className: "round-log-empty", children: "brak akcji" })), log.map((entry, i) => (_jsxs("div", { className: `round-log-entry ${entry.isBot ? 'round-log-entry--bot' : 'round-log-entry--human'}`, children: [_jsx("span", { className: "round-log-icon", children: entry.isBot ? '🤖' : '👤' }), _jsxs("div", { className: "round-log-content", children: [_jsx("span", { className: "round-log-player", children: entry.playerName }), _jsx("span", { className: "round-log-action", children: entry.actionText })] })] }, i)))] })] }));
+}
+//# sourceMappingURL=RoundLogPanel.js.map

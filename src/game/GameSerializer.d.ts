@@ -21,6 +21,7 @@ interface SavedPlayer {
     vp: number;
     goods: Record<string, number>;
     pending: number;
+    held: number;
     captainUsed: boolean;
     wharfUsed: boolean;
     plantations: (SavedPlantation | null)[];
@@ -51,6 +52,7 @@ interface SaveGame {
         currentPlayerIndex: number;
         roundNumber: number;
         gameOver: boolean;
+        gameOverReason: string;
         phaseType: string;
         players: SavedPlayer[];
         supply: SavedSupply;

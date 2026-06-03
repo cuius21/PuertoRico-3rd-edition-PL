@@ -1,0 +1,9 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { ScoreCalculator } from '../../state/ScoreCalculator';
+export function GameOverScreen({ state, runner, onReturnToMenu }) {
+    const scores = ScoreCalculator.calculate(state);
+    const sorted = [...scores].sort((a, b) => b.total - a.total);
+    const winner = sorted[0];
+    return (_jsx("div", { className: "gameover-screen", children: _jsxs("div", { className: "gameover-card", children: [_jsx("h1", { className: "gameover-title", children: "Koniec gry!" }), winner && (_jsxs("p", { className: "gameover-winner", children: ["\uD83C\uDFC6 Zwyci\u0119zca: ", _jsx("strong", { children: winner.playerName })] })), _jsxs("table", { className: "score-table", children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { children: "Miejsce" }), _jsx("th", { children: "Gracz" }), _jsx("th", { children: "PZ \u017Cetony" }), _jsx("th", { children: "PZ budynki" }), _jsx("th", { children: "Bonus" }), _jsx("th", { children: "Razem" })] }) }), _jsx("tbody", { children: sorted.map((row, i) => (_jsxs("tr", { className: i === 0 ? 'score-row--winner' : '', children: [_jsxs("td", { children: ["#", i + 1] }), _jsx("td", { children: row.playerName }), _jsx("td", { children: row.vpTokens }), _jsx("td", { children: row.buildingVP }), _jsx("td", { children: row.largeBuildingBonus }), _jsx("td", { children: _jsx("strong", { children: row.total }) })] }, row.playerId))) })] }), state.gameOverReason && (_jsxs("p", { className: "gameover-reason", children: ["\u2691 ", state.gameOverReason] })), _jsxs("p", { className: "gameover-rounds", children: ["Rozegrano ", state.roundNumber, " rund \u00B7 ", state.actionLog.length, " akcji"] }), _jsx("button", { className: "start-btn", onClick: onReturnToMenu, children: "Nowa gra" })] }) }));
+}
+//# sourceMappingURL=GameOverScreen.js.map

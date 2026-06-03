@@ -1,1 +1,1 @@
-{"version":3,"file":"SupplyPanel.d.ts","sourceRoot":"","sources":["SupplyPanel.tsx"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,uBAAuB,CAAC;AAKvD,UAAU,KAAK;IACb,KAAK,EAAE,SAAS,CAAC;CAClB;AAyCD,wBAAgB,WAAW,CAAC,EAAE,KAAK,EAAE,EAAE,KAAK,+BA2K3C"}
+{"version":3,"file":"SupplyPanel.d.ts","sourceRoot":"","sources":["SupplyPanel.tsx"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,uBAAuB,CAAC;AAIvD,UAAU,KAAK;IACb,KAAK,EAAE,SAAS,CAAC;CAClB;AAyCD,wBAAgB,WAAW,CAAC,EAAE,KAAK,EAAE,EAAE,KAAK,+BA+H3C"}

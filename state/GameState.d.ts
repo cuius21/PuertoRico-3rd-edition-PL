@@ -19,6 +19,7 @@ export declare class GameState {
     currentPlayerIndex: number;
     roundNumber: number;
     gameOver: boolean;
+    gameOverReason: string;
     readonly actionLog: Action[];
     constructor(players: Player[], supply: Supply, ships: Ship[], tradingHouse: TradingHouse, roleCards: RoleCard[], initialPhase: GamePhase);
     getCurrentPhase(): GamePhase;
