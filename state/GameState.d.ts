@@ -1,0 +1,39 @@
+import { Player } from '../domain/Player';
+import { Supply } from '../domain/Supply';
+import { Ship } from '../domain/Ship';
+import { TradingHouse } from '../domain/TradingHouse';
+import { RoleCard } from '../domain/RoleCard';
+import type { GamePhase } from './GamePhase';
+import type { Action } from '../actions/Action';
+import { type Result } from '../core/Result';
+import { type PlayerId, RoleType } from '../core/types';
+export declare class GameState {
+    readonly players: Player[];
+    readonly supply: Supply;
+    readonly ships: Ship[];
+    readonly tradingHouse: TradingHouse;
+    readonly roleCards: RoleCard[];
+    private currentPhase;
+    governorIndex: number;
+    roleSelectorIndex: number;
+    currentPlayerIndex: number;
+    roundNumber: number;
+    gameOver: boolean;
+    readonly actionLog: Action[];
+    constructor(players: Player[], supply: Supply, ships: Ship[], tradingHouse: TradingHouse, roleCards: RoleCard[], initialPhase: GamePhase);
+    getCurrentPhase(): GamePhase;
+    setPhase(phase: GamePhase): void;
+    apply(action: Action): Result<void, string>;
+    getValidActions(playerId: PlayerId): Action[];
+    getCurrentPlayer(): Player;
+    getRoleSelector(): Player;
+    getGovernor(): Player;
+    getPlayer(playerId: PlayerId): Player | undefined;
+    getPlayerIndex(playerId: PlayerId): number;
+    getActiveRole(): RoleType | null;
+    getAvailableRoleCards(): readonly RoleCard[];
+    advanceCurrentPlayer(): void;
+    hasCompletedRoundOfActions(): boolean;
+    restorePhase(phase: GamePhase): void;
+}
+//# sourceMappingURL=GameState.d.ts.map
