@@ -38,9 +38,6 @@ examples/*.js.map
 examples/*.d.ts
 examples/*.d.ts.map
 
-# Instrukcje dla Claude Code — nie dla repozytorium
-CLAUDE.md
-
 # System operacyjny
 .DS_Store
 Thumbs.db
