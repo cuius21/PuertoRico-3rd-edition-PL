@@ -1,0 +1,1 @@
+{"version":3,"file":"LargeUtilityBuilding.d.ts","sourceRoot":"","sources":["LargeUtilityBuilding.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,YAAY,CAAC;AACtC,OAAO,EAAE,gBAAgB,EAAE,MAAM,kBAAkB,CAAC;AAIpD,8BAAsB,oBAAqB,SAAQ,QAAQ;IACzD,QAAQ,CAAC,QAAQ,iCAAiC;IAClD,QAAQ,CAAC,QAAQ,KAAK;IACtB,QAAQ,CAAC,cAAc,KAAK;IAC5B,QAAQ,CAAC,aAAa,KAAK;CAC5B"}
