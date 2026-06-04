@@ -47,3 +47,6 @@ src/**/*.js
 src/**/*.js.map
 src/**/*.d.ts
 src/**/*.d.ts.map
+
+#! Wyjątek: plik deklaracji CSS używany do budowania
+!src/custom.d.ts
