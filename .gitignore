@@ -41,3 +41,9 @@ examples/*.d.ts.map
 # System operacyjny
 .DS_Store
 Thumbs.db
+
+# Ignoruj pliki generowane przez TypeScript w `src/`
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
