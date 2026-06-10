@@ -14,6 +14,7 @@ const ROLE_META: Record<RoleType, { label: string; color: string; icon: string }
   [RoleType.Trader]:     { label: 'Kupiec',      color: '#2196F3', icon: '💰' },
   [RoleType.Captain]:    { label: 'Kapitan',     color: '#F44336', icon: '⚓' },
   [RoleType.Prospector]: { label: 'Poszukiwacz', color: '#795548', icon: '⛏️' },
+  [RoleType.Corsair]:    { label: 'Korsarz',     color: '#263238', icon: '🏴‍☠️' },
 };
 
 const ROLE_DESCRIPTIONS: Record<RoleType, { privilege: string; action: string }> = {
@@ -26,7 +27,7 @@ const ROLE_DESCRIPTIONS: Record<RoleType, { privilege: string; action: string }>
     action: 'Robotnicy z Magistratu rozdzielani po jednym, zaczynając od selektora. Każdy gracz rozmieszcza robotników lub oddaje pozostałych do puli.',
   },
   [RoleType.Builder]: {
-    privilege: 'Selektor buduje o 1 dublon taniej (łącznie z zniżką z kamieniołomów).',
+    privilege: 'Selektor buduje o 1 dublon taniej (łącznie ze zniżką z kamieniołomów).',
     action: 'Każdy gracz może zbudować jeden budynek, płacąc do banku. Kamieniołomy dają zniżkę wg grupy cenowej budynku.',
   },
   [RoleType.Craftsman]: {
@@ -44,6 +45,10 @@ const ROLE_DESCRIPTIONS: Record<RoleType, { privilege: string; action: string }>
   [RoleType.Prospector]: {
     privilege: 'Selektor dostaje 1 dublon z banku.',
     action: 'Pozostali gracze nie dostają nic. (Postać dostępna tylko przy 4–5 graczach.)',
+  },
+  [RoleType.Corsair]: {
+    privilege: 'Selektor zdobywa żeton korsarza i wykonuje jedną akcję: Piractwo (towary ze statku), Grabież (towary z targowiska → PZ), Najazd (robotnicy z magistratu), Pojmanie (przechwytuje kartę postaci — inne osoby mogą ją wykupić za 3 dublony).',
+    action: 'Tylko selektor wykonuje akcję. Posiadacz żetonu korsarza nie może ponownie wybrać tej postaci dopóki ktoś inny jej nie weźmie.',
   },
 };
 
@@ -65,20 +70,22 @@ export function RoleCardsBar({ state }: Props) {
           const takenPlayer = taken
             ? state.players.find(p => p.id === card.takenBy)
             : null;
+          const isCaptured = state.capturedRoleCard === card.type;
           const isInfoOpen = selectedRole === card.type;
 
           return (
             <div
               key={card.type}
-              className={`role-card ${taken ? 'role-card--taken' : 'role-card--available'} ${isInfoOpen ? 'role-card--info-open' : ''}`}
+              className={`role-card ${taken ? 'role-card--taken' : 'role-card--available'} ${isCaptured ? 'role-card--captured' : ''} ${isInfoOpen ? 'role-card--info-open' : ''}`}
               style={{ '--role-color': m.color } as React.CSSProperties}
               onClick={() => toggle(card.type)}
-              title="Kliknij, aby zobaczyć opis"
+              title={isCaptured ? 'Pojmana przez Korsarza — wykup za 3 dublony' : 'Kliknij, aby zobaczyć opis'}
             >
               <span className="role-card__icon">{m.icon}</span>
               <span className="role-card__label">{m.label}</span>
+              {isCaptured && <span className="role-card__captured">🏴‍☠️</span>}
               {card.doubloonsOnCard > 0 && (
-                <span className="role-card__doubloons">{card.doubloonsOnCard}🪙</span>
+                <span className="role-card__doubloons">{card.doubloonsOnCard}<span className="icon-coin">D</span></span>
               )}
               {taken && takenPlayer && (
                 <span className="role-card__owner">{takenPlayer.name}</span>
@@ -96,7 +103,7 @@ export function RoleCardsBar({ state }: Props) {
           </div>
           <div className="role-desc-panel__body">
             <div className="role-desc-row">
-              <span className="role-desc-label">★ Przywilej:</span>
+              <span className="role-desc-label">ℹ Przywilej:</span>
               <span className="role-desc-text">{desc.privilege}</span>
             </div>
             <div className="role-desc-row">

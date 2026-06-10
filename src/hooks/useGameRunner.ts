@@ -3,9 +3,10 @@ import { GameRunner, type PlayerSetup } from '../game/GameRunner';
 import { describeAction } from '../game/actionLabels';
 import type { Action } from '../../actions/Action';
 import type { GameState } from '../../state/GameState';
+import type { ExpansionConfig } from '../components/SetupScreen';
 
-const BOT_DELAY_MS = 1300;
-const BOT_DELAY_MAYOR_MS = 180;
+const BOT_DELAY_MS = 600;       // time to show "thinks..." before blocking computation starts
+const BOT_DELAY_MAYOR_MS = 120; // mayor phase is worker placement — near-instant even for MCTS
 const ACTION_FEED_MS = 1100;
 const HUMAN_FEED_MS = 750;
 
@@ -15,10 +16,10 @@ export interface ActionFeedItem {
   isBot: boolean;
 }
 
-export function useGameRunner(setups: PlayerSetup[], savedState?: GameState) {
+export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, expansions?: ExpansionConfig) {
   const runnerRef = useRef<GameRunner | null>(null);
   if (runnerRef.current === null) {
-    runnerRef.current = new GameRunner(setups, savedState);
+    runnerRef.current = new GameRunner(setups, savedState, expansions ?? { festival: false, corsair: false, newBuildings: false, nobleBuildings: false });
   }
   const runner = runnerRef.current;
 

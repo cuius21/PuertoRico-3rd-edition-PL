@@ -11,8 +11,8 @@ import type { Player } from '../Player';
 export abstract class LargeBuilding extends Building {
   readonly category = BuildingCategory.LargeUtility;
   readonly cost = 10;
-  readonly victoryPoints = 4;
-  readonly workerCapacity = 1;
+  readonly victoryPoints: number = 4;
+  readonly workerCapacity: number = 1;
   readonly tileSize = 2;
   readonly priceGroup = BuildingPriceGroup.Group4;
 

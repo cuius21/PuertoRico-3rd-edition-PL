@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { GameState } from '../../state/GameState';
 import { GoodType } from '../../core/types';
 import { GOOD_PRICES } from '../../core/constants';
@@ -6,10 +7,10 @@ interface Props {
   state: GameState;
 }
 
-const GOOD_META: Record<GoodType, { label: string; icon: string; color: string; bg: string }> = {
+const GOOD_META: Record<GoodType, { label: string; icon: ReactNode; color: string; bg: string }> = {
   [GoodType.Corn]:    { label: 'Kukurydza', icon: '🌽', color: '#8B6914', bg: '#FFF9C4' },
   [GoodType.Indigo]:  { label: 'Indygo',   icon: '🔵', color: '#EDE7F6', bg: '#4527A0' },
-  [GoodType.Sugar]:   { label: 'Cukier',   icon: '⬜', color: '#555',    bg: '#EEEEEE' },
+  [GoodType.Sugar]:   { label: 'Cukier',   icon: <span className="icon-sugar" />, color: '#555', bg: '#EEEEEE' },
   [GoodType.Tobacco]: { label: 'Tytoń',    icon: '🍂', color: '#FFF8E1', bg: '#6D4C41' },
   [GoodType.Coffee]:  { label: 'Kawa',     icon: '☕', color: '#FFF9F0', bg: '#2C1810' },
 };
@@ -75,7 +76,7 @@ export function ShipsTradingBar({ state }: Props) {
               style={{ background: meta.bg, color: meta.color }}
               title={`${meta.label}: ${price} dublon`}
             >
-              {meta.icon}{price}🪙
+              {meta.icon}{price}<span className="icon-coin">D</span>
             </span>
           ) : null;
         })}

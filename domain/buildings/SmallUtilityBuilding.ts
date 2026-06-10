@@ -5,6 +5,6 @@ import { BuildingCategory } from '../../core/types';
 // PZ w zakresie 1-3 (zależnie od grupy cenowej).
 export abstract class SmallUtilityBuilding extends Building {
   readonly category = BuildingCategory.SmallUtility;
-  readonly tileSize = 1;
-  readonly workerCapacity = 1;
+  readonly tileSize: 1 = 1;
+  readonly workerCapacity: number = 1;
 }

@@ -21,8 +21,9 @@ export class GuildHall extends LargeBuilding {
   calculateEndGameBonus(_state: GameState, player: Player): number {
     let bonus = 0;
     for (const building of player.island.getBuildings()) {
-      if (building.category !== BuildingCategory.Production) continue;
-      bonus += building.workerCapacity === 1 ? 1 : 2;
+      const isLargeExtra = building.countsAsLargeProductionBuilding?.();
+      if (building.category !== BuildingCategory.Production && !isLargeExtra) continue;
+      bonus += (building.workerCapacity === 1 && !isLargeExtra) ? 1 : 2;
     }
     return bonus;
   }

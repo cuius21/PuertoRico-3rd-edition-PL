@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameRunner } from '../hooks/useGameRunner';
 import type { PlayerSetup } from '../game/GameRunner';
+import type { ExpansionConfig } from './SetupScreen';
 import type { GameState } from '../../state/GameState';
 import { serializeGame } from '../game/GameSerializer';
 import { RoleCardsBar } from './RoleCardsBar';
@@ -12,15 +13,27 @@ import { RoundLogPanel } from './RoundLogPanel';
 
 interface Props {
   setups: PlayerSetup[];
+  expansions: ExpansionConfig;
   savedState?: GameState;
   onReturnToMenu: () => void;
 }
 
-export function GameScreen({ setups, savedState, onReturnToMenu }: Props) {
+export function GameScreen({ setups, expansions, savedState, onReturnToMenu }: Props) {
   const { runner, state, applyHumanAction, isWaitingForBot, roundNotice, actionFeed, roundLog } =
-    useGameRunner(setups, savedState);
+    useGameRunner(setups, savedState, expansions);
 
   const [saveFlash, setSaveFlash] = useState(false);
+  const [showLog, setShowLog] = useState(false);
+  const [expandedPlayers, setExpandedPlayers] = useState<Set<string>>(new Set());
+
+  function togglePlayer(playerId: string) {
+    setExpandedPlayers(prev => {
+      const next = new Set(prev);
+      if (next.has(playerId)) next.delete(playerId);
+      else next.add(playerId);
+      return next;
+    });
+  }
 
   function handleSave() {
     serializeGame(state, runner.playerSetups);
@@ -33,8 +46,6 @@ export function GameScreen({ setups, savedState, onReturnToMenu }: Props) {
   }
 
   const currentPlayer = state.getCurrentPlayer();
-  const currentSetup = runner.getCurrentSetup();
-
   return (
     <div className="game-screen">
       {/* Round change notification */}
@@ -63,6 +74,9 @@ export function GameScreen({ setups, savedState, onReturnToMenu }: Props) {
           <button className="save-btn" onClick={handleSave} title="Zapisz stan gry">
             💾 Zapisz
           </button>
+          <button className="log-btn" onClick={() => setShowLog(true)} title="Historia wszystkich akcji">
+            📋 Logi {runner.log.length > 0 && <span className="log-btn__count">{runner.log.length}</span>}
+          </button>
           <button className="menu-btn" onClick={onReturnToMenu}>Menu</button>
         </div>
       </header>
@@ -87,16 +101,25 @@ export function GameScreen({ setups, savedState, onReturnToMenu }: Props) {
 
         {/* Players area */}
         <div className="players-area">
-          {state.players.map((player, idx) => (
-            <PlayerPanel
-              key={player.id}
-              player={player}
-              setup={runner.getSetup(idx)}
-              isActive={state.currentPlayerIndex === idx}
-              isGovernor={state.governorIndex === idx}
-              isSelector={state.roleSelectorIndex === idx}
-            />
-          ))}
+          {state.players.map((player, idx) => {
+            const isActive = state.currentPlayerIndex === idx;
+            // On mobile (narrow), non-active panels collapse unless manually expanded.
+            // On desktop the collapse toggle is still shown but panels default to expanded.
+            const isMobile = window.innerWidth <= 768;
+            const collapsed = isMobile && !isActive && !expandedPlayers.has(player.id);
+            return (
+              <PlayerPanel
+                key={player.id}
+                player={player}
+                setup={runner.getSetup(idx)}
+                isActive={isActive}
+                isGovernor={state.governorIndex === idx}
+                isSelector={state.roleSelectorIndex === idx}
+                collapsed={collapsed}
+                {...(isMobile ? { onToggle: () => togglePlayer(player.id) } : {})}
+              />
+            );
+          })}
         </div>
 
         {/* Right column: round log + supply */}
@@ -110,10 +133,30 @@ export function GameScreen({ setups, savedState, onReturnToMenu }: Props) {
       <ActionPanel
         runner={runner}
         state={state}
-        currentSetup={currentSetup}
         onAction={applyHumanAction}
         isWaitingForBot={isWaitingForBot}
       />
+
+      {/* Action log modal */}
+      {showLog && (
+        <div className="log-modal-overlay" onClick={() => setShowLog(false)}>
+          <div className="log-modal" onClick={e => e.stopPropagation()}>
+            <div className="log-modal__header">
+              <span className="log-modal__title">Historia akcji</span>
+              <button className="log-modal__close" onClick={() => setShowLog(false)}>✕</button>
+            </div>
+            <div className="log-modal__entries">
+              {runner.log.length === 0 && <span className="log-empty">Brak akcji</span>}
+              {[...runner.log].reverse().map((entry, i) => (
+                <div key={i} className={`log-entry ${entry.isBot ? 'log-entry--bot' : 'log-entry--human'}`}>
+                  <span className="log-player">{entry.playerName}:</span>
+                  <span className="log-action">{entry.actionText}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,16 +1,25 @@
 import { useState } from 'react';
 import { RandomBot } from '../bots/RandomBot';
 import { GreedyBot } from '../bots/GreedyBot';
+import { MctsBot } from '../bots/MctsBot';
 import type { PlayerSetup } from '../game/GameRunner';
 import { getSavedGame } from '../game/GameSerializer';
 
+export interface ExpansionConfig {
+  festival: boolean;
+  corsair: boolean;
+  newBuildings: boolean;
+  nobleBuildings: boolean;
+}
+
 interface Props {
-  onStart: (setups: PlayerSetup[]) => void;
+  onStart: (setups: PlayerSetup[], expansions: ExpansionConfig) => void;
   onLoad: () => void;
+  onMultiplayer: () => void;
 }
 
 type PlayerType = 'human' | 'bot';
-type Difficulty = 'easy' | 'hard';
+type Difficulty = 'easy' | 'hard' | 'ai';
 
 interface PlayerConfig {
   name: string;
@@ -27,8 +36,9 @@ function formatSaveDate(timestamp: number): string {
   });
 }
 
-export function SetupScreen({ onStart, onLoad }: Props) {
+export function SetupScreen({ onStart, onLoad, onMultiplayer }: Props) {
   const [playerCount, setPlayerCount] = useState(3);
+  const [expansions, setExpansions] = useState<ExpansionConfig>({ festival: false, corsair: false, newBuildings: false, nobleBuildings: false });
   const [players, setPlayers] = useState<PlayerConfig[]>(
     DEFAULT_NAMES.slice(0, 3).map((name, i) => ({
       name,
@@ -65,10 +75,10 @@ export function SetupScreen({ onStart, onLoad }: Props) {
         : {
             type: 'bot',
             name: p.name,
-            bot: p.difficulty === 'hard' ? new GreedyBot() : new RandomBot(),
+            bot: p.difficulty === 'ai' ? new MctsBot() : p.difficulty === 'hard' ? new GreedyBot() : new RandomBot(),
           },
     );
-    onStart(setups);
+    onStart(setups, expansions);
   }
 
   return (
@@ -132,12 +142,61 @@ export function SetupScreen({ onStart, onLoad }: Props) {
                       onClick={() => updatePlayer(i, { difficulty: 'hard' })}
                       title="Bot używa heurystyk do oceny każdego ruchu"
                     >
-                      🧠 Inteligentny
+                      🧠 Zachłanny
+                    </button>
+                    <button
+                      className={`diff-btn ${p.difficulty === 'ai' ? 'diff-btn--active-ai' : ''}`}
+                      onClick={() => updatePlayer(i, { difficulty: 'ai' })}
+                      title="Bot symuluje setki możliwych przyszłości (MCTS) — ~2s na ruch"
+                    >
+                      🏆 AI
                     </button>
                   </div>
                 )}
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="setup-section">
+          <label className="setup-label">Rozszerzenia</label>
+          <div className="expansion-list">
+            <label className="expansion-toggle">
+              <input
+                type="checkbox"
+                checked={expansions.newBuildings}
+                onChange={e => setExpansions(prev => ({ ...prev, newBuildings: e.target.checked }))}
+              />
+              <span className="expansion-toggle__name">I: Nowe Budynki</span>
+              <span className="expansion-toggle__desc">14 nowych budynków — Akwedukt, Biblioteka, Klasztor, Statua i inne</span>
+            </label>
+            <label className="expansion-toggle">
+              <input
+                type="checkbox"
+                checked={expansions.nobleBuildings}
+                onChange={e => setExpansions(prev => ({ ...prev, nobleBuildings: e.target.checked }))}
+              />
+              <span className="expansion-toggle__name">II: Szlachcic</span>
+              <span className="expansion-toggle__desc">20 szlachciców — 8 nowych budynków z podwójnymi efektami (+1 PZ za szlachcica)</span>
+            </label>
+            <label className="expansion-toggle">
+              <input
+                type="checkbox"
+                checked={expansions.corsair}
+                onChange={e => setExpansions(prev => ({ ...prev, corsair: e.target.checked }))}
+              />
+              <span className="expansion-toggle__name">III: Korsarz</span>
+              <span className="expansion-toggle__desc">Nowa postać — piractwo, grabież, najazd lub pojmanie roli</span>
+            </label>
+            <label className="expansion-toggle">
+              <input
+                type="checkbox"
+                checked={expansions.festival}
+                onChange={e => setExpansions(prev => ({ ...prev, festival: e.target.checked }))}
+              />
+              <span className="expansion-toggle__name">IV: Festyn w San Juan</span>
+              <span className="expansion-toggle__desc">Losowe zadania — nagrody za plantacje, produkcję i budowę</span>
+            </label>
           </div>
         </div>
 
@@ -151,6 +210,10 @@ export function SetupScreen({ onStart, onLoad }: Props) {
             <span className="load-btn__date">{formatSaveDate(savedGame.savedAt)}</span>
           </button>
         )}
+
+        <button className="multiplayer-btn" onClick={onMultiplayer}>
+          🌐 Gra sieciowa (LAN)
+        </button>
       </div>
     </div>
   );

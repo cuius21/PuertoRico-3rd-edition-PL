@@ -4,19 +4,16 @@ import { PhaseType, type PlayerId, RoleType } from '../core/types';
 import type { GameState } from '../state/GameState';
 
 // Gracz w fazie wyboru postaci bierze jedną z dostępnych kart.
-// - Zabiera ewentualne dublony leżące na karcie (do swojego San Juan).
-// - Karta zostaje "przy nim" do końca rundy (takenBy ustawione).
-// - Selektor i aktualny gracz w GameState są ustawiani na tego gracza
-//   (selektor wykonuje akcję postaci jako pierwszy).
-//
-// Sama zmiana fazy (na SettlerPhase / TraderPhase / itd.) NIE jest tu zaszyta —
-// to robota RoleSelectionPhase.checkTransition().
+// - cardIndex wskazuje konkretną kartę w state.roleCards (ważne gdy są 2 karty tego samego
+//   typu, np. dwa Poszukiwacze w grze 5-osobowej z różnymi nagromadzonymi dublonami).
+// - null = znajdź pierwszą dostępną kartę danego typu (fallback / kompatybilność wsteczna).
 export class SelectRoleAction implements Action {
   readonly type = 'SELECT_ROLE';
 
   constructor(
     readonly playerId: PlayerId,
     readonly role: RoleType,
+    readonly cardIndex: number | null = null,
   ) {}
 
   validate(state: GameState): Result<void, string> {
@@ -26,9 +23,13 @@ export class SelectRoleAction implements Action {
     if (state.getCurrentPlayer().id !== this.playerId) {
       return Err('To nie twoja kolej, by wybrać postać');
     }
+    if (this.role === RoleType.Corsair && state.corsairTokenHolderId === this.playerId) {
+      return Err('Posiadasz żeton korsarza — nie możesz ponownie wybrać tej postaci');
+    }
 
-    const card = state.roleCards.find((c: { type: RoleType }) => c.type === this.role);
+    const card = this.resolveCard(state);
     if (!card) return Err(`Karta postaci ${this.role} nie istnieje w tej rozgrywce`);
+    if (card.type !== this.role) return Err(`Nieprawidłowy indeks karty`);
     if (!card.isAvailable()) return Err(`Karta ${this.role} została już wybrana w tej rundzie`);
 
     return OkVoid;
@@ -36,18 +37,28 @@ export class SelectRoleAction implements Action {
 
   execute(state: GameState): void {
     const player = state.getPlayer(this.playerId)!;
-    const card = state.roleCards.find((c: { type: RoleType }) => c.type === this.role)!;
+    const card = this.resolveCard(state)!;
 
-    // Gracz inkasuje dublony z karty (z poprzednich rund, jeśli były).
+    if (state.capturedRoleCard === this.role) {
+      const corsair = state.corsairTokenHolderId ? state.getPlayer(state.corsairTokenHolderId) : null;
+      if (corsair) corsair.doubloons += state.supply.drawDoubloons(3);
+      state.capturedRoleCard = null;
+    }
+
     player.doubloons += card.doubloonsOnCard;
     card.doubloonsOnCard = 0;
-
-    // Karta przypisana do gracza.
     card.takenBy = this.playerId;
 
-    // Selektor i aktualny gracz - selektor zawsze działa pierwszy w swojej fazie.
     const playerIndex = state.getPlayerIndex(this.playerId);
     state.roleSelectorIndex = playerIndex;
     state.currentPlayerIndex = playerIndex;
+  }
+
+  // Zwraca konkretną kartę na podstawie cardIndex albo pierwszą dostępną po typie.
+  private resolveCard(state: GameState) {
+    if (this.cardIndex !== null) {
+      return state.roleCards[this.cardIndex];
+    }
+    return state.roleCards.find(c => c.type === this.role && c.isAvailable());
   }
 }

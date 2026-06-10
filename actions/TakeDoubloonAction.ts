@@ -28,7 +28,10 @@ export class TakeDoubloonAction implements Action {
 
   execute(state: GameState): void {
     const player = state.getPlayer(this.playerId)!;
-    const taken = state.supply.drawDoubloons(1);
+    // Biblioteka: poszukiwacz dostaje 2 dublony zamiast 1
+    const hasLibrary = player.island.getActiveBuildings().some(b => b.doublesRolePrivilege?.());
+    const amount = hasLibrary ? 2 : 1;
+    const taken = state.supply.drawDoubloons(amount);
     player.doubloons += taken;
     // Brak advance - faza jednoosobowa, ProspectorPhase.checkTransition() ją zamknie.
   }

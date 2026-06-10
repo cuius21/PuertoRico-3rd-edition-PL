@@ -1,4 +1,6 @@
 import { GameState } from '../../state/GameState';
+import { FestivalBoard } from '../../domain/FestivalBoard';
+import type { FestivalUprawaQuest, FestivalProdukcjaQuest, FestivalBudowaQuest } from '../../domain/FestivalBoard';
 import { Player } from '../../domain/Player';
 import { Island } from '../../domain/Island';
 import { Plantation } from '../../domain/Plantation';
@@ -12,6 +14,7 @@ import type { Building } from '../../domain/buildings/Building';
 import type { PlayerSetup } from './GameRunner';
 import { RandomBot } from '../bots/RandomBot';
 import { GreedyBot } from '../bots/GreedyBot';
+import { MctsBot } from '../bots/MctsBot';
 
 // Phase classes
 import { RoleSelectionPhase } from '../../state/phases/RoleSelectionPhase';
@@ -22,6 +25,7 @@ import { CraftsmanPhase } from '../../state/phases/CraftsmanPhase';
 import { TraderPhase } from '../../state/phases/TraderPhase';
 import { CaptainPhase } from '../../state/phases/CaptainPhase';
 import { ProspectorPhase } from '../../state/phases/ProspectorPhase';
+import { CorsairPhase } from '../../state/phases/CorsairPhase';
 import { RoundEndPhase } from '../../state/phases/RoundEndPhase';
 import { GameOverPhase } from '../../state/phases/GameOverPhase';
 
@@ -38,6 +42,13 @@ import {
 import {
   Fortress, GuildHall, CustomsHouse, CityHall, Residence,
 } from '../../domain/buildings/catalog/LargeBuildings';
+import {
+  Aqueduct, BlackMarket, Hut, Depot, Inn, TradingPost, Church, Marina,
+  TransferStation, Lighthouse, Manufactory, Library, Monastery, Statue,
+} from '../../domain/buildings/catalog/NewBuildings1';
+import {
+  Chancellery, Chapel, HuntingLodge, MasonsGuild, Treasury, Villa, JewelersWorkshop, PalaceGarden,
+} from '../../domain/buildings/catalog/NewBuildings2';
 
 const STORAGE_KEY = 'puerto_rico_save';
 
@@ -46,12 +57,12 @@ const STORAGE_KEY = 'puerto_rico_save';
 export interface SavedSetup {
   name: string;
   type: 'human' | 'bot';
-  difficulty: 'easy' | 'hard';
+  difficulty: 'easy' | 'hard' | 'ai';
 }
 
-type SavedPlantation = { type: string; workers: number };
+type SavedPlantation = { type: string; workers: number; nobles?: number; forest?: boolean };
 // null = empty slot; { shared: true } = large building occupying 2nd slot (same instance as previous)
-type SavedBuildingSlot = null | { id: string; workers: number; shared?: true };
+type SavedBuildingSlot = null | { id: string; workers: number; nobles?: number; shared?: true };
 
 interface SavedPlayer {
   id: string;
@@ -61,8 +72,13 @@ interface SavedPlayer {
   goods: Record<string, number>;
   pending: number;
   held: number;
+  pendingNobles?: number;
+  heldNobles?: number;
   captainUsed: boolean;
   wharfUsed: boolean;
+  treasuryUsed?: boolean;
+  marinaGoods?: number;
+  factoriaUsed?: boolean;
   plantations: (SavedPlantation | null)[];
   buildingSlots: SavedBuildingSlot[];
 }
@@ -72,12 +88,23 @@ interface SavedSupply {
   vp: number;
   workers: number;
   magistrate: number;
+  noblesPool?: number;
+  noblesMagistrate?: number;
   goods: Record<string, number>;
   decks: SavedPlantation[][];
   revealed: SavedPlantation[];
   discarded: SavedPlantation[];
   quarries: number;
-  buildings: { id: string; workers: number }[];
+  buildings: { id: string; workers: number; nobles?: number }[];
+}
+
+interface SavedFestivalQuest {
+  type: 'uprawa' | 'produkcja' | 'budowa';
+  completedBy: string | null;
+  plantationType?: string;
+  requiredGoods?: Record<string, number>;
+  buildingId?: string;
+  buildingDisplayName?: string;
 }
 
 interface SaveGame {
@@ -97,6 +124,11 @@ interface SaveGame {
     ships: { cap: number; good: string | null; count: number }[];
     tradingHouse: (string | null)[];
     roleCards: { type: string; doubloons: number; takenBy: string | null }[];
+    festivalBoard: { uprawa: SavedFestivalQuest; produkcja: SavedFestivalQuest; budowa: SavedFestivalQuest } | null;
+    corsairTokenHolderId: string | null;
+    capturedRoleCard: string | null;
+    nobleExpansion?: boolean;
+    captainStoragePending?: boolean;
   };
 }
 
@@ -126,6 +158,30 @@ const BUILDING_FACTORIES: Record<string, () => Building> = {
   customsHouse: () => new CustomsHouse(),
   cityHall: () => new CityHall(),
   residence: () => new Residence(),
+  // Rozszerzenie I
+  aqueduct:        () => new Aqueduct(),
+  blackMarket:     () => new BlackMarket(),
+  hut:             () => new Hut(),
+  depot:           () => new Depot(),
+  inn:             () => new Inn(),
+  tradingPost:     () => new TradingPost(),
+  church:          () => new Church(),
+  marina:          () => new Marina(),
+  transferStation: () => new TransferStation(),
+  lighthouse:      () => new Lighthouse(),
+  manufactory:     () => new Manufactory(),
+  library:         () => new Library(),
+  monastery:       () => new Monastery(),
+  statue:          () => new Statue(),
+  // Rozszerzenie II
+  chancellery:       () => new Chancellery(),
+  chapel:            () => new Chapel(),
+  huntingLodge:      () => new HuntingLodge(),
+  masonsGuild:       () => new MasonsGuild(),
+  treasury:          () => new Treasury(),
+  villa:             () => new Villa(),
+  jewelersWorkshop:  () => new JewelersWorkshop(),
+  palaceGarden:      () => new PalaceGarden(),
 };
 
 function makeBuilding(id: string): Building | null {
@@ -144,6 +200,7 @@ function makePhase(type: string): GamePhase {
     case 'trader':        return new TraderPhase();
     case 'captain':       return new CaptainPhase();
     case 'prospector':    return new ProspectorPhase();
+    case 'corsair':       return new CorsairPhase();
     case 'roundEnd':      return new RoundEndPhase();
     default:              return new GameOverPhase();
   }
@@ -152,7 +209,10 @@ function makePhase(type: string): GamePhase {
 // ── Serialization ─────────────────────────────────────────────────────────────
 
 function savePlantation(p: Plantation): SavedPlantation {
-  return { type: p.type, workers: p.occupiedWorkers };
+  const saved: SavedPlantation = { type: p.type, workers: p.occupiedWorkers };
+  if (p.occupiedNobles) saved.nobles = p.occupiedNobles;
+  if (p.isForest) saved.forest = true;
+  return saved;
 }
 
 function saveBuildingSlots(island: Island): SavedBuildingSlot[] {
@@ -163,9 +223,13 @@ function saveBuildingSlots(island: Island): SavedBuildingSlot[] {
     if (!slot) { result.push(null); continue; }
     // Large building: same object reference appears in 2 consecutive slots
     if (i > 0 && raw[i - 1] === slot) {
-      result.push({ id: slot.id, workers: slot.occupiedWorkers, shared: true });
+      const entry: SavedBuildingSlot = { id: slot.id, workers: slot.occupiedWorkers, shared: true };
+      if (slot.occupiedNobles) (entry as { id: string; workers: number; nobles?: number; shared?: true }).nobles = slot.occupiedNobles;
+      result.push(entry);
     } else {
-      result.push({ id: slot.id, workers: slot.occupiedWorkers });
+      const entry: SavedBuildingSlot = { id: slot.id, workers: slot.occupiedWorkers };
+      if (slot.occupiedNobles) (entry as { id: string; workers: number; nobles?: number }).nobles = slot.occupiedNobles;
+      result.push(entry);
     }
   }
   return result;
@@ -174,7 +238,7 @@ function saveBuildingSlots(island: Island): SavedBuildingSlot[] {
 function savePlayer(p: Player): SavedPlayer {
   const goods: Record<string, number> = {};
   for (const [g, n] of p.storedGoods.entries()) goods[g] = n;
-  return {
+  const savedP: SavedPlayer = {
     id: p.id,
     name: p.name,
     doubloons: p.doubloons,
@@ -187,12 +251,18 @@ function savePlayer(p: Player): SavedPlayer {
     plantations: p.island.getPlantationSlots().map(pl => pl ? savePlantation(pl) : null),
     buildingSlots: saveBuildingSlots(p.island),
   };
+  if (p.pendingNobles) savedP.pendingNobles = p.pendingNobles;
+  if (p.heldNobles) savedP.heldNobles = p.heldNobles;
+  if (p.marinaGoodsLoaded) savedP.marinaGoods = p.marinaGoodsLoaded;
+  if (p.hasUsedFactoriaThisPhase) savedP.factoriaUsed = true;
+  if (p.hasUsedTreasuryThisPhase) savedP.treasuryUsed = true;
+  return savedP;
 }
 
 function saveSupply(s: Supply): SavedSupply {
   const goods: Record<string, number> = {};
   for (const [g, n] of s.goodsPool.entries()) goods[g] = n;
-  return {
+  const saved: SavedSupply = {
     doubloons: s.doubloonsInBank,
     vp: s.victoryPointPool,
     workers: s.workersPool,
@@ -202,8 +272,15 @@ function saveSupply(s: Supply): SavedSupply {
     revealed: s.revealedPlantations.map(savePlantation),
     discarded: s.discardedPlantations.map(savePlantation),
     quarries: s.quarryStack.length,
-    buildings: s.availableBuildings.map(b => ({ id: b.id, workers: b.occupiedWorkers })),
+    buildings: s.availableBuildings.map(b => {
+      const entry: { id: string; workers: number; nobles?: number } = { id: b.id, workers: b.occupiedWorkers };
+      if (b.occupiedNobles) entry.nobles = b.occupiedNobles;
+      return entry;
+    }),
   };
+  if (s.noblesPool) saved.noblesPool = s.noblesPool;
+  if (s.noblesInMagistrate) saved.noblesMagistrate = s.noblesInMagistrate;
+  return saved;
 }
 
 function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): SaveGame {
@@ -214,7 +291,7 @@ function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): 
       name: s.name,
       type: s.type,
       difficulty: s.type === 'bot'
-        ? (s.bot.name === 'GreedyBot' ? 'hard' : 'easy')
+        ? (s.bot.name === 'MctsBot' ? 'ai' : s.bot.name === 'GreedyBot' ? 'hard' : 'easy')
         : 'easy',
     })),
     state: {
@@ -238,6 +315,15 @@ function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): 
         doubloons: c.doubloonsOnCard,
         takenBy: c.takenBy,
       })),
+      festivalBoard: state.festivalBoard ? {
+        uprawa:    { type: 'uprawa',    completedBy: state.festivalBoard.uprawa.completedBy,    plantationType: state.festivalBoard.uprawa.plantationType },
+        produkcja: { type: 'produkcja', completedBy: state.festivalBoard.produkcja.completedBy, requiredGoods: state.festivalBoard.produkcja.requiredGoods as Record<string, number> },
+        budowa:    { type: 'budowa',    completedBy: state.festivalBoard.budowa.completedBy,    buildingId: state.festivalBoard.budowa.buildingId, buildingDisplayName: state.festivalBoard.budowa.buildingDisplayName },
+      } : null,
+      corsairTokenHolderId: state.corsairTokenHolderId,
+      capturedRoleCard: state.capturedRoleCard,
+      ...(state.nobleExpansion ? { nobleExpansion: true as const } : {}),
+      ...(state.captainStoragePending ? { captainStoragePending: true as const } : {}),
     },
   };
 }
@@ -255,6 +341,8 @@ function restoreIsland(
     if (!pl) return null;
     const p = new Plantation(pl.type as PlantationType);
     p.occupiedWorkers = pl.workers;
+    if (pl.nobles) p.occupiedNobles = pl.nobles;
+    if (pl.forest) p.isForest = true;
     return p;
   });
   island.restorePlantationSlots(restoredPlantations);
@@ -267,6 +355,7 @@ function restoreIsland(
     const b = makeBuilding(data.id);
     if (!b) { lastBuilding = null; return null; }
     b.occupiedWorkers = data.workers;
+    if (data.nobles) b.occupiedNobles = data.nobles;
     lastBuilding = b;
     return b;
   });
@@ -285,8 +374,13 @@ function restorePlayer(p: SavedPlayer): Player {
   }
   player.pendingWorkers = p.pending;
   player.heldWorkers = p.held ?? 0;
+  if (p.pendingNobles) player.pendingNobles = p.pendingNobles;
+  if (p.heldNobles) player.heldNobles = p.heldNobles;
   player.hasUsedCaptainBonusThisPhase = p.captainUsed;
   player.hasUsedWharfThisPhase = p.wharfUsed;
+  if (p.marinaGoods) player.marinaGoodsLoaded = p.marinaGoods;
+  if (p.factoriaUsed) player.hasUsedFactoriaThisPhase = true;
+  if (p.treasuryUsed) player.hasUsedTreasuryThisPhase = true;
   return player;
 }
 
@@ -320,8 +414,11 @@ function restoreSupply(s: SavedSupply): Supply {
   supply.availableBuildings = s.buildings.map(b => {
     const building = makeBuilding(b.id)!;
     building.occupiedWorkers = b.workers;
+    if (b.nobles) building.occupiedNobles = b.nobles;
     return building;
   }).filter(Boolean);
+  if (s.noblesPool) supply.noblesPool = s.noblesPool;
+  if (s.noblesMagistrate) supply.noblesInMagistrate = s.noblesMagistrate;
   return supply;
 }
 
@@ -356,6 +453,33 @@ function restoreGameState(s: SaveGame['state']): GameState {
   state.roundNumber = s.roundNumber;
   state.gameOver = s.gameOver;
   state.gameOverReason = s.gameOverReason ?? '';
+
+  if (s.festivalBoard) {
+    const fb = s.festivalBoard;
+    const uprawa: FestivalUprawaQuest = {
+      type: 'uprawa',
+      plantationType: fb.uprawa.plantationType as import('../../core/types').PlantationType,
+      completedBy: fb.uprawa.completedBy,
+    };
+    const produkcja: FestivalProdukcjaQuest = {
+      type: 'produkcja',
+      requiredGoods: fb.produkcja.requiredGoods ?? {},
+      completedBy: fb.produkcja.completedBy,
+    };
+    const budowa: FestivalBudowaQuest = {
+      type: 'budowa',
+      buildingId: fb.budowa.buildingId ?? '',
+      buildingDisplayName: fb.budowa.buildingDisplayName ?? '',
+      completedBy: fb.budowa.completedBy,
+    };
+    state.festivalBoard = new FestivalBoard(uprawa, produkcja, budowa);
+  }
+
+  state.corsairTokenHolderId = s.corsairTokenHolderId ?? null;
+  state.capturedRoleCard = (s.capturedRoleCard as RoleType | null) ?? null;
+  if (s.nobleExpansion) state.nobleExpansion = true;
+  if (s.captainStoragePending) state.captainStoragePending = true;
+
   state.restorePhase(makePhase(s.phaseType));
   return state;
 }
@@ -367,7 +491,7 @@ function restoreSetups(setups: SavedSetup[]): PlayerSetup[] {
       : {
           type: 'bot',
           name: s.name,
-          bot: s.difficulty === 'hard' ? new GreedyBot() : new RandomBot(),
+          bot: s.difficulty === 'ai' ? new MctsBot() : s.difficulty === 'hard' ? new GreedyBot() : new RandomBot(),
         },
   );
 }
@@ -406,3 +530,11 @@ export function deserializeGame(save: SaveGame): { state: GameState; setups: Pla
 }
 
 export type { SaveGame };
+
+// For server-side use (no localStorage dependency)
+export function serializeGameState(state: GameState): SaveGame['state'] {
+  return buildSaveGame(state, []).state;
+}
+export function deserializeGameState(data: SaveGame['state']): GameState {
+  return restoreGameState(data);
+}

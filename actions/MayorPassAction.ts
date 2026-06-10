@@ -26,6 +26,10 @@ export class MayorPassAction implements Action {
       player.heldWorkers += player.pendingWorkers;
       player.pendingWorkers = 0;
     }
+    if (player.pendingNobles > 0) {
+      player.heldNobles += player.pendingNobles;
+      player.pendingNobles = 0;
+    }
     state.advanceCurrentPlayer();
   }
 }
