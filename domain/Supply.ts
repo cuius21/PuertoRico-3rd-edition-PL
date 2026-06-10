@@ -10,11 +10,11 @@ export class Supply {
   doubloonsInBank: number = 0;
   victoryPointPool: number = 0;
 
-  // === ROBOTNICY ===
-  // Robotnicy w głównej puli (poza Magistratem - źródło przywileju burmistrza).
+  // === ROBOTNICY I SZLACHCICE ===
   workersPool: number = 0;
-  // Robotnicy aktualnie w Magistracie (do rozdania w fazie burmistrza).
   workersInMagistrate: number = 0;
+  noblesPool: number = 0;
+  noblesInMagistrate: number = 0;
 
   // === TOWARY ===
   // Pula znaczników towarów do produkcji.
@@ -78,6 +78,18 @@ export class Supply {
 
   returnWorkersToPool(count: number): void {
     this.workersPool += count;
+  }
+
+  drawNobleFromPool(): boolean {
+    if (this.noblesPool > 0) {
+      this.noblesPool--;
+      return true;
+    }
+    return false;
+  }
+
+  returnNoblesToPool(count: number): void {
+    this.noblesPool += count;
   }
 
   // === OPERACJE NA TOWARACH ===

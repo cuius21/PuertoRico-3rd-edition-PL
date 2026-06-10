@@ -17,7 +17,10 @@ export interface PlayerScore {
   // Ratusz, Rezydencja) — liczony TYLKO jeśli budynek jest aktywny (ma robotnika).
   largeBuildingBonus: number;
 
-  // Łączny wynik: vpTokens + buildingVP + largeBuildingBonus.
+  // Rozszerzenie II: 1 PZ za każdego szlachcica gracza (na wyspie + w rękach).
+  nobleVP: number;
+
+  // Łączny wynik: vpTokens + buildingVP + largeBuildingBonus + nobleVP.
   total: number;
 
   // Remis-breaker 1: dublony (więcej = lepsza pozycja).
@@ -48,13 +51,17 @@ export class ScoreCalculator {
         }
       }
 
+      // Rozszerzenie II: 1 PZ za każdego szlachcica gracza
+      const nobleVP = state.nobleExpansion ? player.getTotalNobles() : 0;
+
       return {
         playerId: player.id,
         playerName: player.name,
         vpTokens,
         buildingVP,
         largeBuildingBonus,
-        total: vpTokens + buildingVP + largeBuildingBonus,
+        nobleVP,
+        total: vpTokens + buildingVP + largeBuildingBonus + nobleVP,
         doubloons: player.doubloons,
         goods: player.getTotalStoredGoods(),
         rank: 0, // wypełnimy poniżej

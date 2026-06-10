@@ -7,13 +7,14 @@ export type WorkerTarget =
   | { kind: 'plantation'; slotIndex: number }
   | { kind: 'building'; buildingId: string };
 
-// Faza burmistrza: gracz umieszcza jednego oczekującego robotnika na plantacji lub budynku.
+// Faza burmistrza: gracz umieszcza jednego oczekującego robotnika lub szlachcica na plantacji lub budynku.
 export class PlaceWorkerAction implements Action {
   readonly type = 'PLACE_WORKER';
 
   constructor(
     readonly playerId: PlayerId,
     readonly target: WorkerTarget,
+    readonly asNoble: boolean = false,
   ) {}
 
   validate(state: GameState): Result<void, string> {
@@ -26,8 +27,10 @@ export class PlaceWorkerAction implements Action {
 
     const player = state.getPlayer(this.playerId)!;
 
-    if (player.pendingWorkers === 0) {
-      return Err('Nie masz oczekujących robotników do rozmieszczenia');
+    if (this.asNoble) {
+      if (player.pendingNobles === 0) return Err('Nie masz oczekujących szlachciców do rozmieszczenia');
+    } else {
+      if (player.pendingWorkers === 0) return Err('Nie masz oczekujących robotników do rozmieszczenia');
     }
 
     if (this.target.kind === 'plantation') {
@@ -46,19 +49,25 @@ export class PlaceWorkerAction implements Action {
 
   execute(state: GameState): void {
     const player = state.getPlayer(this.playerId)!;
-    player.pendingWorkers--;
+
+    if (this.asNoble) {
+      player.pendingNobles--;
+    } else {
+      player.pendingWorkers--;
+    }
 
     if (this.target.kind === 'plantation') {
       const slot = player.island.getPlantationSlots()[this.target.slotIndex]!;
-      slot.occupiedWorkers++;
+      if (this.asNoble) slot.occupiedNobles++;
+      else slot.occupiedWorkers++;
     } else {
       const { buildingId } = this.target;
       const building = player.island.getBuildings().find(b => b.id === buildingId)!;
-      building.occupiedWorkers++;
+      if (this.asNoble) building.occupiedNobles++;
+      else building.occupiedWorkers++;
     }
 
-    // When all workers placed, advance to next player
-    if (player.pendingWorkers === 0) {
+    if (player.pendingWorkers === 0 && player.pendingNobles === 0) {
       state.advanceCurrentPlayer();
     }
   }

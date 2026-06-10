@@ -21,6 +21,8 @@
 html, body, #root {
   height: 100%;
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   font-family: 'Open Sans', sans-serif;
   background: var(--board-green);
   color: var(--text-light);
@@ -176,7 +178,7 @@ html, body, #root {
   width: 100%;
   padding: 10px 14px;
   background: transparent;
-  color: var(--parchment-dark);
+  color: var(--wood-dark);
   border: 1px dashed var(--parchment-dark);
   border-radius: 6px;
   cursor: pointer;
@@ -196,6 +198,124 @@ html, body, #root {
 .load-btn__date {
   font-size: 0.75rem;
   opacity: 0.7;
+}
+
+/* ===== EXPANSION TOGGLES (setup screen) ===== */
+.expansion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expansion-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border: 2px solid var(--parchment-dark);
+  border-radius: var(--radius);
+  background: white;
+  transition: border-color 0.15s;
+}
+
+.expansion-toggle:has(input:checked) {
+  border-color: var(--gold);
+  background: #FFFDE7;
+}
+
+.expansion-toggle input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--wood-dark);
+  width: 16px;
+  height: 16px;
+}
+
+.expansion-toggle__name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--wood-dark);
+  display: block;
+}
+
+.expansion-toggle__desc {
+  font-size: 0.75rem;
+  color: var(--wood-mid);
+  display: block;
+  margin-top: 2px;
+}
+
+/* ===== FESTIVAL BOARD PANEL ===== */
+.festival-board-panel {
+  background: rgba(255, 200, 50, 0.08);
+  border: 1px solid rgba(255, 200, 50, 0.35);
+  border-radius: var(--radius);
+  padding: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.festival-board-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 200, 50, 0.25);
+}
+
+.festival-board-quests {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.festival-quest {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 5px;
+  padding: 5px 7px;
+}
+
+.festival-quest--done {
+  background: rgba(76,175,80,0.12);
+  border-color: rgba(76,175,80,0.4);
+  opacity: 0.75;
+}
+
+.festival-quest__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.festival-quest__type {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  color: var(--gold-light);
+}
+
+.festival-quest__reward {
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.55);
+}
+
+.festival-quest__detail {
+  font-size: 0.75rem;
+  color: var(--parchment);
+  font-weight: 600;
+}
+
+.festival-quest__winner {
+  font-size: 0.62rem;
+  color: #81C784;
+  margin-top: 2px;
 }
 
 /* ===== GAME SCREEN LAYOUT ===== */
@@ -342,9 +462,11 @@ html, body, #root {
 
 .role-cards-bar {
   display: flex;
+  flex-wrap: nowrap;
   gap: 6px;
   padding: 8px 12px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   cursor: pointer;
 }
 
@@ -374,6 +496,24 @@ html, body, #root {
 .role-card--taken {
   opacity: 0.5;
   background: rgba(0,0,0,0.3);
+}
+
+.role-card--captured {
+  outline: 2px dashed rgba(255,255,255,0.7);
+  outline-offset: -2px;
+  animation: captured-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes captured-pulse {
+  0%, 100% { outline-color: rgba(255,255,255,0.7); }
+  50%       { outline-color: rgba(255,200,0,0.9); }
+}
+
+.role-card__captured {
+  font-size: 0.75rem;
+  position: absolute;
+  top: 2px;
+  right: 2px;
 }
 
 .role-card__icon { font-size: 1.1rem; }
@@ -483,7 +623,8 @@ html, body, #root {
   min-width: 0;
   border: 2px solid transparent;
   transition: border-color 0.2s, box-shadow 0.2s, outline-color 0.2s;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -605,6 +746,28 @@ html, body, #root {
   font-weight: 700;
 }
 
+.stat--pending-noble {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.stat--held-noble {
+  color: #922b21;
+  font-weight: 700;
+}
+
+/* Token szlachcica — czerwony krążek jak na żetonie w instrukcji */
+.token-noble {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #c0392b;
+  border: 1.5px solid rgba(0,0,0,0.25);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 .stored-goods {
   display: flex;
   flex-wrap: wrap;
@@ -686,6 +849,7 @@ html, body, #root {
 
 .slot-worker--filled { opacity: 1; }
 .slot-worker--empty  { opacity: 0.38; }
+.slot-worker--noble  { opacity: 1; display: flex; align-items: center; justify-content: center; }
 
 /* ── Buildings grid ── */
 .building-grid {
@@ -762,6 +926,7 @@ html, body, #root {
 }
 
 .building-worker-icon--empty { opacity: 0.38; }
+.building-worker-icon--noble { opacity: 1; display: inline-flex; align-items: center; justify-content: center; }
 
 .no-buildings {
   font-size: 0.72rem;
@@ -843,6 +1008,40 @@ html, body, #root {
 
 .good-token__icon { font-size: 1rem; line-height: 1; }
 .good-token__count { font-size: 0.85rem; font-weight: 700; }
+
+/* Ikona dublonu — złota moneta z literą D */
+.icon-coin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15em;
+  height: 1.15em;
+  background: #D4A017;
+  border-radius: 50%;
+  border: 2px solid #8B6914;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 220, 80, 0.55);
+  vertical-align: middle;
+  flex-shrink: 0;
+  font-size: 0.8em;
+  font-weight: 900;
+  color: #5C3A00;
+  font-family: Georgia, serif;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Ikona cukru — glazurowana kostka cukru */
+.icon-sugar {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  background: radial-gradient(circle at 30% 30%, #fff 20%, #ddd 100%);
+  border: 1.5px solid #bbb;
+  border-radius: 3px;
+  vertical-align: middle;
+  flex-shrink: 0;
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.9);
+}
 
 .ships-list {
   display: flex;
@@ -1068,7 +1267,7 @@ html, body, #root {
   border-radius: var(--radius);
   border: 1px solid rgba(255,255,255,0.1);
   min-width: 0;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .stb-section-label {
@@ -1079,7 +1278,7 @@ html, body, #root {
   font-weight: 700;
 }
 
-.stb-section-label--trading { margin-top: 4px; }
+.stb-section-label--trading { margin-top: auto; padding-top: 4px; }
 
 .stb-ships {
   display: flex;
@@ -1135,14 +1334,14 @@ html, body, #root {
 
 .stb-trading-slot {
   flex: 1;
-  padding: 3px 2px;
+  padding: 5px 2px;
   border-radius: 4px;
   border: 1px solid rgba(255,255,255,0.18);
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   background: rgba(255,255,255,0.05);
   color: rgba(255,255,255,0.35);
-  min-height: 26px;
+  min-height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1166,19 +1365,25 @@ html, body, #root {
 /* ===== ACTION PANEL ===== */
 .action-panel {
   display: grid;
-  grid-template-columns: 1fr 210px 220px;
+  grid-template-columns: 1fr 210px;
   gap: 8px;
   padding: 8px 12px;
   background: var(--wood-dark);
   border-top: 2px solid var(--gold);
   min-height: 120px;
-  max-height: 170px;
+  max-height: 215px;
+}
+
+.action-panel--festival {
+  grid-template-columns: 1fr 185px 210px;
+  max-height: 250px;
 }
 
 .action-panel__left {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1203,7 +1408,10 @@ html, body, #root {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .action-btn {
@@ -1229,42 +1437,112 @@ html, body, #root {
   opacity: 0.5;
 }
 
-/* ===== ACTION LOG ===== */
-.action-panel__log {
+/* ===== ACTION LOG BUTTON + MODAL ===== */
+.log-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--gold-light);
+  border: 1px solid rgba(212,175,55,0.45);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.log-btn:hover {
+  background: rgba(212,175,55,0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.log-btn__count {
+  background: var(--gold);
+  color: var(--wood-dark);
+  border-radius: 8px;
+  padding: 0 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.log-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.log-modal {
+  background: var(--wood-dark);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  width: min(560px, 92vw);
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7);
 }
 
-.log-title {
-  font-size: 0.7rem;
-  text-transform: uppercase;
+.log-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.log-modal__title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.9rem;
+  color: var(--gold);
   letter-spacing: 1px;
-  color: rgba(255,255,255,0.5);
-  margin-bottom: 4px;
 }
 
-.log-entries {
+.log-modal__close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.log-modal__close:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-light);
+}
+
+.log-modal__entries {
   overflow-y: auto;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .log-entry {
-  font-size: 0.75rem;
-  padding: 2px 6px;
+  font-size: 0.78rem;
+  padding: 3px 8px;
   border-radius: 3px;
   display: flex;
-  gap: 5px;
+  gap: 6px;
 }
 
 .log-entry--bot { background: rgba(100, 60, 200, 0.2); }
 .log-entry--human { background: rgba(40, 120, 70, 0.2); }
 
 .log-player { font-weight: 600; white-space: nowrap; color: var(--gold-light); }
-.log-action { opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.log-empty { font-size: 0.75rem; opacity: 0.4; }
+.log-action { opacity: 0.85; }
+.log-empty { font-size: 0.75rem; opacity: 0.4; padding: 6px 8px; }
 
 /* ===== GAME OVER SCREEN ===== */
 .gameover-screen {
@@ -1479,14 +1757,16 @@ html, body, #root {
 /* Compact desktop / small laptop (< 1400px) */
 @media (max-width: 1400px) {
   .game-main { grid-template-columns: 1fr 190px; }
-  .action-panel { grid-template-columns: 1fr 195px 200px; }
+  .action-panel { grid-template-columns: 1fr 195px; }
+  .action-panel--festival { grid-template-columns: 1fr 165px 195px; }
 }
 
 /* Tablet landscape (< 1200px) */
 @media (max-width: 1200px) {
   html, body, #root { font-size: 13px; }
   .game-main { grid-template-columns: 1fr 170px; }
-  .action-panel { grid-template-columns: 1fr 180px 185px; gap: 6px; }
+  .action-panel { grid-template-columns: 1fr 180px; gap: 6px; }
+  .action-panel--festival { grid-template-columns: 1fr 155px 180px; gap: 6px; }
   .plantation-grid { grid-template-columns: repeat(4, 1fr); }
   .building-grid { grid-template-columns: repeat(3, 1fr); }
   .game-meta { gap: 10px; }
@@ -1497,9 +1777,14 @@ html, body, #root {
   html, body, #root { font-size: 12px; }
   .game-main { grid-template-columns: 1fr 155px; gap: 6px; }
   .action-panel {
-    grid-template-columns: 1fr 165px 170px;
+    grid-template-columns: 1fr 165px;
     min-height: 110px;
-    max-height: 155px;
+    max-height: 200px;
+  }
+  .action-panel--festival {
+    grid-template-columns: 1fr 140px 165px;
+    min-height: 110px;
+    max-height: 235px;
   }
   .round-log-panel { flex: 0 0 160px; }
   .players-area { gap: 5px; }
@@ -1511,56 +1796,243 @@ html, body, #root {
 
 /* Large phone / small tablet (< 768px) — scrollable layout */
 @media (max-width: 768px) {
-  html, body, #root { font-size: 12px; }
+  html, body, #root { font-size: 12px; overflow-x: hidden; }
 
+  /* ── Main scroll container ── */
   .game-screen {
-    height: auto;
+    height: auto !important;
     min-height: 100dvh;
+    overflow-x: hidden !important;
     overflow-y: auto;
     grid-template-rows: auto auto auto auto;
+    width: 100%;
   }
 
+  /* ── All top-level sections: force single column, full width ── */
+  .game-header,
+  .role-cards-wrapper,
+  .game-main,
+  .action-panel,
+  .action-panel--festival {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box;
+  }
+
+  /* ── Game main: single-column stack ── */
   .game-main {
-    grid-template-columns: 1fr;
-    overflow: visible;
+    grid-template-columns: 1fr !important;
+    overflow-x: hidden;
+    overflow-y: visible;
     height: auto;
     min-height: 0;
+    padding: 6px;
+    gap: 6px;
   }
 
+  /* ── Players: vertical stack ── */
   .players-area {
     flex-direction: column;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
     height: auto;
+    gap: 5px;
   }
 
+  /* ── Right column: side-by-side with wrapping ── */
   .game-right-column {
     flex-direction: row;
     flex-wrap: wrap;
     height: auto;
     max-height: none;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
+    gap: 5px;
   }
 
-  .round-log-panel { flex: 1 1 200px; max-height: 200px; }
-  .supply-panel { flex: 1 1 200px; max-height: 260px; }
+  .round-log-panel { flex: 1 1 45%; max-height: 200px; }
+  .supply-panel { flex: 1 1 45%; max-height: 260px; }
 
-  .action-panel {
-    grid-template-columns: 1fr;
+  /* ── Action panel: single-column ── */
+  .action-panel,
+  .action-panel--festival {
+    grid-template-columns: 1fr !important;
     max-height: none;
     gap: 6px;
   }
 
+  /* ── Ships/trading bar: horizontal wrap ── */
   .ships-trading-bar {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 8px;
     align-items: flex-start;
   }
-
   .stb-ships { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+  .stb-section-label--trading { margin-top: 0; }
 
+  /* ── Header: wrap to avoid overflow ── */
+  .game-header { flex-wrap: wrap; padding: 6px 10px; gap: 6px; }
   .game-meta { flex-wrap: wrap; gap: 6px; }
-  .game-header { flex-wrap: wrap; }
+
+  /* ── Island grids ── */
   .plantation-grid { grid-template-columns: repeat(4, 1fr); }
   .building-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ===== PLAYER PANEL COLLAPSE (mobile) ===== */
+.player-collapse-btn {
+  font-size: 0.6rem;
+  color: rgba(0,0,0,0.4);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.player-panel--collapsed {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.player-panel--collapsed .player-stats {
+  margin-bottom: 0;
+}
+
+.player-panel--collapsed .stored-goods {
+  margin-bottom: 0;
+  min-height: 0;
+}
+
+/* ===== PHONE (≤480px) ===== */
+@media (max-width: 480px) {
+  html, body, #root { font-size: 11px; }
+
+  /* Header — compress heavily */
+  .game-header { padding: 5px 8px; gap: 6px; }
+  .game-title { display: none; }
+  .game-meta { gap: 6px; flex-wrap: wrap; }
+  .round-info, .phase-info, .governor-info { font-size: 0.75rem; }
+  .current-player-info { font-size: 0.75rem; padding: 2px 7px; }
+  .save-btn, .log-btn, .menu-btn { font-size: 0.75rem; padding: 4px 8px; }
+
+  /* Role cards — smaller */
+  .role-card { min-width: 62px; padding: 4px 6px; }
+  .role-cards-bar { gap: 4px; padding: 5px 8px; }
+
+  /* Players — vertical stack, full width */
+  .players-area { flex-direction: column; gap: 5px; }
+  .player-panel { padding: 6px; }
+  .player-panel--collapsed { padding: 4px 6px; }
+
+  /* Island grid — 4 columns instead of 6 (fits on 390px) */
+  .plantation-grid { grid-template-columns: repeat(4, 1fr); }
+  .plantation-slot { height: 32px; }
+  .slot-icon { font-size: 1.1rem; }
+
+  /* Buildings — 2 columns */
+  .building-grid { grid-template-columns: repeat(2, 1fr); }
+  .building-tile { min-height: 44px; padding: 4px; }
+  .building-tile--large { grid-column: span 2; }
+
+  /* Action buttons — touch-friendly */
+  .action-btn { min-height: 44px; padding: 8px 12px; font-size: 0.8rem; }
+  .action-buttons { gap: 4px; }
+
+  /* Action panel */
+  .action-panel { padding: 6px 8px; min-height: 100px; }
+
+  /* Ships/trading bar on phone */
+  .ships-trading-bar { flex-direction: row; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+  .stb-ships { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  .stb-section-label--trading { margin-top: 0; }
+
+  /* Right column — hide on very small screens (can scroll to it) */
+  .game-right-column { flex-direction: row; flex-wrap: wrap; }
+  .round-log-panel { flex: 1 1 140px; max-height: 150px; }
+  .supply-panel { flex: 1 1 140px; max-height: 200px; }
+
+  /* Supply panel — compact */
+  .supply-section-label { font-size: 0.55rem; }
+
+  /* Setup screen */
+  .setup-card { padding: 24px 20px; }
+}
+
+/* AI difficulty button */
+.diff-btn--active-ai {
+  background: linear-gradient(135deg, #6c3483 0%, #1a5276 100%);
+  color: #fff;
+  border-color: #9b59b6;
+}
+
+/* ===== MULTIPLAYER ===== */
+.multiplayer-btn {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  margin-top: 0.75rem;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: var(--radius);
+  color: var(--board-green);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.multiplayer-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.6); }
+
+.multiplayer-status {
+  text-align: center;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  background: rgba(231, 76, 60, 0.25);
+  color: #f5b7b1;
+  margin-bottom: 0.75rem;
+}
+.multiplayer-status--ok {
+  background: rgba(39, 174, 96, 0.25);
+  color: #a9dfbf;
+}
+
+.multiplayer-error {
+  background: rgba(192, 57, 43, 0.3);
+  border: 1px solid #c0392b;
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+.multiplayer-error__dismiss { opacity: 0.6; font-size: 0.75rem; }
+
+.multiplayer-hint {
+  text-align: center;
+  font-size: 0.78rem;
+  opacity: 0.65;
+  margin-top: 0.6rem;
+}
+
+.multiplayer-badge {
+  font-size: 0.75rem;
+  background: rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.multiplayer-inline-error {
+  font-size: 0.78rem;
+  color: #f1948a;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(192, 57, 43, 0.2);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

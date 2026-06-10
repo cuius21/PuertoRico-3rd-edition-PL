@@ -5,15 +5,17 @@ import { PlantationType } from '../core/types';
 export class Plantation {
   readonly workerCapacity = 1;
   occupiedWorkers: number = 0;
+  occupiedNobles: number = 0;
+  isForest: boolean = false;
 
   constructor(readonly type: PlantationType) {}
 
   isActive(): boolean {
-    return this.occupiedWorkers > 0;
+    return this.occupiedWorkers > 0 || this.occupiedNobles > 0;
   }
 
   hasFreeWorkerSlot(): boolean {
-    return this.occupiedWorkers < this.workerCapacity;
+    return this.occupiedWorkers + this.occupiedNobles < this.workerCapacity;
   }
 
   isQuarry(): boolean {

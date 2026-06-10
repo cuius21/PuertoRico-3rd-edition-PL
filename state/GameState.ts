@@ -3,6 +3,7 @@ import { Supply } from '../domain/Supply';
 import { Ship } from '../domain/Ship';
 import { TradingHouse } from '../domain/TradingHouse';
 import { RoleCard } from '../domain/RoleCard';
+import type { FestivalBoard } from '../domain/FestivalBoard';
 import type { GamePhase } from './GamePhase';
 import type { Action } from '../actions/Action';
 import { type Result, Err, OkVoid } from '../core/Result';
@@ -31,6 +32,21 @@ export class GameState {
 
   gameOver: boolean = false;
   gameOverReason: string = '';
+
+  // Plansza festynu (Rozszerzenie IV) — null jeśli rozszerzenie wyłączone
+  festivalBoard: FestivalBoard | null = null;
+
+  // Rozszerzenie II: Szlachcic aktywny
+  nobleExpansion: boolean = false;
+
+  // Rozszerzenie III: Korsarz
+  // Gracz, który aktualnie posiada żeton korsarza (nie może ponownie wybrać Korsarza).
+  corsairTokenHolderId: PlayerId | null = null;
+  // Karta pojmana przez Korsarza w bieżącej rundzie (Pojmanie).
+  capturedRoleCard: RoleType | null = null;
+
+  // Faza kapitana: true gdy gracz z aktywnym magazynem czeka na wybór typów towaru do zachowania.
+  captainStoragePending: boolean = false;
 
   // Log akcji - przyda się do debug, testów regresyjnych i (w przyszłości) replay.
   readonly actionLog: Action[] = [];

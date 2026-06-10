@@ -1,5 +1,7 @@
 import { GameState } from './GameState';
 import type { GamePhase } from './GamePhase';
+import { FestivalBoard } from '../domain/FestivalBoard';
+import type { FestivalUprawaQuest, FestivalProdukcjaQuest, FestivalBudowaQuest } from '../domain/FestivalBoard';
 import { Player } from '../domain/Player';
 import { Supply } from '../domain/Supply';
 import { Ship } from '../domain/Ship';
@@ -26,6 +28,13 @@ import {
 import {
   Fortress, GuildHall, CustomsHouse, CityHall, Residence,
 } from '../domain/buildings/catalog/LargeBuildings';
+import {
+  Aqueduct, BlackMarket, Hut, Depot, Inn, TradingPost, Church, Marina,
+  TransferStation, Lighthouse, Manufactory, Library, Monastery, Statue,
+} from '../domain/buildings/catalog/NewBuildings1';
+import {
+  Chancellery, Chapel, HuntingLodge, MasonsGuild, Treasury, Villa, JewelersWorkshop, PalaceGarden,
+} from '../domain/buildings/catalog/NewBuildings2';
 
 // Ile sztuk każdego budynku trafia na planszę główną.
 // Źródło: instrukcja Puerto Rico 3. edycji (Lacerta).
@@ -92,10 +101,42 @@ export function refillRevealedPlantations(supply: Supply, count: number): Planta
 export class GameFactory {
   // Tworzy w pełni zainicjowany GameState gotowy do pierwszej rundy.
   // Wywołujący dostarcza initialPhase - po zaimplementowaniu faz będzie to RoleSelectionPhase.
+  // Nowe budynki z Rozszerzenia I: każdy typ w 2 egzemplarzach (małe), duże po 1.
+  static readonly NEW_BUILDING_COUNTS: [() => Building, number][] = [
+    [() => new Aqueduct(),         2],
+    [() => new BlackMarket(),      2],
+    [() => new Hut(),              2],
+    [() => new Depot(),            2],
+    [() => new Inn(),              2],
+    [() => new TradingPost(),      2],
+    [() => new Church(),           2],
+    [() => new Marina(),           2],
+    [() => new TransferStation(),  2],
+    [() => new Lighthouse(),       2],
+    [() => new Manufactory(),      2],
+    [() => new Library(),          2],
+    [() => new Monastery(),        1],
+    [() => new Statue(),           1],
+  ];
+
+  static readonly NOBLE_BUILDING_COUNTS: [() => Building, number][] = [
+    [() => new Chancellery(),        2],
+    [() => new Chapel(),             2],
+    [() => new HuntingLodge(),       2],
+    [() => new MasonsGuild(),        2],
+    [() => new Treasury(),           2],
+    [() => new Villa(),              2],
+    [() => new JewelersWorkshop(),   2],
+    [() => new PalaceGarden(),       1],
+  ];
+
   static create(
     playerCount: 3 | 4 | 5,
     playerNames: readonly string[],
     initialPhase: GamePhase,
+    expansions: { festival: boolean; corsair: boolean; newBuildings: boolean; nobleBuildings: boolean } = {
+      festival: false, corsair: false, newBuildings: false, nobleBuildings: false,
+    },
   ): GameState {
     if (playerNames.length !== playerCount) {
       throw new Error(`Oczekiwano ${playerCount} nazw graczy, otrzymano ${playerNames.length}`);
@@ -170,6 +211,23 @@ export class GameFactory {
       Array.from({ length: count }, factory),
     );
 
+    if (expansions.newBuildings) {
+      const newBuildingList = GameFactory.NEW_BUILDING_COUNTS.flatMap(([factory, count]) =>
+        Array.from({ length: count }, factory),
+      );
+      supply.availableBuildings.push(...newBuildingList);
+    }
+
+    if (expansions.nobleBuildings) {
+      const nobleBuildingList = GameFactory.NOBLE_BUILDING_COUNTS.flatMap(([factory, count]) =>
+        Array.from({ length: count }, factory),
+      );
+      supply.availableBuildings.push(...nobleBuildingList);
+      // 20 szlachciców w puli, 1 na start w Magistracie
+      supply.noblesPool = 19;
+      supply.noblesInMagistrate = 1;
+    }
+
     // --- Statki ---
     const ships = [...config.shipCapacities].map(cap => new Ship(cap));
 
@@ -187,8 +245,73 @@ export class GameFactory {
     } else if (playerCount === 5) {
       roleTypes.push(RoleType.Prospector);
     }
+    if (expansions.corsair) {
+      roleTypes.push(RoleType.Corsair);
+    }
     const roleCards = roleTypes.map(type => new RoleCard(type));
 
-    return new GameState(players, supply, ships, tradingHouse, roleCards, initialPhase);
+    const state = new GameState(players, supply, ships, tradingHouse, roleCards, initialPhase);
+
+    if (expansions.festival) {
+      state.festivalBoard = GameFactory.createFestivalBoard(supply);
+    }
+
+    if (expansions.nobleBuildings) {
+      state.nobleExpansion = true;
+    }
+
+    return state;
+  }
+
+  private static createFestivalBoard(supply: Supply): FestivalBoard {
+    const rand = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)]!;
+
+    // Uprawa: losowa plantacja (nie kamieniołom)
+    const plantationTypes = [
+      PlantationType.Corn, PlantationType.Indigo, PlantationType.Sugar,
+      PlantationType.Tobacco, PlantationType.Coffee,
+    ];
+    const uprawa: FestivalUprawaQuest = {
+      type: 'uprawa',
+      plantationType: rand(plantationTypes),
+      completedBy: null,
+    };
+
+    // Produkcja: 3 losowe znaczniki towaru (z powtórzeniami)
+    const goodTypes = [GoodType.Corn, GoodType.Indigo, GoodType.Sugar, GoodType.Tobacco, GoodType.Coffee];
+    const drawnGoods = [rand(goodTypes), rand(goodTypes), rand(goodTypes)];
+    const requiredGoods: Partial<Record<GoodType, number>> = {};
+    for (const g of drawnGoods) {
+      requiredGoods[g] = (requiredGoods[g] ?? 0) + 1;
+    }
+    const produkcja: FestivalProdukcjaQuest = {
+      type: 'produkcja',
+      requiredGoods,
+      completedBy: null,
+    };
+
+    // Budowa: losowy budynek grupy 3 (3 PZ) z puli dostępnych, z wyłączeniem
+    // budynków produkcyjnych dla towarów w zadaniu produkcji
+    const prodBuildingIds: Partial<Record<GoodType, string>> = {
+      [GoodType.Indigo]:  'largeIndigoPlant',
+      [GoodType.Sugar]:   'largeSugarMill',
+      [GoodType.Tobacco]: 'tobaccoStorage',
+      [GoodType.Coffee]:  'coffeeRoaster',
+    };
+    const excludedBuildingIds = new Set(
+      Object.keys(requiredGoods).map(g => prodBuildingIds[g as GoodType]).filter(Boolean) as string[],
+    );
+    const group3Candidates = supply.availableBuildings.filter(
+      b => b.victoryPoints === 3 && !excludedBuildingIds.has(b.id),
+    );
+    const budowaBuilding = rand(group3Candidates.length > 0 ? group3Candidates : supply.availableBuildings.filter(b => b.victoryPoints === 3));
+    const budowa: FestivalBudowaQuest = {
+      type: 'budowa',
+      buildingId: budowaBuilding?.id ?? 'harbour',
+      buildingDisplayName: budowaBuilding?.displayName ?? 'Port',
+      completedBy: null,
+    };
+
+    return new FestivalBoard(uprawa, produkcja, budowa);
   }
 }

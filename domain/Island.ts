@@ -44,6 +44,10 @@ export class Island {
     return this.countActivePlantations(PlantationType.Quarry);
   }
 
+  countForests(): number {
+    return this.getPlantations().filter(p => p.isForest).length;
+  }
+
   // === BUDYNKI ===
 
   addBuilding(building: Building): void {
@@ -109,24 +113,32 @@ export class Island {
       .find(b => b.produces === good);
 
     if (!productionBuilding) return 0;
-    return Math.min(activePlantations, productionBuilding.occupiedWorkers);
+    return Math.min(activePlantations, productionBuilding.occupiedWorkers + productionBuilding.occupiedNobles);
   }
 
   // === ROBOTNICY ===
 
-  // Liczba wolnych slotów na robotników (plantacje + budynki).
+  // Liczba wolnych slotów na robotników/szlachciców (plantacje + budynki).
   getFreeWorkerSlotsCount(): number {
     let count = 0;
-    for (const p of this.getPlantations()) count += p.workerCapacity - p.occupiedWorkers;
-    for (const b of this.getBuildings()) count += b.workerCapacity - b.occupiedWorkers;
+    for (const p of this.getPlantations()) count += p.workerCapacity - p.occupiedWorkers - p.occupiedNobles;
+    for (const b of this.getBuildings()) count += b.workerCapacity - b.occupiedWorkers - b.occupiedNobles;
     return count;
   }
 
-  // Suma zatrudnionych robotników (dla bonusu Twierdzy).
+  // Suma zatrudnionych robotników (dla Twierdzy — tylko robotnicy, nie szlachcice).
   getTotalEmployedWorkers(): number {
     let count = 0;
     for (const p of this.getPlantations()) count += p.occupiedWorkers;
     for (const b of this.getBuildings()) count += b.occupiedWorkers;
+    return count;
+  }
+
+  // Suma szlachciców umieszczonych na wyspie (bez pendingNobles/heldNobles gracza).
+  countNobles(): number {
+    let count = 0;
+    for (const p of this.getPlantations()) count += p.occupiedNobles;
+    for (const b of this.getBuildings()) count += b.occupiedNobles;
     return count;
   }
 

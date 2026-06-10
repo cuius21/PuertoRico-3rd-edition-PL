@@ -28,13 +28,20 @@ export class Player {
 
   // Workers received in Mayor phase, waiting to be placed.
   pendingWorkers: number = 0;
+  pendingNobles: number = 0;
 
-  // Workers kept between Mayor phases (player chose not to place them last round).
+  // Workers/nobles kept between Mayor phases.
   heldWorkers: number = 0;
+  heldNobles: number = 0;
 
   // Flagi efektów jednorazowych w fazie kapitana - resetowane na początku każdej fazy.
   hasUsedCaptainBonusThisPhase: boolean = false;
   hasUsedWharfThisPhase: boolean = false;
+  hasUsedTreasuryThisPhase: boolean = false;
+  marinaGoodsLoaded: number = 0;
+
+  // Flagi efektów jednorazowych w fazie kupca.
+  hasUsedFactoriaThisPhase: boolean = false;
 
   constructor(
     readonly id: PlayerId,
@@ -66,10 +73,17 @@ export class Player {
     this.storedGoods.set(good, current - count);
   }
 
+  // Suma wszystkich szlachciców gracza (na wyspie + w rękach).
+  getTotalNobles(): number {
+    return this.island.countNobles() + this.pendingNobles + this.heldNobles;
+  }
+
   // === FLAGI FAZY ===
 
   resetCaptainPhaseFlags(): void {
     this.hasUsedCaptainBonusThisPhase = false;
     this.hasUsedWharfThisPhase = false;
+    this.hasUsedTreasuryThisPhase = false;
+    this.marinaGoodsLoaded = 0;
   }
 }

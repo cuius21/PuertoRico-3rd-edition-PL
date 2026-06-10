@@ -46,6 +46,7 @@ export class GreedyBot implements Bot {
       case 'SELL_GOOD':      return GOOD_PRICES[a['good'] as GoodType] * 5 + (isSel ? 5 : 0);
       case 'CRAFTSMAN_BONUS': return GOOD_PRICES[a['good'] as GoodType] * 5;
       case 'LOAD_SHIP':      return this.scoreLoad(a, player, isSel);
+      case 'SELECT_STORAGE': return this.scoreStorage(a['keepTypes'] as GoodType[], player);
       case 'TAKE_DOUBLOON':  return 5;
       case 'MAYOR_PASS':
       case 'PASS':           return 1;
@@ -93,6 +94,8 @@ export class GreedyBot implements Bot {
       }
       case RoleType.Prospector:
         return 7;
+      case RoleType.Corsair:
+        return 15;
     }
   }
 
@@ -177,6 +180,14 @@ export class GreedyBot implements Bot {
   private scoreLoad(a: Record<string, unknown>, player: Player, isSel: boolean): number {
     const cnt = player.storedGoods.get(a['good'] as GoodType) ?? 0;
     return 15 + cnt * 6 + (isSel ? 6 : 0);
+  }
+
+  private scoreStorage(keepTypes: GoodType[], player: Player): number {
+    let total = 0;
+    for (const g of keepTypes) {
+      total += player.getStoredGoodCount(g) * (GOOD_PRICES[g] + 1);
+    }
+    return total;
   }
 
   // ── HELPERS ──────────────────────────────────────────────────────

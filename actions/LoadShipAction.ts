@@ -5,12 +5,14 @@ import type { GameState } from '../state/GameState';
 
 export type ShipTarget =
   | { kind: 'ship'; shipIndex: number }
-  | { kind: 'wharf' };
+  | { kind: 'wharf' }
+  | { kind: 'marina' };
 
 // Faza kapitana: gracz ładuje maksymalną możliwą ilość towaru na wybrany statek.
 // Na jeden statek może trafić tylko jeden rodzaj towaru.
 // Ten sam towar nie może być jednocześnie na dwóch różnych statkach.
 // Nabrzeże (Wharf) daje własny "statek" bez limitu pojemności, użyteczny raz na fazę.
+// Przystań (Marina) — prywatny statek na dowolne towary; VP=1 za każde 2 załadowane (liczone na koniec fazy).
 export class LoadShipAction implements Action {
   readonly type = 'LOAD_SHIP';
 
@@ -46,11 +48,14 @@ export class LoadShipAction implements Action {
       if (alreadyOnOtherShip) {
         return Err(`Towar ${this.good} jest już załadowany na innym statku`);
       }
-    } else {
-      // Wharf
+    } else if (this.target.kind === 'wharf') {
       const hasWharf = player.island.getActiveBuildings().some(b => b.hasOwnShip?.());
       if (!hasWharf) return Err('Nie posiadasz aktywnego Nabrzeża');
       if (player.hasUsedWharfThisPhase) return Err('Nabrzeże było już użyte w tej fazie');
+    } else {
+      // marina
+      const hasMarina = player.island.getActiveBuildings().some(b => b.hasPrivateMarinaShip?.());
+      if (!hasMarina) return Err('Nie posiadasz aktywnej Przystani');
     }
 
     return OkVoid;
@@ -67,21 +72,35 @@ export class LoadShipAction implements Action {
       ship.loadedGood = this.good;
       ship.loadedCount += canLoad;
       amountLoaded = canLoad;
-    } else {
-      // Wharf: load all of this good type
+    } else if (this.target.kind === 'wharf') {
       amountLoaded = player.getStoredGoodCount(this.good);
       player.removeStoredGoods(this.good, amountLoaded);
       player.hasUsedWharfThisPhase = true;
+    } else {
+      // marina: ładuje wszystkie towary tego rodzaju, VP=1 za każde 2 na koniec fazy
+      amountLoaded = player.getStoredGoodCount(this.good);
+      player.removeStoredGoods(this.good, amountLoaded);
+      // Towary wracają od razu do puli (tak jak po rozładunku statku)
+      state.supply.returnGoods(this.good, amountLoaded);
+      player.marinaGoodsLoaded += amountLoaded;
+      // Latarnia morska: +1 dublon za każdy załadunek (marina też jest załadunkiem)
+      for (const building of player.island.getActiveBuildings()) {
+        if (building.bonusDblPerLoad) {
+          player.doubloons += state.supply.drawDoubloons(building.bonusDblPerLoad());
+        }
+      }
+      state.advanceCurrentPlayer();
+      return;
     }
 
-    // Award VPs: base 1 per unit + Harbour bonus
+    // PZ za załadunek: bazowo 1 PZ na jednostkę + bonus z Portu
     let vp = amountLoaded;
     for (const building of player.island.getActiveBuildings()) {
       if (building.bonusVpOnShipping) {
         vp += building.bonusVpOnShipping(state, player, amountLoaded);
       }
     }
-    // Captain (selector) gets +1 VP privilege on first load
+    // Kapitan (selektor) dostaje +1 PZ przy pierwszym załadunku
     if (!player.hasUsedCaptainBonusThisPhase && state.getRoleSelector().id === this.playerId) {
       vp += 1;
       player.hasUsedCaptainBonusThisPhase = true;
@@ -89,6 +108,13 @@ export class LoadShipAction implements Action {
 
     const awarded = state.supply.drawVictoryPoints(vp);
     player.victoryPointTokens += awarded;
+
+    // Latarnia morska: +1 dublon za każdy załadunek
+    for (const building of player.island.getActiveBuildings()) {
+      if (building.bonusDblPerLoad) {
+        player.doubloons += state.supply.drawDoubloons(building.bonusDblPerLoad());
+      }
+    }
 
     state.advanceCurrentPlayer();
   }

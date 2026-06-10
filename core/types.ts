@@ -18,7 +18,6 @@ export enum PlantationType {
   Quarry = 'quarry',
 }
 
-// Postacie wybierane przez graczy w każdej rundzie (MVP: bez Korsarza).
 export enum RoleType {
   Settler = 'settler',       // Plantator
   Mayor = 'mayor',           // Burmistrz
@@ -27,6 +26,7 @@ export enum RoleType {
   Trader = 'trader',         // Kupiec
   Captain = 'captain',       // Kapitan
   Prospector = 'prospector', // Poszukiwacz
+  Corsair = 'corsair',       // Korsarz (Rozszerzenie III)
 }
 
 // Typ aktualnej fazy gry - używany przez GamePhase jako tag stanu.
@@ -40,6 +40,7 @@ export enum PhaseType {
   Trader = 'trader',
   Captain = 'captain',
   Prospector = 'prospector',
+  Corsair = 'corsair',
   RoundEnd = 'roundEnd',
   GameOver = 'gameOver',
 }

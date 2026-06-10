@@ -10,6 +10,7 @@ import { CraftsmanPhase } from './CraftsmanPhase';
 import { TraderPhase } from './TraderPhase';
 import { CaptainPhase } from './CaptainPhase';
 import { ProspectorPhase } from './ProspectorPhase';
+import { CorsairPhase } from './CorsairPhase';
 
 function phaseForRole(role: RoleType): GamePhase {
   switch (role) {
@@ -20,6 +21,7 @@ function phaseForRole(role: RoleType): GamePhase {
     case RoleType.Trader:     return new TraderPhase();
     case RoleType.Captain:    return new CaptainPhase();
     case RoleType.Prospector: return new ProspectorPhase();
+    case RoleType.Corsair:    return new CorsairPhase();
   }
 }
 
@@ -39,9 +41,12 @@ export class RoleSelectionPhase implements GamePhase {
 
   getValidActions(state: GameState, playerId: PlayerId): Action[] {
     if (state.getCurrentPlayer().id !== playerId) return [];
-    return state.getAvailableRoleCards().map(
-      card => new SelectRoleAction(playerId, card.type),
-    );
+    // Przekazujemy indeks karty — przy dwóch Poszukiwaczach gracz może wybrać konkretną
+    // kartę (np. tę z większą liczbą nagromadzonych dublonów).
+    return state.getAvailableRoleCards().map(card => {
+      const idx = state.roleCards.indexOf(card);
+      return new SelectRoleAction(playerId, card.type, idx);
+    });
   }
 
   checkTransition(state: GameState): GamePhase | null {

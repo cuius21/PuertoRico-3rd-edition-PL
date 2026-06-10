@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import type { Building } from '../../domain/buildings/Building';
 import type { GameState } from '../../state/GameState';
@@ -8,29 +9,28 @@ interface Props {
   state: GameState;
 }
 
-const GOOD_META: Record<GoodType, { label: string; icon: string; color: string; bg: string }> = {
+const GOOD_META: Record<GoodType, { label: string; icon: ReactNode; color: string; bg: string }> = {
   [GoodType.Corn]:    { label: 'Kukurydza', icon: '🌽', color: '#8B6914', bg: '#FFF9C4' },
   [GoodType.Indigo]:  { label: 'Indygo',   icon: '🔵', color: '#EDE7F6', bg: '#4527A0' },
-  [GoodType.Sugar]:   { label: 'Cukier',   icon: '⬜', color: '#555',    bg: '#EEEEEE' },
+  [GoodType.Sugar]:   { label: 'Cukier',   icon: <span className="icon-sugar" />, color: '#555', bg: '#EEEEEE' },
   [GoodType.Tobacco]: { label: 'Tytoń',    icon: '🍂', color: '#FFF8E1', bg: '#6D4C41' },
   [GoodType.Coffee]:  { label: 'Kawa',     icon: '☕', color: '#FFF9F0', bg: '#2C1810' },
 };
 
-const PLANT_META: Record<PlantationType, { label: string; icon: string; bg: string; color: string }> = {
+const PLANT_META: Record<PlantationType, { label: string; icon: ReactNode; bg: string; color: string }> = {
   [PlantationType.Corn]:    { label: 'Kukurydza',   icon: '🌽', bg: '#FFF9C4', color: '#8B6914' },
   [PlantationType.Indigo]:  { label: 'Indygo',      icon: '🔵', bg: '#4527A0', color: '#EDE7F6' },
-  [PlantationType.Sugar]:   { label: 'Cukier',      icon: '⬜', bg: '#EEEEEE', color: '#555'    },
+  [PlantationType.Sugar]:   { label: 'Cukier',      icon: <span className="icon-sugar" />, bg: '#EEEEEE', color: '#555' },
   [PlantationType.Tobacco]: { label: 'Tytoń',       icon: '🍂', bg: '#6D4C41', color: '#FFF8E1' },
   [PlantationType.Coffee]:  { label: 'Kawa',        icon: '☕', bg: '#2C1810', color: '#FFF9F0' },
   [PlantationType.Quarry]:  { label: 'Kamieniołom', icon: '🪨', bg: '#78909C', color: '#fff'    },
 };
 
-// Left-border accent color for production buildings, keyed by building id
-const PROD_ACCENT: Record<string, { barColor: string; icon: string }> = {
+const PROD_ACCENT: Record<string, { barColor: string; icon: ReactNode }> = {
   smallIndigoPlant: { barColor: '#7B1FA2', icon: '🔵' },
   largeIndigoPlant: { barColor: '#7B1FA2', icon: '🔵' },
-  smallSugarMill:   { barColor: '#9E9E9E', icon: '⬜' },
-  largeSugarMill:   { barColor: '#9E9E9E', icon: '⬜' },
+  smallSugarMill:   { barColor: '#9E9E9E', icon: <span className="icon-sugar" /> },
+  largeSugarMill:   { barColor: '#9E9E9E', icon: <span className="icon-sugar" /> },
   tobaccoStorage:   { barColor: '#795548', icon: '🍂' },
   coffeeRoaster:    { barColor: '#4E342E', icon: '☕' },
 };
@@ -78,7 +78,7 @@ export function SupplyPanel({ state }: Props) {
             {count > 1 && <span className="avail-building__count">×{count}</span>}
           </span>
           <span className="avail-building__right">
-            <span className="avail-b-cost">🪙{building.cost}</span>
+            <span className="avail-b-cost"><span className="icon-coin">D</span>{building.cost}</span>
             <span className="avail-b-vp">⭐{building.victoryPoints}</span>
             <span className="avail-b-discount" title="Max zniżka z kamieniołomów">🪨-{building.priceGroup}</span>
           </span>
@@ -86,7 +86,7 @@ export function SupplyPanel({ state }: Props) {
         {isOpen && (
           <div className="building-inline-desc">
             <div className="building-inline-desc__stats">
-              👷 {building.workerCapacity} {building.workerCapacity > 1 ? 'miejsca' : 'miejsce'} · 🪙 max -{building.priceGroup} z kamieniołomów
+              👷 {building.workerCapacity} {building.workerCapacity > 1 ? 'miejsca' : 'miejsce'} · <span className="icon-coin">D</span> max -{building.priceGroup} z kamieniołomów
             </div>
             <p className="building-inline-desc__text">
               {BUILDING_DESCRIPTIONS[building.id] ?? 'Brak opisu.'}
@@ -103,7 +103,7 @@ export function SupplyPanel({ state }: Props) {
 
       {/* Global supply numbers */}
       <div className="supply-row">
-        <span className="supply-item" title="Dublony w banku">🪙 <strong>{supply.doubloonsInBank}</strong></span>
+        <span className="supply-item" title="Dublony w banku"><span className="icon-coin">D</span> <strong>{supply.doubloonsInBank}</strong></span>
         <span className="supply-item" title="Żetony PZ">⭐ <strong>{supply.victoryPointPool}</strong></span>
       </div>
       <div className="supply-row supply-row--workers">
@@ -122,6 +122,24 @@ export function SupplyPanel({ state }: Props) {
           <span className="supply-item__label"> magistrat</span>
         </span>
       </div>
+      {state.nobleExpansion && (
+        <div className="supply-row supply-row--workers">
+          <span
+            className="supply-item"
+            title="Szlachcice w ogólnej puli (każdy szlachcic = 1 PZ na koniec gry)"
+          >
+            <span className="token-noble" style={{ width: 10, height: 10 }} /> <strong>{supply.noblesPool}</strong>
+            <span className="supply-item__label"> szlachcice</span>
+          </span>
+          <span
+            className="supply-item supply-item--magistrate"
+            title="Szlachcice w Magistracie — 1 szlachcic trafia tu po każdej fazie Burmistrza"
+          >
+            🏛️ <span className="token-noble" style={{ width: 10, height: 10 }} /> <strong>{supply.noblesInMagistrate}</strong>
+            <span className="supply-item__label"> magistrat</span>
+          </span>
+        </div>
+      )}
 
       {/* Revealed plantations */}
       <h4 className="supply-subtitle">Plantacje do wyboru</h4>

@@ -22,4 +22,30 @@ export const BUILDING_DESCRIPTIONS: Record<string, string> = {
   customsHouse: 'Koniec gry: +1 PZ za każde 4 posiadane żetony PZ.',
   cityHall: 'Koniec gry: +1 PZ za każdy budynek użytkowy (mały i duży).',
   residence: 'Koniec gry: za 9 zajętych pól wiejskich +4 PZ, za 10 → +5, za 11 → +6, za 12 → +7 PZ.',
+
+  // Rozszerzenie I: Nowe Budynki
+  aqueduct: 'W fazie zarządcy: gdy produkujesz indygo lub cukier w dużym budynku produkcyjnym, otrzymujesz +1 dodatkowy towar tego rodzaju (maks. pojemność budynku).',
+  blackMarket: 'W fazie budowniczego: możesz "sprzedać" towary, robotników lub żetony PZ, by pokryć brakujące dublony (maks. 3 łącznie). Kolejność: najpierw najtańsze towary, potem robotnicy, potem PZ.',
+  hut: 'W fazie plantatora: każdą odsłoniętą plantację możesz wziąć jako las. Lasy nie produkują, ale za każde 2 lasy na wyspie otrzymujesz -1 do ceny budynku.',
+  depot: 'Po fazie kapitana możesz zachować do 3 dodatkowych znaczników towarów (ponad normalny limit magazynowania).',
+  inn: 'Brak specjalnego efektu w grze podstawowej rozszerzenia. Posiada 2 sloty na robotników.',
+  tradingPost: 'Możesz sprzedać na targowisku towar, nawet gdy targowisko jest pełne (4/4).',
+  church: 'Gdy budujesz budynek: +1 PZ za budynek z grupy 2. lub 3., +2 PZ za budynek z grupy 4. lub duży budynek użytkowy.',
+  marina: 'W fazie kapitana: możesz załadować towary na prywatną przystań (wracają do puli). Na koniec fazy otrzymujesz +1 PZ za każde 2 załadowane towary.',
+  transferStation: 'Na początku fazy kapitana: za każdą parę różnych rodzajów towarów w twoim magazynie otrzymujesz +1 dublon.',
+  lighthouse: 'W fazie kapitana: gdy jesteś selektorem, bierzesz +1 dublon zamiast standardowego przywileju. Za każdy ładunek na statek (dowolny gracz) otrzymujesz +1 dublon.',
+  manufactory: 'W fazie zarządcy: po produkcji wszystkich towarów otrzymujesz tyle dublonów, ile masz różnych rodzajów towarów minus 1 (min. 0).',
+  library: 'Podwaja przywilej selektora w każdej fazie: Plantator — dodatkowa losowa plantacja, Burmistrz — +2 robotnicy, Budowniczy — -2 do ceny, Zarządca — +2 towary bonusowe, Kupiec — +2 dublony, Kapitan — +2 PZ, Poszukiwacz — +2 dublony.',
+  monastery: 'Koniec gry: za 3 pola tego samego typu plantacji (aktywne) +1 PZ, za 4 → +3, za 5 → +6, za 6 → +10 PZ.',
+  statue: 'Zawsze aktywna (nie wymaga robotnika). Koniec gry: +8 PZ.',
+
+  // Rozszerzenie II: Szlachcic
+  chancellery: 'Faza kupca — z robotnikiem: zapłać 1 dublon, weź zakrytą plantację ze stosu. Ze szlachcicem: odrzuć plantację ze swojej wyspy i zarabiasz 1 dublon.',
+  chapel: 'Faza zarządcy — z robotnikiem: +1 dublon. Ze szlachcicem: +1 PZ.',
+  huntingLodge: 'Faza plantatora — z robotnikiem: możesz odrzucić plantację lub las ze swojej wyspy. Ze szlachcicem: jeśli masz największą liczbę wolnych pól wiejskich, automatycznie +2 PZ.',
+  masonsGuild: 'Faza budowniczego — z robotnikiem: -1 do ceny małych budynków (1 pole). Ze szlachcicem: -2 do ceny dużych budynków (2 pola).',
+  treasury: 'Faza kapitana, przed załadunkiem — możesz dostarczyć do X różnych towarów (X = liczba twoich szlachciców). Za każdy dostarczony towar: +1 PZ.',
+  villa: 'Faza burmistrza — gdy otrzymujesz pierwszego robotnika lub szlachcica z Magistratu, bierzesz też 1 dodatkowego szlachcica z puli ogólnej.',
+  jewelersWorkshop: 'Faza zarządcy — budynek aktywny: +1 dublon za każdego szlachcica na twojej wyspie. Liczy się jako duży budynek produkcyjny (Siedziba Cechu: +2 PZ).',
+  palaceGarden: 'Koniec gry: +1 PZ za każdego szlachcica gracza (na wyspie i w rękach). Łącznie z bazową wartością szlachcica = 2 PZ za szlachcica.',
 };

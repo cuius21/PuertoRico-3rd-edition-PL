@@ -63,7 +63,7 @@ export class TobaccoStorage extends ProductionBuilding {
 
 export class CoffeeRoaster extends ProductionBuilding {
   readonly id = 'coffeeRoaster';
-  readonly displayName = 'Palnia Kawy';
+  readonly displayName = 'Palarnia Kawy';
   readonly displayNameEn = 'Coffee Roaster';
   readonly cost = 6;
   readonly victoryPoints = 3;

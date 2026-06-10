@@ -15,15 +15,15 @@ export type PlantationChoice =
 // - selektor (plantator) może wziąć kamieniołom dzięki swojemu przywilejowi,
 // - inni gracze mogą wziąć kamieniołom TYLKO jeśli mają aktywną Kuźnię.
 //
-// (Aktywna Kuźnia w MVP będzie sprawdzana po id 'smithy'; póki nie ma jej klasy,
-// hasBuildingOfType() zwróci false i bez aktywnej Kuźni nie da się wziąć kamieniołomu —
-// kod jest forward-compatible.)
+// asForest=true (Szałas): plantacja kładzie się zakryta jako las — nie produkuje towarów,
+// ale każde 2 lasy dają -1 dublon przy budowaniu.
 export class TakePlantationAction implements Action {
   readonly type = 'TAKE_PLANTATION';
 
   constructor(
     readonly playerId: PlayerId,
     readonly choice: PlantationChoice,
+    readonly asForest: boolean = false,
   ) {}
 
   validate(state: GameState): Result<void, string> {
@@ -68,6 +68,7 @@ export class TakePlantationAction implements Action {
 
     if (this.choice.kind === 'revealed') {
       const plantation = state.supply.revealedPlantations.splice(this.choice.index, 1)[0]!;
+      if (this.asForest) plantation.isForest = true;
       player.island.addPlantation(plantation);
     } else {
       const quarry = state.supply.quarryStack.pop()!;
@@ -88,6 +89,21 @@ export class TakePlantationAction implements Action {
       if (newest && newest.hasFreeWorkerSlot() && state.supply.workersPool > 0) {
         state.supply.workersPool--;
         newest.occupiedWorkers++;
+      }
+    }
+
+    // Festival: check uprawa quest
+    if (state.festivalBoard) {
+      const q = state.festivalBoard.uprawa;
+      if (!q.completedBy) {
+        const count = player.island.getPlantations().filter(p => p.type === q.plantationType).length;
+        if (count >= 3) {
+          q.completedBy = player.id;
+          // Reward: 3 workers from general supply
+          const taken = Math.min(3, state.supply.workersPool);
+          state.supply.workersPool -= taken;
+          player.heldWorkers += taken;
+        }
       }
     }
 

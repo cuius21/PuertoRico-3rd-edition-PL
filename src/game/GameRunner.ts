@@ -21,7 +21,11 @@ export class GameRunner {
   // Zewnętrzny log zdarzeń (co kto zrobił) widoczny w UI.
   readonly log: GameEvent[] = [];
 
-  constructor(playerSetups: PlayerSetup[], existingState?: GameState) {
+  constructor(
+    playerSetups: PlayerSetup[],
+    existingState?: GameState,
+    expansions: { festival: boolean; corsair: boolean; newBuildings: boolean; nobleBuildings: boolean } = { festival: false, corsair: false, newBuildings: false, nobleBuildings: false },
+  ) {
     if (playerSetups.length < 3 || playerSetups.length > 5) {
       throw new Error('Puerto Rico wymaga 3–5 graczy');
     }
@@ -30,7 +34,7 @@ export class GameRunner {
       this.state = existingState;
     } else {
       const names = playerSetups.map(p => p.name);
-      this.state = GameFactory.create(playerSetups.length as 3 | 4 | 5, names, new RoleSelectionPhase());
+      this.state = GameFactory.create(playerSetups.length as 3 | 4 | 5, names, new RoleSelectionPhase(), expansions);
     }
   }
 
@@ -70,7 +74,6 @@ export class GameRunner {
     const result = this.state.apply(action);
     if (!result.ok) return false;
     this.log.unshift({ playerName, actionText: label, isBot });
-    if (this.log.length > 60) this.log.length = 60;
     return true;
   }
 

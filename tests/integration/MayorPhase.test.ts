@@ -81,15 +81,13 @@ describe('MayorPhase — PlaceWorkerAction', () => {
 });
 
 describe('MayorPhase — MayorPassAction', () => {
-  it('returns all pending workers to pool', () => {
+  it('keeps unplaced workers as heldWorkers', () => {
     const state = enterMayorPhase();
     const poolBefore = state.supply.workersPool;
-    applyOk(state, new MayorPassAction('player-0')); // Alice passes 2 pending (no slots for 2nd)
-    // Alice placed 0 workers (just passing all), so 2 returned to pool
-    // Actually Alice still has her starting plantation free, so she could place 1 first.
-    // This test passes ALL — so 2 returned to pool.
-    expect(state.supply.workersPool).toBe(poolBefore + 2);
+    applyOk(state, new MayorPassAction('player-0')); // Alice passes all 2 pending
+    expect(state.players[0]!.heldWorkers).toBe(2);
     expect(state.players[0]!.pendingWorkers).toBe(0);
+    expect(state.supply.workersPool).toBe(poolBefore); // pool unchanged
   });
 
   it('advances to next player', () => {
@@ -113,8 +111,8 @@ describe('MayorPhase — magistrate refill and phase end', () => {
     applyOk(state, new PlaceWorkerAction('player-2', { kind: 'plantation', slotIndex: 0 }));
     // Phase should have ended and magistrate refilled
     expect(state.getCurrentPhase().type).toBe(PhaseType.RoleSelection);
-    // Total employed: Alice=1, Bob=1, Carol=1 = 3 → magistrate = 4
-    expect(state.supply.workersInMagistrate).toBe(4);
+    // No buildings → 0 empty building slots → min = 3 players → magistrate = 3
+    expect(state.supply.workersInMagistrate).toBe(3);
   });
 
   it('transitions back to RoleSelection after all workers placed', () => {
