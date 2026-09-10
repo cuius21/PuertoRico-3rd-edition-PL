@@ -1,0 +1,5 @@
+# Osobny projekt Cloudflare Pages dla Puerto Rico.
+name = "puerto-rico-3rd-edition"
+account_id = "d75a5e5ada1cb7d25763bf96ea753e68"
+pages_build_output_dir = "dist-pages"
+compatibility_date = "2026-09-09"

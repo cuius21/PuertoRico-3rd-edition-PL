@@ -1,7 +1,7 @@
 import type { GameState } from '../GameState';
 import type { Action } from '../../actions/Action';
 import { GoodType, PhaseType, type PlayerId } from '../../core/types';
-import type { GamePhase } from '../GamePhase';
+import type { GamePhase, PhaseProgress } from '../GamePhase';
 import type { Player } from '../../domain/Player';
 import { LoadShipAction } from '../../actions/LoadShipAction';
 import { TreasuryAction } from '../../actions/TreasuryAction';
@@ -29,6 +29,20 @@ export class CaptainPhase implements GamePhase {
   private storageDone = false;
   // true po zakończeniu ładowania — jesteśmy w fazie wyboru magazynu lub po niej
   private storagePhaseStarted = false;
+
+  getProgress(_state: GameState): PhaseProgress {
+    return {
+      consecutivePasses: this.consecutivePasses,
+      storageDone: this.storageDone,
+      storagePhaseStarted: this.storagePhaseStarted,
+    };
+  }
+
+  restoreProgress(state: GameState, progress: PhaseProgress): void {
+    this.consecutivePasses = progress.consecutivePasses ?? 0;
+    this.storageDone = progress.storageDone ?? false;
+    this.storagePhaseStarted = progress.storagePhaseStarted ?? state.captainStoragePending;
+  }
 
   onEnter(state: GameState): void {
     this.consecutivePasses = 0;

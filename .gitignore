@@ -38,15 +38,46 @@ examples/*.js.map
 examples/*.d.ts
 examples/*.d.ts.map
 
+# Instrukcje dla Claude Code — nie dla repozytorium
+CLAUDE.md
+
 # System operacyjny
 .DS_Store
 Thumbs.db
 
-# Ignoruj pliki generowane przez TypeScript w `src/`
-src/**/*.js
-src/**/*.js.map
-src/**/*.d.ts
-src/**/*.d.ts.map
+# Publikacja, lokalne paczki i eksperymenty
+dist-pages/
+dist-html/
+dist-exe/
+dist-hardcore/
+.wrangler/
+.hardcore-work/
+.hardcore-backup*/
+.env
+.env.*
+.dev.vars
+.dev.vars.*
 
-#! Wyjątek: plik deklaracji CSS używany do budowania
-!src/custom.d.ts
+# Local training data; retain the model fixture required by tests.
+/work/*
+!/work/neural-policy/
+/work/neural-policy/*
+!/work/neural-policy/policy-league-active-456.json
+
+# Closed confirmation evidence only.
+/reports/*
+!/reports/neural-policy/
+/reports/neural-policy/*
+!/reports/neural-policy/policy-active-cached-production-plan.json
+!/reports/neural-policy/policy-active-cached-production-result.json
+!/reports/neural-policy/policy-active-cached-confirm-650ms.json
+!/reports/neural-policy/policy-active-cached-replication-650ms.json
+!/reports/neural-policy/cloudflare-experimental-release-20260910.json
+
+/Puerto Rico Hardcore.html
+/URUCHOM HARDCORE.cmd
+/tools/collect-mayor-snapshots.ts
+/tools/check-mayor-snapshots.ts
+/src/**/*.js
+**/*.js.map
+**/*.d.ts.map

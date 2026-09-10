@@ -1,0 +1,46 @@
+{
+  "status": "deployed-and-verified",
+  "releaseClassification": "experimental-neural-option; not a proven stronger successor",
+  "productionUrl": "https://puerto-rico-3rd-edition.pages.dev/",
+  "deploymentUrl": "https://2ffd00f5.puerto-rico-3rd-edition.pages.dev",
+  "contentHash": "adc52feaaf9fd4ee4d002b50ef203f8788521dab4baf4db7d1feca1817acd5ff",
+  "builtAt": "2026-09-10T00:16:30.075Z",
+  "candidateModelSha256": "e3c194fa554452ae45cfe2b9e80ee66b86fc0c1df7fedde8b125e02be8756dcc",
+  "parameterSha256": "290f01f3ad7e3e8d6baf027064ae581653ce7b72341e1106784d27e621049b82",
+  "strengthGatePassed": false,
+  "confirmationReport": "reports/neural-policy/policy-active-cached-production-result.json",
+  "confirmationReportSha256": "980c0ef11725139d489cc8e123d08859676ad80db0babed836551d0b9f7fee21",
+  "confirmation": {
+    "completeLegalGames": 360,
+    "independentEnvironmentSeeds": 60,
+    "neuralWinCredit": 66,
+    "neuralGames": 180,
+    "controlWinCredit": 59.5,
+    "controlGames": 180,
+    "pairedDifference95": [-0.06666666666666667, 0.1361111111111111],
+    "actualNeuralPredictions": 14626221,
+    "evaluatorErrors": 0
+  },
+  "validation": {
+    "typescript": "pass",
+    "testFiles": 35,
+    "testsPassed": 407,
+    "testsFailed": 0,
+    "pagesBuild": "pass",
+    "productionVersionAndEveryAssetHash": "pass",
+    "productionBrowser": "IAB Chromium",
+    "helpText": "Experimental status and lack of confirmed superiority visible in Neural help and after selecting it",
+    "smokeGame": "Alice Hardcore, Bob Neural, Carol Hardcore; observed round 3 and 27 logged actions",
+    "consoleErrorsOrWarnings": 0,
+    "browserCleanup": "Returned to new-game menu; did not save the QA game"
+  },
+  "scope": "Neural policy for base game with 3 players; Hardcore fallback for 4/5 players or any expansion",
+  "integration": {
+    "stagedFilesCopied": 9,
+    "originalBackup": "work/neural-policy/release-backup-20260910",
+    "additionalEdit": "SetupScreen.tsx explicitly labels the released option experimental and says superiority is not yet confirmed",
+    "setupScreenSha256": "c1ca99e3488f6e8ccb1029fcff423d5ca95b4ba108a3f8635d7451528ba63f59"
+  },
+  "remainingObjective": "A statistically confirmed stronger bot has not been achieved. Publication of this tested experimental option does not complete that goal.",
+  "cancelledDeliverables": ["EXE", "standalone HTML"]
+}

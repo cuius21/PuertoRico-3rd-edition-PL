@@ -1,7 +1,7 @@
 import type { GameState } from '../GameState';
 import type { Action } from '../../actions/Action';
 import { PhaseType, type PlayerId } from '../../core/types';
-import type { GamePhase } from '../GamePhase';
+import type { GamePhase, PhaseProgress } from '../GamePhase';
 import { TakePlantationAction } from '../../actions/TakePlantationAction';
 import { PassAction } from '../../actions/PassAction';
 import { SellPlantationAction } from '../../actions/SellPlantationAction';
@@ -20,6 +20,14 @@ function nextPhaseAfterRole(state: GameState): GamePhase {
 export class SettlerPhase implements GamePhase {
   readonly type = PhaseType.Settler;
   private initialLogLength = 0;
+
+  getProgress(state: GameState): PhaseProgress {
+    return { actionsTaken: state.actionLog.length - this.initialLogLength };
+  }
+
+  restoreProgress(state: GameState, progress: PhaseProgress): void {
+    this.initialLogLength = state.actionLog.length - (progress.actionsTaken ?? 0);
+  }
 
   onEnter(state: GameState): void {
     this.initialLogLength = state.actionLog.length;

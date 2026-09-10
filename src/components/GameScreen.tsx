@@ -19,7 +19,7 @@ interface Props {
 }
 
 export function GameScreen({ setups, expansions, savedState, onReturnToMenu }: Props) {
-  const { runner, state, applyHumanAction, isWaitingForBot, roundNotice, actionFeed, roundLog } =
+  const { runner, state, applyHumanAction, isWaitingForBot, roundNotice, actionFeed, roundLog, botError, retryBot } =
     useGameRunner(setups, savedState, expansions);
 
   const [saveFlash, setSaveFlash] = useState(false);
@@ -80,6 +80,12 @@ export function GameScreen({ setups, expansions, savedState, onReturnToMenu }: P
           <button className="menu-btn" onClick={onReturnToMenu}>Menu</button>
         </div>
       </header>
+
+      {botError && (
+        <div className="bot-error" role="alert">
+          {botError} <button onClick={retryBot}>Spróbuj ponownie</button>
+        </div>
+      )}
 
       {/* Role cards row */}
       <RoleCardsBar state={state} />

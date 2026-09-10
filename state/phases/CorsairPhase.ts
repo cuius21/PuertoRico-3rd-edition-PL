@@ -1,7 +1,7 @@
 import type { GameState } from '../GameState';
 import type { Action } from '../../actions/Action';
 import { PhaseType, RoleType, type PlayerId } from '../../core/types';
-import type { GamePhase } from '../GamePhase';
+import type { GamePhase, PhaseProgress } from '../GamePhase';
 import { CorsairPiracyAction } from '../../actions/CorsairPiracyAction';
 import { CorsairPlunderAction } from '../../actions/CorsairPlunderAction';
 import { CorsairRaidAction } from '../../actions/CorsairRaidAction';
@@ -19,6 +19,14 @@ function nextPhaseAfterRole(state: GameState): GamePhase {
 export class CorsairPhase implements GamePhase {
   readonly type = PhaseType.Corsair;
   private initialLogLength = 0;
+
+  getProgress(state: GameState): PhaseProgress {
+    return { actionsTaken: state.actionLog.length - this.initialLogLength };
+  }
+
+  restoreProgress(state: GameState, progress: PhaseProgress): void {
+    this.initialLogLength = state.actionLog.length - (progress.actionsTaken ?? 0);
+  }
 
   onEnter(state: GameState): void {
     this.initialLogLength = state.actionLog.length;

@@ -13,9 +13,15 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
+    "bot:arena": "tsx tools/arena.ts",
+    "bot:train": "tsx tools/train-neural.ts",
     "server": "tsx server/server.ts",
     "dist": "npm run build:app && electron-builder --win portable",
-    "build:html": "vite build --config vite.config.singlefile.ts"
+    "build:html": "vite build --config vite.config.singlefile.ts",
+    "build:pages": "node --import ./tools/register-typescript.mjs tools/build-pages.mjs",
+    "pages:upload": "node tools/deploy-pages-direct.mjs",
+    "pages:verify": "node tools/verify-pages.mjs",
+    "deploy": "npm run check && npm test && npm run build:pages && npm run pages:upload && npm run pages:verify"
   },
   "build": {
     "appId": "pl.puertorico.game",
@@ -45,7 +51,8 @@
     "typescript": "^5.4.0",
     "vite": "^8.0.16",
     "vite-plugin-singlefile": "^2.3.3",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.7",
+    "wrangler": "4.114.0"
   },
   "dependencies": {
     "express": "^4.21.0",

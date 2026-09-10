@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { RandomBot } from '../bots/RandomBot';
-import { GreedyBot } from '../bots/GreedyBot';
-import { MctsBot } from '../bots/MctsBot';
+import { createBot } from '../bots/createBot';
+import type { BotDifficulty } from '../bots/createBot';
 import type { PlayerSetup } from '../game/GameRunner';
 import { getSavedGame } from '../game/GameSerializer';
 
@@ -19,7 +18,7 @@ interface Props {
 }
 
 type PlayerType = 'human' | 'bot';
-type Difficulty = 'easy' | 'hard' | 'ai';
+type Difficulty = BotDifficulty;
 
 interface PlayerConfig {
   name: string;
@@ -28,6 +27,34 @@ interface PlayerConfig {
 }
 
 const DEFAULT_NAMES = ['Alice', 'Bob', 'Carol', 'David', 'Eve'];
+
+const DIFFICULTIES: { value: Difficulty; label: string; method: string; description: string; neural: string }[] = [
+  {
+    value: 'easy', label: '🎲 Losowy', method: 'Losowanie legalnych ruchów',
+    description: 'Wybiera losowo jeden z dozwolonych ruchów. Nie ocenia jego opłacalności ani nie planuje kolejnych tur. Najłatwiejszy przeciwnik, dobry do poznawania zasad gry.',
+    neural: 'Nie korzysta z sieci neuronowej i nie uczy się podczas gry.',
+  },
+  {
+    value: 'hard', label: '🧠 Zachłanny', method: 'Heurystyki, czyli zaprogramowane reguły oceny',
+    description: 'Ocenia dostępne ruchy według korzyści: produkcji, dochodu, budynków i punktów. Wybiera najwyżej oceniony ruch na podstawie obecnej sytuacji, bez symulowania kolejnych tur.',
+    neural: 'Nie korzysta z sieci neuronowej. Reguły oceny są stałe i nie zmieniają się po rozegranych partiach.',
+  },
+  {
+    value: 'ai', label: '🏆 AI', method: 'Symulacje Monte Carlo (MCTS)',
+    description: 'Porównuje ruchy, wielokrotnie symulując dalszy przebieg gry. W symulacjach korzysta z reguł bota Zachłannego i ocenia przewagę nad rywalami. Na trudniejsze decyzje przeznacza około 1,5 sekundy.',
+    neural: 'Nie korzysta z sieci neuronowej. Nazwa AI oznacza tutaj podejmowanie decyzji przez symulacje, bez treningu na wcześniejszych partiach.',
+  },
+  {
+    value: 'hardcore', label: '🔥 Hardcore', method: 'Przeszukiwanie drzewa gry i ocena strategiczna',
+    description: 'Planuje rozwój całej wyspy, rozmieszczenie robotników, współpracę budynków i moment zakończenia gry. Uwzględnia interes każdego rywala, a zakryte plantacje losuje na potrzeby symulacji. Zwykle przeznacza około 0,65 sekundy na trudniejszą decyzję.',
+    neural: 'Nie korzysta z sieci neuronowej. Ocena strategiczna i zasady symulacji są stałe; bot nie uczy się podczas rozgrywki.',
+  },
+  {
+    value: 'neural', label: '🧬 Neural', method: 'Eksperymentalna sieć neuronowa i MCTS',
+    description: 'Łączy przeszukiwanie dalszej gry z oceną ruchów przez wytrenowaną sieć. Sieć pomaga przy wyborze roli, budynku, sprzedaży i plantacji. Na trudniejszą decyzję przeznacza zwykle około 0,65 sekundy. Testy nie potwierdziły jeszcze przewagi nad Hardcore.',
+    neural: 'Sieć wytrenowano wcześniej na partiach botów. Działa lokalnie i nie doucza się podczas rozgrywki. Obsługuje podstawową grę dla 3 graczy. Przy 4–5 graczach lub dowolnym rozszerzeniu ten poziom automatycznie korzysta z bota Hardcore.',
+  },
+];
 
 function formatSaveDate(timestamp: number): string {
   return new Date(timestamp).toLocaleString('pl', {
@@ -48,6 +75,9 @@ export function SetupScreen({ onStart, onLoad, onMultiplayer }: Props) {
   );
 
   const savedGame = getSavedGame();
+  const neuralSelected = players.some(player => player.type === 'bot' && player.difficulty === 'neural');
+  const neuralUsesHardcore = neuralSelected &&
+    (playerCount !== 3 || Object.values(expansions).some(Boolean));
 
   function updateCount(n: number) {
     setPlayerCount(n);
@@ -75,7 +105,7 @@ export function SetupScreen({ onStart, onLoad, onMultiplayer }: Props) {
         : {
             type: 'bot',
             name: p.name,
-            bot: p.difficulty === 'ai' ? new MctsBot() : p.difficulty === 'hard' ? new GreedyBot() : new RandomBot(),
+            bot: createBot(p.difficulty),
           },
     );
     onStart(setups, expansions);
@@ -130,27 +160,45 @@ export function SetupScreen({ onStart, onLoad, onMultiplayer }: Props) {
                 </div>
                 {p.type === 'bot' && (
                   <div className="diff-toggle">
-                    <button
-                      className={`diff-btn ${p.difficulty === 'easy' ? 'diff-btn--active-easy' : ''}`}
-                      onClick={() => updatePlayer(i, { difficulty: 'easy' })}
-                      title="Bot wybiera losowe legalne ruchy"
-                    >
-                      🎲 Losowy
-                    </button>
-                    <button
-                      className={`diff-btn ${p.difficulty === 'hard' ? 'diff-btn--active-hard' : ''}`}
-                      onClick={() => updatePlayer(i, { difficulty: 'hard' })}
-                      title="Bot używa heurystyk do oceny każdego ruchu"
-                    >
-                      🧠 Zachłanny
-                    </button>
-                    <button
-                      className={`diff-btn ${p.difficulty === 'ai' ? 'diff-btn--active-ai' : ''}`}
-                      onClick={() => updatePlayer(i, { difficulty: 'ai' })}
-                      title="Bot symuluje setki możliwych przyszłości (MCTS) — ~2s na ruch"
-                    >
-                      🏆 AI
-                    </button>
+                    {DIFFICULTIES.map(difficulty => {
+                      const helpId = `difficulty-help-${i}-${difficulty.value}`;
+                      return (
+                        <div className="diff-option" key={difficulty.value}>
+                          <button
+                            type="button"
+                            className={`diff-btn ${p.difficulty === difficulty.value ? `diff-btn--active-${difficulty.value}` : ''}`}
+                            onClick={() => updatePlayer(i, { difficulty: difficulty.value })}
+                            aria-pressed={p.difficulty === difficulty.value}
+                          >
+                            {difficulty.label}
+                          </button>
+                          <button
+                            type="button"
+                            className="diff-help-btn"
+                            popoverTarget={helpId}
+                            aria-label={`Jak działa bot ${difficulty.label}?`}
+                            title={`Jak działa bot ${difficulty.label}?`}
+                          >
+                            ?
+                          </button>
+                          <div id={helpId} popover="auto" className="diff-help" role="dialog" aria-labelledby={`${helpId}-title`}>
+                            <button
+                              type="button"
+                              className="diff-help-close"
+                              popoverTarget={helpId}
+                              popoverTargetAction="hide"
+                              aria-label="Zamknij opis bota"
+                            >
+                              ×
+                            </button>
+                            <h2 id={`${helpId}-title`}>{difficulty.label}</h2>
+                            <p className="diff-help-method">{difficulty.method}</p>
+                            <p>{difficulty.description}</p>
+                            <p className="diff-help-neural"><strong>Sieć neuronowa:</strong> {difficulty.neural}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -200,6 +248,14 @@ export function SetupScreen({ onStart, onLoad, onMultiplayer }: Props) {
           </div>
         </div>
 
+        {neuralSelected && (
+          <p className="neural-scope-note" role="status">
+            {neuralUsesHardcore
+              ? 'W tym wariancie Neural korzysta z bota Hardcore. Sieć działa w podstawowej grze dla 3 graczy.'
+              : 'Neural to poziom eksperymentalny. Jego przewaga nad Hardcore nie została jeszcze potwierdzona.'}
+          </p>
+        )}
+
         <button className="start-btn" onClick={handleStart}>
           Rozpocznij grę
         </button>
@@ -211,9 +267,11 @@ export function SetupScreen({ onStart, onLoad, onMultiplayer }: Props) {
           </button>
         )}
 
-        <button className="multiplayer-btn" onClick={onMultiplayer}>
-          🌐 Gra sieciowa (LAN)
-        </button>
+        {import.meta.env.VITE_LAN_ENABLED !== 'false' && (
+          <button className="multiplayer-btn" onClick={onMultiplayer}>
+            🌐 Gra sieciowa (LAN)
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import type { GameState } from '../GameState';
 import type { Action } from '../../actions/Action';
 import { PhaseType, RoleType, type PlayerId } from '../../core/types';
-import type { GamePhase } from '../GamePhase';
+import type { GamePhase, PhaseProgress } from '../GamePhase';
 import { SelectRoleAction } from '../../actions/SelectRoleAction';
 import { SettlerPhase } from './SettlerPhase';
 import { MayorPhase } from './MayorPhase';
@@ -30,6 +30,14 @@ export class RoleSelectionPhase implements GamePhase {
   readonly type = PhaseType.RoleSelection;
   private initialLogLength = 0;
 
+  getProgress(state: GameState): PhaseProgress {
+    return { actionsTaken: state.actionLog.length - this.initialLogLength };
+  }
+
+  restoreProgress(state: GameState, progress: PhaseProgress): void {
+    this.initialLogLength = state.actionLog.length - (progress.actionsTaken ?? 0);
+  }
+
   onEnter(state: GameState): void {
     this.initialLogLength = state.actionLog.length;
     // Ustal kto wybiera: gubernator + liczba już wybranych kart
@@ -46,7 +54,7 @@ export class RoleSelectionPhase implements GamePhase {
     return state.getAvailableRoleCards().map(card => {
       const idx = state.roleCards.indexOf(card);
       return new SelectRoleAction(playerId, card.type, idx);
-    });
+    }).filter(action => action.validate(state).ok);
   }
 
   checkTransition(state: GameState): GamePhase | null {

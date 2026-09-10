@@ -48,7 +48,7 @@ function applyBlackMarketReturn(state: GameState, player: Player, amount: number
   }
 }
 
-function calcBuildCost(state: GameState, player: Player, building: Building): number {
+export function calcBuildCost(state: GameState, player: Player, building: Building): number {
   const isSelector = state.getRoleSelector().id === player.id;
   const activeBuildings = player.island.getActiveBuildings();
 
@@ -64,7 +64,19 @@ function calcBuildCost(state: GameState, player: Player, building: Building): nu
   // Szałas: każde 2 lasy dają -1 dublon
   const forestDiscount = Math.floor(player.island.countForests() / 2);
 
-  return Math.max(0, building.cost - quarryDiscount - builderDiscount - forestDiscount);
+  // Gildia murarska: robotnik → -1 na małe budynki (tileSize=1); szlachcic → -2 na duże (tileSize=2).
+  let masonsDiscount = 0;
+  for (const b of activeBuildings) {
+    if (b.occupiedWorkers > 0 && b.builderWorkerDiscount && building.tileSize === 1) {
+      masonsDiscount = Math.max(masonsDiscount, b.builderWorkerDiscount());
+    }
+    if (b.occupiedNobles > 0 && b.builderNobleDiscount && building.tileSize === 2) {
+      masonsDiscount = Math.max(masonsDiscount, b.builderNobleDiscount());
+    }
+  }
+
+
+  return Math.max(0, building.cost - quarryDiscount - builderDiscount - forestDiscount - masonsDiscount);
 }
 
 // Faza budowniczego: gracz kupuje jeden budynek ze zniżką kamieniołomów.
@@ -131,8 +143,9 @@ export class BuildAction implements Action {
       applyBlackMarketReturn(state, player, shortfall);
     }
 
-    player.doubloons -= cost;
-    state.supply.depositDoubloons(cost);
+    const cashPaid = Math.min(player.doubloons, cost);
+    player.doubloons -= cashPaid;
+    state.supply.depositDoubloons(cashPaid);
 
     player.island.addBuilding(building);
 

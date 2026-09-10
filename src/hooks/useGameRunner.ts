@@ -4,8 +4,10 @@ import { describeAction } from '../game/actionLabels';
 import type { Action } from '../../actions/Action';
 import type { GameState } from '../../state/GameState';
 import type { ExpansionConfig } from '../components/SetupScreen';
+import { BotWorkerClient } from '../bots/BotWorkerClient';
+import { botDifficulty } from '../bots/createBot';
 
-const BOT_DELAY_MS = 600;       // time to show "thinks..." before blocking computation starts
+const BOT_DELAY_MS = 350;
 const BOT_DELAY_MAYOR_MS = 120; // mayor phase is worker placement — near-instant even for MCTS
 const ACTION_FEED_MS = 1100;
 const HUMAN_FEED_MS = 750;
@@ -25,6 +27,8 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
 
   const [tick, setTick] = useState(0);
   const forceUpdate = useCallback(() => setTick(t => t + 1), []);
+  const workerRef = useRef<BotWorkerClient | null>(null);
+  const [botError, setBotError] = useState<string | null>(null);
 
   // Round change tracking
   const prevRoundRef = useRef(runner.state.roundNumber);
@@ -46,25 +50,49 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
   // Auto-execute bot turns
   useEffect(() => {
     if (runner.isGameOver() || runner.isCurrentPlayerHuman()) return;
-
+    let cancelled = false;
     const isMayorPhase = runner.state.getCurrentPhase().type === 'mayor';
     const delay = isMayorPhase ? BOT_DELAY_MAYOR_MS : BOT_DELAY_MS;
-
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const setup = runner.getCurrentSetup();
-      const action = runner.getBotAction();
-      if (action) {
+      if (setup.type !== 'bot') return;
+      try {
+        const difficulty = botDifficulty(setup.bot);
+        let action: Action | null;
+        if (!isMayorPhase && (difficulty === 'ai' || difficulty === 'hardcore' || difficulty === 'neural') &&
+            runner.getValidActionsForCurrentPlayer().length > 1) {
+          workerRef.current ??= new BotWorkerClient();
+          action = await workerRef.current.chooseAction(runner.state, difficulty);
+        } else {
+          action = runner.getBotAction();
+        }
+        if (cancelled) return;
+        if (!action) throw new Error('No bot action available');
         const label = describeAction(action, runner.state);
-        runner.applyAction(action, label);
+        if (!runner.applyAction(action, label)) throw new Error('Invalid bot action');
+        setBotError(null);
         const entry: ActionFeedItem = { playerName: setup.name, actionText: label, isBot: true };
         showFeed(entry, isMayorPhase ? BOT_DELAY_MAYOR_MS : ACTION_FEED_MS);
         setRoundLog(prev => [entry, ...prev]);
         forceUpdate();
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Bot move failed', error);
+          setBotError('Nie udało się obliczyć ruchu bota.');
+        }
       }
     }, delay);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      workerRef.current?.cancel();
+    };
+  }, [runner, tick, showFeed, forceUpdate]);
 
-    return () => clearTimeout(timer);
-  });
+  useEffect(() => () => {
+    if (feedTimerRef.current) clearTimeout(feedTimerRef.current);
+    workerRef.current?.dispose();
+  }, []);
 
   // Detect round change — clear log and show notice
   useEffect(() => {
@@ -99,6 +127,8 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
     roundNotice,
     actionFeed,
     roundLog,
+    botError,
+    retryBot: () => { setBotError(null); forceUpdate(); },
     isWaitingForBot: !runner.isGameOver() && !runner.isCurrentPlayerHuman(),
   };
 }

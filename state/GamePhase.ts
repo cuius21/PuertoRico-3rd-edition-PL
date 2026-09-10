@@ -8,8 +8,19 @@ import type { PhaseType, PlayerId } from '../core/types';
 // - co dzieje się przy wejściu i wyjściu z fazy.
 //
 // Każda faza (Settler, Mayor, ...) będzie osobną klasą implementującą ten interfejs.
+export interface PhaseProgress {
+  actionsTaken?: number;
+  consecutivePasses?: number;
+  storageDone?: boolean;
+  storagePhaseStarted?: boolean;
+}
+
 export interface GamePhase {
   readonly type: PhaseType;
+
+  // Relative progress lets saved games and simulations omit the historical action log.
+  getProgress?(state: GameState): PhaseProgress;
+  restoreProgress?(state: GameState, progress: PhaseProgress): void;
 
   // Zbiór legalnych akcji w aktualnym momencie dla danego gracza.
   // To centralne API dla UI ("jakie przyciski pokazać") i AI ("jakie ruchy rozważyć").

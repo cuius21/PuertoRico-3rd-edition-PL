@@ -6,13 +6,14 @@ Cyfrowa wersja gry planszowej _Puerto Rico_ (3. edycja, Lacerta), gra podstawowa
 
 ### Wymagania
 
-- Node.js ≥ 18 (sprawdź: `node -v`)
+- Node.js ≥ 22.12 (sprawdź: `node -v`)
 - npm (dołączony do Node.js)
 
 ### Pierwsze uruchomienie
 
 ```bash
-npm install
+cd files2
+npm ci
 ```
 
 ### Uruchomienie dev-serwera
@@ -60,9 +61,18 @@ Kliknij **💾 Zapisz** w górnym pasku podczas gry. Stan zostaje zapisany w `lo
 
 ## Tryby gry
 
-- **Człowiek** — sterowany przez gracza siedzącego przy klawiaturze (hot-seat)
-- **Bot losowy** — wybiera losowy legalny ruch (🎲)
-- **Bot inteligentny** — heurystyczny bot greedy, ocenia każdy ruch punktowo (🧠)
+- **Człowiek** — wspólna gra przy jednym ekranie.
+- **Łatwy** — losowe legalne ruchy.
+- **Trudny** — heurystyczna ocena ruchów.
+- **AI** — przeszukiwanie MCTS.
+- **Hardcore** — rozbudowane przeszukiwanie i heurystyki ekonomii gry.
+- **Neural (eksperymentalny)** — sieć polityki ruchów wspiera symulacje MCTS. Dla podstawowej gry trzyosobowej; przy 4–5 graczach lub dodatkach korzysta z Hardcore. Przewaga nad Hardcore nie została potwierdzona.
+
+Przy poziomach trudności są opisy pod ikoną pytajnika.
+
+[Zagraj na Cloudflare](https://puerto-rico-3rd-edition.pages.dev/). Publikację opisuje [CLOUDFLARE.md](CLOUDFLARE.md). Push do GitHuba sam nie wdraża gry; służy do tego proces `npm run deploy`.
+
+Rozwój botów został wstrzymany na prośbę użytkownika 10 września 2026. Wyniki i kierunki ewentualnego powrotu: [NEURAL-STATUS.md](NEURAL-STATUS.md).
 
 ---
 
@@ -79,7 +89,7 @@ npm run build        # kompilacja samego backendu TypeScript (tsc)
 ## Struktura projektu
 
 ```
-/
+files2/
 ├── src/                    # frontend React + Vite
 │   ├── components/         # komponenty UI
 │   ├── hooks/              # useGameRunner (integracja gry z Reactem)

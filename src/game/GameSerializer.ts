@@ -9,12 +9,11 @@ import { Ship } from '../../domain/Ship';
 import { TradingHouse } from '../../domain/TradingHouse';
 import { RoleCard } from '../../domain/RoleCard';
 import { GoodType, PlantationType, RoleType } from '../../core/types';
-import type { GamePhase } from '../../state/GamePhase';
+import type { GamePhase, PhaseProgress } from '../../state/GamePhase';
 import type { Building } from '../../domain/buildings/Building';
 import type { PlayerSetup } from './GameRunner';
-import { RandomBot } from '../bots/RandomBot';
-import { GreedyBot } from '../bots/GreedyBot';
-import { MctsBot } from '../bots/MctsBot';
+import { createBot, botDifficulty } from '../bots/createBot';
+import type { BotDifficulty } from '../bots/createBot';
 
 // Phase classes
 import { RoleSelectionPhase } from '../../state/phases/RoleSelectionPhase';
@@ -57,7 +56,7 @@ const STORAGE_KEY = 'puerto_rico_save';
 export interface SavedSetup {
   name: string;
   type: 'human' | 'bot';
-  difficulty: 'easy' | 'hard' | 'ai';
+  difficulty: BotDifficulty;
 }
 
 type SavedPlantation = { type: string; workers: number; nobles?: number; forest?: boolean };
@@ -119,6 +118,7 @@ interface SaveGame {
     gameOver: boolean;
     gameOverReason: string;
     phaseType: string;
+    phaseProgress?: PhaseProgress;
     players: SavedPlayer[];
     supply: SavedSupply;
     ships: { cap: number; good: string | null; count: number }[];
@@ -291,7 +291,7 @@ function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): 
       name: s.name,
       type: s.type,
       difficulty: s.type === 'bot'
-        ? (s.bot.name === 'MctsBot' ? 'ai' : s.bot.name === 'GreedyBot' ? 'hard' : 'easy')
+        ? botDifficulty(s.bot)
         : 'easy',
     })),
     state: {
@@ -302,6 +302,7 @@ function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): 
       gameOver: state.gameOver,
       gameOverReason: state.gameOverReason,
       phaseType: state.getCurrentPhase().type,
+      phaseProgress: state.getCurrentPhase().getProgress?.(state) ?? {},
       players: state.players.map(savePlayer),
       supply: saveSupply(state.supply),
       ships: state.ships.map(sh => ({
@@ -317,7 +318,7 @@ function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): 
       })),
       festivalBoard: state.festivalBoard ? {
         uprawa:    { type: 'uprawa',    completedBy: state.festivalBoard.uprawa.completedBy,    plantationType: state.festivalBoard.uprawa.plantationType },
-        produkcja: { type: 'produkcja', completedBy: state.festivalBoard.produkcja.completedBy, requiredGoods: state.festivalBoard.produkcja.requiredGoods as Record<string, number> },
+        produkcja: { type: 'produkcja', completedBy: state.festivalBoard.produkcja.completedBy, requiredGoods: { ...state.festivalBoard.produkcja.requiredGoods } },
         budowa:    { type: 'budowa',    completedBy: state.festivalBoard.budowa.completedBy,    buildingId: state.festivalBoard.budowa.buildingId, buildingDisplayName: state.festivalBoard.budowa.buildingDisplayName },
       } : null,
       corsairTokenHolderId: state.corsairTokenHolderId,
@@ -330,6 +331,14 @@ function buildSaveGame(state: GameState, playerSetups: readonly PlayerSetup[]): 
 
 // ── Deserialization ───────────────────────────────────────────────────────────
 
+function restorePlantation(data: SavedPlantation): Plantation {
+  const plantation = new Plantation(data.type as PlantationType);
+  plantation.occupiedWorkers = data.workers;
+  plantation.occupiedNobles = data.nobles ?? 0;
+  plantation.isForest = data.forest ?? false;
+  return plantation;
+}
+
 function restoreIsland(
   plantations: (SavedPlantation | null)[],
   buildingSlotData: SavedBuildingSlot[],
@@ -337,14 +346,7 @@ function restoreIsland(
   const island = new Island();
 
   // Restore plantations preserving slot positions
-  const restoredPlantations: (Plantation | null)[] = plantations.map(pl => {
-    if (!pl) return null;
-    const p = new Plantation(pl.type as PlantationType);
-    p.occupiedWorkers = pl.workers;
-    if (pl.nobles) p.occupiedNobles = pl.nobles;
-    if (pl.forest) p.isForest = true;
-    return p;
-  });
+  const restoredPlantations = plantations.map(pl => pl ? restorePlantation(pl) : null);
   island.restorePlantationSlots(restoredPlantations);
 
   // Restore building slots: track last created instance for large buildings
@@ -393,23 +395,9 @@ function restoreSupply(s: SavedSupply): Supply {
   for (const [g, n] of Object.entries(s.goods)) {
     supply.goodsPool.set(g as GoodType, n);
   }
-  supply.plantationDecks = s.decks.map(deck =>
-    deck.map(pl => {
-      const p = new Plantation(pl.type as PlantationType);
-      p.occupiedWorkers = pl.workers;
-      return p;
-    }),
-  );
-  supply.revealedPlantations = s.revealed.map(pl => {
-    const p = new Plantation(pl.type as PlantationType);
-    p.occupiedWorkers = pl.workers;
-    return p;
-  });
-  supply.discardedPlantations = s.discarded.map(pl => {
-    const p = new Plantation(pl.type as PlantationType);
-    p.occupiedWorkers = pl.workers;
-    return p;
-  });
+  supply.plantationDecks = s.decks.map(deck => deck.map(restorePlantation));
+  supply.revealedPlantations = s.revealed.map(restorePlantation);
+  supply.discardedPlantations = s.discarded.map(restorePlantation);
   supply.quarryStack = Array.from({ length: s.quarries }, () => new Plantation(PlantationType.Quarry));
   supply.availableBuildings = s.buildings.map(b => {
     const building = makeBuilding(b.id)!;
@@ -420,6 +408,16 @@ function restoreSupply(s: SavedSupply): Supply {
   if (s.noblesPool) supply.noblesPool = s.noblesPool;
   if (s.noblesMagistrate) supply.noblesInMagistrate = s.noblesMagistrate;
   return supply;
+}
+
+function inferLegacyPhaseProgress(state: GameState): PhaseProgress {
+  const phaseType = state.getCurrentPhase().type;
+  if (phaseType === 'builder' || phaseType === 'settler' || phaseType === 'trader') {
+    // Old saves lack action counts; the turn pointer recovers normal once-per-player phases.
+    const count = state.players.length;
+    return { actionsTaken: (state.currentPlayerIndex - state.roleSelectorIndex + count) % count };
+  }
+  return {};
 }
 
 function restoreGameState(s: SaveGame['state']): GameState {
@@ -463,7 +461,7 @@ function restoreGameState(s: SaveGame['state']): GameState {
     };
     const produkcja: FestivalProdukcjaQuest = {
       type: 'produkcja',
-      requiredGoods: fb.produkcja.requiredGoods ?? {},
+      requiredGoods: { ...fb.produkcja.requiredGoods },
       completedBy: fb.produkcja.completedBy,
     };
     const budowa: FestivalBudowaQuest = {
@@ -480,7 +478,9 @@ function restoreGameState(s: SaveGame['state']): GameState {
   if (s.nobleExpansion) state.nobleExpansion = true;
   if (s.captainStoragePending) state.captainStoragePending = true;
 
-  state.restorePhase(makePhase(s.phaseType));
+  const phase = makePhase(s.phaseType);
+  state.restorePhase(phase);
+  phase.restoreProgress?.(state, s.phaseProgress ?? inferLegacyPhaseProgress(state));
   return state;
 }
 
@@ -491,7 +491,7 @@ function restoreSetups(setups: SavedSetup[]): PlayerSetup[] {
       : {
           type: 'bot',
           name: s.name,
-          bot: s.difficulty === 'ai' ? new MctsBot() : s.difficulty === 'hard' ? new GreedyBot() : new RandomBot(),
+          bot: createBot(s.difficulty),
         },
   );
 }

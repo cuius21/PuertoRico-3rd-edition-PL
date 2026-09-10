@@ -1,0 +1,36 @@
+{
+  "status": "parked-by-user",
+  "integrated": false,
+  "unitTestsExecuted": false,
+  "strengthGamesExecuted": 0,
+  "files": [
+    {
+      "path": "src/bots/MayorSearchBot.ts",
+      "sha256": "0eed4458b894189573dc2559bfdf9332edf6813c461f2766fd49b9dbe86bb464"
+    },
+    {
+      "path": "src/bots/mayorPlans.ts",
+      "sha256": "8e1ff466282399908560b1086fb57521ef0c6afbd70af3686403006408139105"
+    },
+    {
+      "path": "tools/check-mayor-snapshots.ts",
+      "sha256": "d9f8458e11ccaa47fdc349e91a878796c0551d6fa53616d0e011c738fc76eb17"
+    },
+    {
+      "path": "tools/mayor-lab.ts",
+      "sha256": "f9a9f79464f8fe93284dfc3b6a8a853035c5a5172dca63eae7db1de5e08846e0"
+    },
+    {
+      "path": "tests/unit/MayorLab.test.ts",
+      "sha256": "f60c2f19a9393cdb6732d8bebf3b14a860b65f9e6f538d3362b6885e6d78de3d"
+    },
+    {
+      "path": "tests/unit/MayorSearchBot.test.ts",
+      "sha256": "0d7f57016ff74f74e17708506f18516ca13f63a999e86061ea575016779733b3"
+    },
+    {
+      "path": "tools/mayor-worker.mjs",
+      "sha256": "3c174bfe80f2e6ee434e1af39dad273695efdeb7c6b198464195cef03798799c"
+    }
+  ]
+}
