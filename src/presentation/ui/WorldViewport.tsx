@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { WorldRenderer } from '../renderer/WorldRenderer';
 import { WEATHER_NAMES, type WeatherKind } from '../renderer/weather';
 import type { ActionPlayback } from '../playback/useActionPlayback';
-import { ActionPlaybackPanel } from './ActionPlaybackPanel';
 import type { EntityRef, SceneSnapshot } from '../adapter/sceneTypes';
 
 interface Props {
@@ -67,8 +66,11 @@ export function WorldViewport(props: Props) {
       props.playback.state.follow &&
       matchMedia('(max-width: 760px)').matches
     )
-      host.current?.parentElement?.scrollIntoView({
-        block: 'center',
+      (
+        host.current?.closest('.pr-world')?.querySelector('.pr-observer') ??
+        host.current?.parentElement
+      )?.scrollIntoView({
+        block: 'start',
         behavior: props.motion ? 'smooth' : 'auto',
       });
   }, [props.playback?.state.beat?.id]);
@@ -117,7 +119,6 @@ export function WorldViewport(props: Props) {
         </span>
         {WEATHER_NAMES[weather]}
       </div>
-      {props.playback && <ActionPlaybackPanel playback={props.playback} />}
       <div className="pr-zoom">
         <button
           aria-label="Oddal mapę"

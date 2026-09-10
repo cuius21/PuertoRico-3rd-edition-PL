@@ -14,6 +14,7 @@ import { ROLE_META } from '../../components/RoleCardsBar';
 import { WorldDialog } from './WorldDialog';
 import { FestivalBoardPanel } from '../../components/FestivalBoardPanel';
 import { WorldViewport } from './WorldViewport';
+import { ActionPlaybackPanel } from './ActionPlaybackPanel';
 import { buildSceneSnapshot, GOOD_NAMES } from '../adapter/buildSceneSnapshot';
 import type { Area, EntityRef } from '../adapter/sceneTypes';
 import {
@@ -345,58 +346,132 @@ export function WorldGame({
           {error}
         </div>
       )}
-      <nav className="pr-players" aria-label="Wyspy graczy">
-        {scene.players.map((p, i) => (
+      <aside className="pr-player-rail" aria-label="Gracze i obserwacja ruchów">
+        <nav className="pr-players" aria-label="Wyspy graczy">
+          {scene.players.map((p, i) => (
+            <button
+              key={p.id}
+              className={
+                (beat ? p.id === beat.actorId : p.current) ? 'is-current' : ''
+              }
+              aria-current={
+                (beat ? p.id === beat.actorId : p.current) ? 'true' : undefined
+              }
+              style={{ '--player-color': p.color } as CSSProperties}
+              onClick={() => {
+                choose({ key: p.id, area: 'island', playerId: p.id });
+                go(p.id);
+              }}
+            >
+              <span className="pr-avatar">{i + 1}</span>
+              <span className="pr-player-name">
+                <strong>{p.name}</strong>
+                <small>
+                  {p.governor ? 'Gubernator · ' : ''}
+                  {i === state.roleSelectorIndex &&
+                  scene.phase !== 'roleSelection'
+                    ? 'Przywilej · '
+                    : ''}
+                  {runner.getSetup(i).type === 'human' ? 'Gracz' : 'Bot'}
+                </small>
+              </span>
+              <span className="pr-player-values">
+                <b>
+                  <GameValue value={p.coins} />
+                </b>
+                <small>
+                  <GameValue value={p.vp} kind="star" />
+                </small>
+                {p.pending + p.pendingNobles + p.held + p.heldNobles > 0 && (
+                  <small
+                    className="pr-player-workers"
+                    title="Pracownicy oczekujący na wyspie"
+                  >
+                    👤 {p.pending + p.pendingNobles + p.held + p.heldNobles}
+                    <span className="pr-worker-caption">
+                      {p.pending + p.pendingNobles > 0
+                        ? ' do przydziału'
+                        : ' w rezerwie'}
+                    </span>
+                  </small>
+                )}
+              </span>
+            </button>
+          ))}
+        </nav>
+        {playback && <ActionPlaybackPanel playback={playback} />}
+        <div className="pr-action-launcher">
+          <span className="pr-action-context">
+            {canAct && scene.phase === 'roleSelection'
+              ? 'Wybierz postać'
+              : PHASES[scene.phase] || scene.phase}
+          </span>
           <button
-            key={p.id}
             className={
-              (beat ? p.id === beat.actorId : p.current) ? 'is-current' : ''
+              'pr-action-fab' +
+              (canAct && scene.phase === 'roleSelection' ? ' needs-choice' : '')
             }
-            aria-current={
-              (beat ? p.id === beat.actorId : p.current) ? 'true' : undefined
-            }
-            style={{ '--player-color': p.color } as CSSProperties}
+            aria-label="Akcje"
+            aria-haspopup="dialog"
+            aria-expanded={showActions}
+            aria-controls="pr-actions-dialog"
             onClick={() => {
-              choose({ key: p.id, area: 'island', playerId: p.id });
-              go(p.id);
+              setSelected(null);
+              setRoleInfo(null);
+              setShowActions(true);
             }}
           >
-            <span className="pr-avatar">{i + 1}</span>
-            <span className="pr-player-name">
-              <strong>{p.name}</strong>
-              <small>
-                {p.governor ? 'Gubernator · ' : ''}
-                {i === state.roleSelectorIndex &&
-                scene.phase !== 'roleSelection'
-                  ? 'Przywilej · '
-                  : ''}
-                {runner.getSetup(i).type === 'human' ? 'Gracz' : 'Bot'}
-              </small>
-            </span>
-            <span className="pr-player-values">
-              <b>
-                <GameValue value={p.coins} />
-              </b>
-              <small>
-                <GameValue value={p.vp} kind="star" />
-              </small>
-              {p.pending + p.pendingNobles + p.held + p.heldNobles > 0 && (
-                <small
-                  className="pr-player-workers"
-                  title="Pracownicy oczekujący na wyspie"
-                >
-                  👤 {p.pending + p.pendingNobles + p.held + p.heldNobles}
-                  <span className="pr-worker-caption">
-                    {p.pending + p.pendingNobles > 0
-                      ? ' do przydziału'
-                      : ' w rezerwie'}
-                  </span>
-                </small>
-              )}
-            </span>
+            <svg viewBox="0 0 48 36" aria-hidden="true" focusable="false">
+              <rect
+                x="5"
+                y="8"
+                width="20"
+                height="26"
+                rx="4"
+                transform="rotate(-18 15 21)"
+                fill="#c58d43"
+                stroke="#fff0b7"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="24"
+                y="8"
+                width="20"
+                height="26"
+                rx="4"
+                transform="rotate(18 34 21)"
+                fill="#d8aa57"
+                stroke="#fff0b7"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="14"
+                y="2"
+                width="20"
+                height="28"
+                rx="4"
+                fill="#fff0bd"
+                stroke="#9b6d31"
+                strokeWidth="1.5"
+              />
+              <path
+                d="m24 8 2 5 5 1-4 3 1 5-4-2-4 2 1-5-4-3 5-1Z"
+                fill="#b07b31"
+              />
+            </svg>
+            <strong>Akcje</strong>
+            {scene.phase === 'mayor' && shownPending > 0 && (
+              <span
+                className="pr-fab-workers"
+                aria-label={'Do przydzielenia: ' + shownPending}
+              >
+                <span aria-hidden="true">👤</span>
+                {shownPending}
+              </span>
+            )}
           </button>
-        ))}
-      </nav>
+        </div>
+      </aside>
       <div className="pr-layout">
         <section className="pr-explore" aria-label="Mapa wysp">
           <div className="pr-map-nav">
@@ -923,77 +998,6 @@ export function WorldGame({
           )}
         </div>
       </section>
-      <div className="pr-action-launcher">
-        <span className="pr-action-context">
-          {canAct && scene.phase === 'roleSelection'
-            ? 'Wybierz postać'
-            : PHASES[scene.phase] || scene.phase}
-        </span>
-        <button
-          className={
-            'pr-action-fab' +
-            (canAct && scene.phase === 'roleSelection' ? ' needs-choice' : '')
-          }
-          aria-label="Akcje"
-          aria-haspopup="dialog"
-          aria-expanded={showActions}
-          aria-controls="pr-actions-dialog"
-          onClick={() => {
-            setSelected(null);
-            setRoleInfo(null);
-            setShowActions(true);
-          }}
-        >
-          <svg viewBox="0 0 48 36" aria-hidden="true" focusable="false">
-            <rect
-              x="5"
-              y="8"
-              width="20"
-              height="26"
-              rx="4"
-              transform="rotate(-18 15 21)"
-              fill="#c58d43"
-              stroke="#fff0b7"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="24"
-              y="8"
-              width="20"
-              height="26"
-              rx="4"
-              transform="rotate(18 34 21)"
-              fill="#d8aa57"
-              stroke="#fff0b7"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="14"
-              y="2"
-              width="20"
-              height="28"
-              rx="4"
-              fill="#fff0bd"
-              stroke="#9b6d31"
-              strokeWidth="1.5"
-            />
-            <path
-              d="m24 8 2 5 5 1-4 3 1 5-4-2-4 2 1-5-4-3 5-1Z"
-              fill="#b07b31"
-            />
-          </svg>
-          <strong>Akcje</strong>
-          {scene.phase === 'mayor' && shownPending > 0 && (
-            <span
-              className="pr-fab-workers"
-              aria-label={'Do przydzielenia: ' + shownPending}
-            >
-              <span aria-hidden="true">👤</span>
-              {shownPending}
-            </span>
-          )}
-        </button>
-      </div>
       {showActions && (
         <WorldDialog
           id="pr-actions-dialog"

@@ -106,3 +106,6 @@ To podstawa późniejszego samouczka: etapy mają gracza, rolę, obiekty, opis i
 Powyżej 760 px szerokości gra mieści się w 100dvh: mapa w elastycznej lewej kolumnie, drewniane tabliczki graczy po prawej, pod nimi przycisk Akcje. Listy ruchów i zawartość okien przewijają się niezależnie. Na telefonie pozostaje przewijany widok. Tabliczka wskazuje gracza oglądanego ruchu.
 
 WASD przesuwa kamerę płynnie przy przytrzymaniu (W do góry, S w dół, A w lewo, D w prawo), niezależnie od dekoracyjnych animacji. Ruch jest normalizowany po przekątnej i względem powiększenia. Skróty nie działają w oknach szczegółów, historii ani polach edycji; utrata fokusu czy ukrycie karty czyści przytrzymane klawisze. Sterowanie nie korzysta z logiki gry ani RNG.
+
+
+Panel obserwacji ma drewniany wygląd i znajduje się pod tabliczkami graczy. Na komputerze obie sekcje oraz przycisk Akcje tworzą jedną prawą kolumnę; na telefonie obserwacja jest pod poziomym paskiem graczy. Długie opisy mają własne przewijanie, a przyciski pokazu pozostają widoczne. Panel jest pojedynczą instancją, niezależną od renderera mapy.

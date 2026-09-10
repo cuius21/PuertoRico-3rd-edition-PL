@@ -2221,13 +2221,13 @@
     min-height: 0;
     padding: 10px 14px 12px;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(198px, 18vw, 264px);
+    grid-template-columns: minmax(0, 1fr) clamp(254px, 22vw, 320px);
     grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'header header'
       'error error'
-      'map players'
-      'commands launcher';
+      'map rail'
+      'commands rail';
     column-gap: 14px;
     row-gap: 8px;
     overflow: hidden;
@@ -2557,5 +2557,274 @@
 @media (min-width: 761px) and (max-height: 550px) {
   .pr-player-name small {
     display: none;
+  }
+}
+
+/* One wooden observation panel follows the player plaques. */
+.pr-player-rail {
+  display: contents;
+}
+.pr-player-rail .pr-observer {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #6d4227;
+  border-top-color: #bd8c51;
+  border-bottom: 4px solid #42271c;
+  border-left: 3px solid var(--observer-color);
+  border-radius: 9px 13px 11px 8px;
+  background:
+    repeating-linear-gradient(
+      2deg,
+      transparent 0 7px,
+      #32190c18 8px,
+      transparent 9px 16px
+    ),
+    linear-gradient(180deg, #986432, #764a2b 49%, #6d4228 51%, #895632);
+  box-shadow:
+    inset 0 1px 0 #edc58b66,
+    inset 0 0 0 2px #30190c2e,
+    0 4px 9px #052e3b55;
+  color: #fff3d4;
+}
+.pr-player-rail .pr-observer-story {
+  display: flow-root;
+  min-height: 0;
+  padding: 12px 12px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.pr-player-rail .pr-observer-art {
+  float: right;
+  width: 44px;
+  height: 48px;
+  margin: 0 0 5px 8px;
+}
+.pr-player-rail .pr-observer-kicker {
+  gap: 5px;
+  font-size: 11px;
+}
+.pr-player-rail .pr-observer-kicker > b {
+  color: #ffedbf;
+}
+.pr-player-rail .pr-observer-kicker > span {
+  background: #4a2d1db3;
+  border-color: #d7ab62;
+  color: #ffe3a0;
+  padding: 2px 6px;
+  font-size: 9px;
+  box-shadow: none;
+}
+.pr-player-rail .pr-observer-kicker > small {
+  color: #eed6af;
+}
+.pr-world .pr-player-rail .pr-observer h3 {
+  color: #fff3d4;
+  font-size: 14px;
+  margin: 7px 0 4px;
+  overflow-wrap: anywhere;
+}
+.pr-player-rail .pr-observer-copy p {
+  color: #f4dfbd;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.pr-player-rail .pr-observer-changes {
+  gap: 4px;
+  margin-top: 6px;
+}
+.pr-player-rail .pr-observer-changes > span {
+  background: #422919b3;
+  border-color: #ca9b5666;
+  color: #ffedbb;
+  padding: 1px 4px;
+  font-size: 11px;
+}
+.pr-player-rail .pr-observer-changes i {
+  width: 22px;
+  height: 24px;
+}
+.pr-player-rail .pr-observer-changes small {
+  display: none;
+}
+.pr-player-rail .pr-observer-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+  padding: 9px;
+  flex-shrink: 0;
+  border-top-color: #f1cf8833;
+  background: #41281833;
+}
+.pr-player-rail .pr-observer-controls button,
+.pr-player-rail .pr-observer-controls select {
+  min-width: 0;
+  padding: 6px;
+  border-color: #c99b6077;
+  background: #4f3221;
+  color: #fff0c7;
+  font-size: 11px;
+  box-shadow: inset 0 1px 0 #e2b57322;
+}
+.pr-player-rail .pr-observer-controls button[aria-pressed='true'] {
+  background: #d7b36b;
+  color: #3b2a1d;
+  border-color: #f1d89e;
+}
+.pr-player-rail .pr-observer-controls label {
+  display: block;
+  margin: 0;
+  font-size: 0;
+}
+.pr-player-rail .pr-observer-controls select {
+  width: 100%;
+  max-width: none;
+}
+.pr-player-rail .pr-observer-controls option {
+  background: #4f3221;
+  color: #fff0c7;
+}
+.pr-player-rail .pr-observer-idle {
+  padding: 11px 12px 9px;
+  font-size: 11px;
+  color: #ffedc5;
+}
+.pr-player-rail .pr-observer-held {
+  flex-shrink: 0;
+  color: #f8e2b6;
+  padding: 5px 10px;
+}
+.pr-player-rail .pr-observer-progress {
+  flex-shrink: 0;
+  background: #39251b;
+}
+.pr-player-rail .pr-observer-progress > span {
+  background: #edcc7c;
+}
+
+@media (min-width: 761px) {
+  .pr-player-rail {
+    grid-area: rail;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    min-width: 0;
+    min-height: 0;
+  }
+  .pr-player-rail:has(.pr-observer) {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+  .pr-player-rail .pr-players {
+    grid-area: auto;
+    gap: 6px;
+    padding: 3px 3px 4px;
+  }
+  .pr-player-rail .pr-players > button {
+    flex: 0 0 auto;
+    min-height: 62px;
+    padding: 7px 12px;
+    row-gap: 2px;
+  }
+  .pr-player-rail .pr-observer {
+    align-self: start;
+    margin: 0;
+  }
+  .pr-player-rail .pr-action-launcher {
+    grid-area: auto;
+  }
+  .pr-map.has-playback .pr-zoom {
+    top: auto;
+    bottom: 16px;
+  }
+}
+@media (min-width: 761px) and (max-height: 750px) {
+  .pr-player-rail {
+    gap: 8px;
+  }
+  .pr-player-rail .pr-players {
+    gap: 5px;
+  }
+  .pr-player-rail .pr-players > button {
+    min-height: 44px;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    column-gap: 7px;
+    padding: 6px 9px;
+  }
+  .pr-player-rail .pr-avatar {
+    width: 24px;
+    height: 24px;
+    grid-row: auto;
+    font-size: 10px;
+  }
+  .pr-player-rail .pr-player-name {
+    grid-column: 2;
+    align-self: center;
+  }
+  .pr-player-rail .pr-player-name strong {
+    font-size: 12px;
+  }
+  .pr-player-rail .pr-player-name small {
+    display: none;
+  }
+  .pr-player-rail .pr-player-values {
+    grid-column: 3;
+    align-self: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .pr-player-rail .pr-player-values .pr-value {
+    font-size: 11px;
+  }
+  .pr-player-rail .pr-observer-story {
+    padding: 9px 10px 5px;
+  }
+  .pr-world .pr-player-rail .pr-observer h3 {
+    font-size: 13px;
+  }
+}
+@media (min-width: 761px) and (max-height: 650px) {
+  .pr-player-rail .pr-action-fab {
+    width: 62px;
+    height: 62px;
+  }
+  .pr-player-rail .pr-action-fab svg {
+    width: 28px;
+    height: 22px;
+  }
+  .pr-player-rail .pr-observer-art {
+    width: 34px;
+    height: 38px;
+  }
+  .pr-player-rail .pr-observer-controls {
+    gap: 4px;
+    padding: 6px;
+  }
+  .pr-player-rail .pr-observer-controls button,
+  .pr-player-rail .pr-observer-controls select {
+    padding: 4px;
+    font-size: 10px;
+  }
+}
+@media (min-width: 761px) and (max-height: 550px) {
+  .pr-player-rail {
+    gap: 6px;
+  }
+  .pr-player-rail .pr-players {
+    gap: 3px;
+  }
+  .pr-player-rail .pr-players > button {
+    min-height: 34px;
+    padding: 2px 8px;
+  }
+  .pr-player-rail .pr-action-fab {
+    width: 54px;
+    height: 54px;
   }
 }
