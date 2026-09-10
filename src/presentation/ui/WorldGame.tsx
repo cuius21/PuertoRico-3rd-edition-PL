@@ -292,7 +292,7 @@ export function WorldGame({
     ...(scene.corsair ? ['corsair' as const] : []),
   ];
   return (
-    <main className="pr-world">
+    <main className={'pr-world' + (playback ? ' pr-world--playback' : '')}>
       <header className="pr-header">
         <div className="pr-brand">
           <span className="pr-brand-mark">PR</span>
@@ -349,7 +349,12 @@ export function WorldGame({
         {scene.players.map((p, i) => (
           <button
             key={p.id}
-            className={p.current ? 'is-current' : ''}
+            className={
+              (beat ? p.id === beat.actorId : p.current) ? 'is-current' : ''
+            }
+            aria-current={
+              (beat ? p.id === beat.actorId : p.current) ? 'true' : undefined
+            }
             style={{ '--player-color': p.color } as CSSProperties}
             onClick={() => {
               choose({ key: p.id, area: 'island', playerId: p.id });
@@ -381,9 +386,11 @@ export function WorldGame({
                   title="Pracownicy oczekujący na wyspie"
                 >
                   👤 {p.pending + p.pendingNobles + p.held + p.heldNobles}
-                  {p.pending + p.pendingNobles > 0
-                    ? ' do przydziału'
-                    : ' w rezerwie'}
+                  <span className="pr-worker-caption">
+                    {p.pending + p.pendingNobles > 0
+                      ? ' do przydziału'
+                      : ' w rezerwie'}
+                  </span>
                 </small>
               )}
             </span>
@@ -419,6 +426,7 @@ export function WorldGame({
           </div>
           <WorldViewport
             playback={playback}
+            keyboardEnabled={!selected && !showActions && !showLog}
             scene={scene}
             onPick={choose}
             motion={motion}
@@ -435,7 +443,10 @@ export function WorldGame({
               Juan i wybierz surowiec
             </button>
           )}
-          <div className="pr-live" aria-live="polite">
+          <div
+            className={'pr-live' + (notice ? ' has-notice' : '')}
+            aria-live="polite"
+          >
             {notice ? (
               <strong>{notice}</strong>
             ) : feed ? (

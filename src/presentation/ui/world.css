@@ -2147,3 +2147,415 @@
     display: none;
   }
 }
+
+/* Wooden player plaques and a desktop board that fits the viewport. */
+.pr-players > button {
+  border: 2px solid #6d4227;
+  border-top-color: #bd8c51;
+  border-bottom: 4px solid #42271c;
+  border-radius: 9px 13px 11px 8px;
+  background:
+    radial-gradient(ellipse at 18% 20%, #efc8841c, transparent 50%),
+    repeating-linear-gradient(
+      2deg,
+      transparent 0 7px,
+      #32190c18 8px,
+      transparent 9px 16px
+    ),
+    linear-gradient(180deg, #986432, #764a2b 49%, #6d4228 51%, #895632);
+  box-shadow:
+    inset 0 1px 0 #edc58b66,
+    inset 0 0 0 2px #30190c2e,
+    0 4px 9px #052e3b55;
+  color: #fff3d4;
+}
+.pr-players > button::before,
+.pr-players > button::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #3c2920;
+  box-shadow: 0 1px 0 #e0ad6966;
+  pointer-events: none;
+}
+.pr-players > button::before {
+  left: 6px;
+}
+.pr-players > button::after {
+  right: 6px;
+}
+.pr-players > button.is-current {
+  border-color: #f4d27d;
+  border-bottom-color: #bc8b43;
+  background:
+    repeating-linear-gradient(
+      2deg,
+      transparent 0 7px,
+      #32190c18 8px,
+      transparent 9px 16px
+    ),
+    linear-gradient(180deg, #ac7b40, #85582f 49%, #7b4e2a 51%, #9c6a37);
+  box-shadow:
+    inset 0 1px 0 #ffe5a9,
+    0 0 0 2px #f4d27d30,
+    0 5px 14px #032d3a55;
+}
+.pr-players .pr-avatar {
+  border: 2px solid #fff1ca99;
+  box-shadow: 0 2px 5px #311c1370;
+}
+.pr-player-name small,
+.pr-player-values small {
+  color: #edd6af;
+}
+.pr-player-values b {
+  color: #ffe3a1;
+}
+
+@media (min-width: 761px) {
+  .pr-world {
+    height: 100dvh;
+    min-height: 0;
+    padding: 10px 14px 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(198px, 18vw, 264px);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'header header'
+      'error error'
+      'map players'
+      'commands launcher';
+    column-gap: 14px;
+    row-gap: 8px;
+    overflow: hidden;
+  }
+  .pr-header {
+    grid-area: header;
+    min-height: 58px;
+    margin: 0;
+    gap: 18px;
+  }
+  .pr-world > .pr-error {
+    grid-area: error;
+    margin: 0;
+  }
+  .pr-header .pr-brand {
+    min-width: 0;
+  }
+  .pr-header .pr-tools {
+    max-width: none;
+  }
+  .pr-layout {
+    grid-area: map;
+    min-height: 0;
+    min-width: 0;
+  }
+  .pr-explore {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .pr-map {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+  .pr-map-nav {
+    padding: 8px 10px 0;
+    flex-shrink: 0;
+  }
+  .pr-map-caption {
+    left: 14px;
+    top: 12px;
+  }
+  .pr-destinations {
+    flex-shrink: 0;
+    padding: 4px 6px;
+    gap: 2px;
+  }
+  .pr-destinations button {
+    padding: 7px 5px;
+  }
+  .pr-live {
+    flex-shrink: 0;
+    margin: 0 10px 8px;
+  }
+  .pr-world--playback .pr-live:not(.has-notice) {
+    display: none;
+  }
+  .pr-next-step {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    margin: 0 10px 6px;
+    width: calc(100% - 20px);
+    font-size: 11px;
+  }
+  .pr-next-step > span {
+    font-size: 17px;
+  }
+  .pr-players {
+    grid-area: players;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    min-height: 0;
+    gap: 10px;
+    margin: 0;
+    padding: 3px 3px 6px;
+    overflow: visible;
+  }
+  .pr-players > button {
+    flex: 0 1 90px;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 9px;
+    row-gap: 4px;
+    padding: 10px 12px;
+  }
+  .pr-players .pr-avatar {
+    grid-row: 1 / 3;
+  }
+  .pr-player-name {
+    grid-column: 2;
+    align-self: end;
+  }
+  .pr-player-name strong {
+    font-size: 14px;
+  }
+  .pr-player-name small {
+    display: block;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  .pr-player-values {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    align-self: start;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0;
+    text-align: left;
+  }
+  .pr-player-values small {
+    font-size: 11px;
+  }
+  .pr-player-values .pr-player-workers {
+    flex-basis: 100%;
+    font-size: 9px;
+    line-height: 1.1;
+  }
+  .pr-commandbar {
+    grid-area: commands;
+    min-width: 0;
+    min-height: 0;
+    align-self: stretch;
+    margin: 0;
+    padding: 10px 14px;
+    gap: 18px;
+  }
+  .pr-commandbar h2 {
+    font-size: 18px;
+  }
+  .pr-commandbar .pr-intro {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .pr-commandbar .pr-actions {
+    max-height: 76px;
+    grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+  }
+  .pr-commandbar .pr-action {
+    padding: 8px 10px;
+  }
+  .pr-action-launcher {
+    grid-area: launcher;
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+    align-self: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .pr-action-context {
+    max-width: 112px;
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+  .pr-world .pr-action-fab {
+    width: 76px;
+    height: 76px;
+    flex-shrink: 0;
+    padding: 7px;
+  }
+  .pr-action-fab svg {
+    width: 34px;
+    height: 26px;
+  }
+  .pr-action-fab strong {
+    font-size: 12px;
+  }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .pr-world {
+    padding: 8px 10px 10px;
+    column-gap: 10px;
+  }
+  .pr-header {
+    gap: 12px;
+  }
+  .pr-header .pr-turn {
+    min-width: 150px;
+  }
+  .pr-header .pr-tools {
+    max-width: 280px;
+    gap: 4px;
+  }
+  .pr-tools button {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  .pr-brand h1 {
+    font-size: 25px;
+  }
+  .pr-brand div > span {
+    letter-spacing: 1px;
+    font-size: 8px;
+  }
+  .pr-players > button {
+    padding: 9px;
+    column-gap: 6px;
+  }
+  .pr-commandbar {
+    gap: 12px;
+  }
+  .pr-observer {
+    left: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+  }
+  .pr-observer-story {
+    padding: 10px 12px 6px;
+    gap: 8px;
+  }
+  .pr-observer-art {
+    width: 48px;
+    height: 54px;
+  }
+  .pr-world .pr-observer h3 {
+    font-size: 14px;
+  }
+  .pr-observer-controls {
+    gap: 5px;
+    padding: 7px;
+  }
+  .pr-observer-controls button,
+  .pr-observer-controls select {
+    font-size: 10px;
+    padding: 5px 6px;
+  }
+  .pr-map.has-playback .pr-zoom {
+    top: 54px;
+    bottom: auto;
+    right: 12px;
+  }
+  .pr-map-caption small {
+    max-width: 245px;
+    font-size: 9px;
+  }
+}
+@media (min-width: 761px) and (max-height: 650px) {
+  .pr-header {
+    min-height: 48px;
+  }
+  .pr-brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+  .pr-players {
+    gap: 7px;
+  }
+  .pr-players > button {
+    flex-basis: 76px;
+    padding: 6px 10px;
+    row-gap: 2px;
+  }
+  .pr-player-name strong {
+    font-size: 12px;
+  }
+  .pr-player-name small {
+    font-size: 9px;
+  }
+  .pr-player-values {
+    gap: 6px;
+  }
+  .pr-observer-story {
+    padding: 8px 12px 4px;
+  }
+  .pr-observer-art {
+    width: 42px;
+    height: 46px;
+  }
+  .pr-observer-copy p {
+    line-height: 1.3;
+    font-size: 11px;
+  }
+  .pr-observer-changes {
+    margin-top: 4px;
+  }
+}
+
+@media (min-width: 761px) {
+  .pr-player-values .pr-player-workers {
+    flex-basis: auto;
+  }
+  .pr-worker-caption {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .pr-players > button {
+    flex: 0 0 224px;
+    min-width: 224px;
+    display: grid;
+    grid-template-columns: 29px minmax(0, 1fr);
+    gap: 4px 9px;
+    padding: 10px 12px;
+  }
+  .pr-players .pr-avatar {
+    grid-row: 1 / 3;
+  }
+  .pr-player-name {
+    grid-column: 2;
+  }
+  .pr-player-name small {
+    display: block;
+  }
+  .pr-player-values {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    margin: 0;
+    text-align: left;
+  }
+  .pr-player-workers {
+    flex-basis: 100%;
+  }
+}
+
+@media (min-width: 761px) and (max-height: 550px) {
+  .pr-player-name small {
+    display: none;
+  }
+}

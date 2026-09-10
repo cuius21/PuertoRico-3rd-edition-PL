@@ -7,6 +7,7 @@ import type { EntityRef, SceneSnapshot } from '../adapter/sceneTypes';
 
 interface Props {
   playback?: ActionPlayback | undefined;
+  keyboardEnabled: boolean;
   scene: SceneSnapshot;
   onPick: (ref: EntityRef) => void;
   motion: boolean;
@@ -35,6 +36,7 @@ export function WorldViewport(props: Props) {
       .init(host.current!)
       .then(() => {
         if (!active) return;
+        world.setKeyboardEnabled(latest.current.keyboardEnabled);
         world.setMotion(latest.current.motion);
         world.setPlayback(latest.current.playback?.controller ?? null);
         world.update(latest.current.scene);
@@ -60,7 +62,11 @@ export function WorldViewport(props: Props) {
     };
   }, []);
   useEffect(() => {
-    if (props.playback?.state.beat && props.playback.state.follow)
+    if (
+      props.playback?.state.beat &&
+      props.playback.state.follow &&
+      matchMedia('(max-width: 760px)').matches
+    )
       host.current?.parentElement?.scrollIntoView({
         block: 'center',
         behavior: props.motion ? 'smooth' : 'auto',
@@ -84,6 +90,9 @@ export function WorldViewport(props: Props) {
   useEffect(() => {
     renderer.current?.focus(props.focus.id);
   }, [props.focus]);
+  useEffect(() => {
+    renderer.current?.setKeyboardEnabled(props.keyboardEnabled);
+  }, [props.keyboardEnabled]);
   return (
     <div
       className={'pr-map' + (props.playback ? ' has-playback' : '')}
@@ -97,7 +106,7 @@ export function WorldViewport(props: Props) {
       )}
       <div className="pr-map-caption">
         <span>ARCHIPELAG PUERTO RICO</span>
-        <small>Przeciągnij, aby odkrywać · przewiń, aby przybliżyć</small>
+        <small>W A S D lub przeciąganie · kółko myszy: przybliżenie</small>
       </div>
       <div
         className="pr-weather-badge"

@@ -99,3 +99,10 @@ Domyślne tempo to około 3–4 sekundy na etap, 1,8 sekundy na pas i 5 sekund n
 Walidacja: TypeScript i 456 testów w 42 plikach. Nowe testy obejmują budowę i jej koszt, osobną produkcję wszystkich wysp, nowych i ponownie rozmieszczanych pracowników, dokładny cel przydziału, załadunek przed odpłynięciem, pauzę, szczegóły, ukrytą kartę, wolne ładowanie mapy i tempo. Pełna deterministyczna partia z pokazem daje identyczny stan końcowy oraz liczbę wywołań RNG jak partia bez niego. Ze 139 poprzednio kontrolowanych plików zmieniony został wyłącznie useGameRunner w zakresie sterowania prezentacją; pozostałe 138 pozostaje identyczne.
 
 To podstawa późniejszego samouczka: etapy mają gracza, rolę, obiekty, opis i bilans. Obecny pokaz opisuje wykonane ruchy; dydaktyczne dymki, cele lekcji i ćwiczenia pozostają na osobny etap. Protokół LAN i zdalny harmonogram nie były rozszerzane.
+
+
+### Układ ekranu i nawigacja klawiaturą
+
+Powyżej 760 px szerokości gra mieści się w 100dvh: mapa w elastycznej lewej kolumnie, drewniane tabliczki graczy po prawej, pod nimi przycisk Akcje. Listy ruchów i zawartość okien przewijają się niezależnie. Na telefonie pozostaje przewijany widok. Tabliczka wskazuje gracza oglądanego ruchu.
+
+WASD przesuwa kamerę płynnie przy przytrzymaniu (W do góry, S w dół, A w lewo, D w prawo), niezależnie od dekoracyjnych animacji. Ruch jest normalizowany po przekątnej i względem powiększenia. Skróty nie działają w oknach szczegółów, historii ani polach edycji; utrata fokusu czy ukrycie karty czyści przytrzymane klawisze. Sterowanie nie korzysta z logiki gry ani RNG.

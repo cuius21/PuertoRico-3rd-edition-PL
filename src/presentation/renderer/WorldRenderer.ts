@@ -39,6 +39,7 @@ import { WeatherLayer } from './WeatherLayer';
 import { ActionVisuals, cuePoint } from './ActionVisuals';
 import type { PlaybackQueue } from '../playback/PlaybackQueue';
 import type { WeatherKind } from './weather';
+import { KeyboardPan } from '../interaction/KeyboardPan';
 import { TRADE_PRICES } from '../adapter/tradePrices';
 import type {
   EntityRef,
@@ -112,6 +113,8 @@ export class WorldRenderer {
   >();
   private highlights = new Map<string, Graphics[]>();
   private snapshot: SceneSnapshot | null = null;
+  private keyboard: KeyboardPan | null = null;
+  private keyboardEnabled = true;
   private camera = { x: 0, y: 0, zoom: 1 };
   private focusId = 'central';
   private manuallyMoved = false;
@@ -154,7 +157,7 @@ export class WorldRenderer {
     host.appendChild(this.app.canvas);
     this.app.canvas.setAttribute(
       'aria-label',
-      'Izometryczny archipelag Puerto Rico. Przeciągnij mapę lub użyj przycisków nawigacji.',
+      'Izometryczny archipelag Puerto Rico. Przesuwaj mapę klawiszami W, A, S, D, przeciąganiem lub przyciskami nawigacji.',
     );
     this.app.canvas.setAttribute('role', 'img');
     this.app.ticker.maxFPS = 30;
@@ -1233,6 +1236,10 @@ export class WorldRenderer {
     };
     if (instant) this.camera = { ...this.destination };
   }
+  setKeyboardEnabled(enabled: boolean) {
+    this.keyboardEnabled = enabled;
+    if (!enabled) this.keyboard?.clear();
+  }
   zoom(factor: number) {
     if (!this.initialized || this.disposed) return;
     this.zoomAt(factor, {
@@ -1303,6 +1310,7 @@ export class WorldRenderer {
       actionFrame?.progress ?? 0,
       this.motion,
     );
+    this.keyboard?.update(dt);
     const factor = this.motion ? Math.min(1, dt * (actionBeat ? 4 : 7)) : 1;
     for (const k of ['x', 'y', 'zoom'] as const)
       this.camera[k] += (this.destination[k] - this.camera[k]) * factor;
@@ -1441,6 +1449,17 @@ export class WorldRenderer {
   }
   private bindInput() {
     const canvas = this.app.canvas;
+    this.keyboard = new KeyboardPan(
+      canvas.ownerDocument,
+      () => this.keyboardEnabled,
+      (x, y) => {
+        this.manuallyMoved = true;
+        this.camera.x += x / this.camera.zoom;
+        this.camera.y += y / this.camera.zoom;
+        this.destination = { ...this.camera };
+      },
+    );
+    this.removers.push(() => this.keyboard?.destroy());
     const on = <K extends keyof HTMLElementEventMap>(
       name: K,
       fn: (e: HTMLElementEventMap[K]) => void,
