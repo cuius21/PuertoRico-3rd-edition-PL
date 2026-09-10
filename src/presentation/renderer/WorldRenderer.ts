@@ -35,6 +35,9 @@ import {
 import { idleFormation, waitingWorkforce } from '../iso/workforce';
 import { walkAt, swayAt, bobAt } from './ambient';
 import { ShipVoyages, voyageFrame } from './shipVoyages';
+import { WeatherLayer } from './WeatherLayer';
+import type { WeatherKind } from './weather';
+import { TRADE_PRICES } from '../adapter/tradePrices';
 import type {
   EntityRef,
   SceneSnapshot,
@@ -70,6 +73,8 @@ export class WorldRenderer {
   private terrain = new Container();
   private playerObjects = new Map<string, Container>();
   private waves = new Graphics();
+  private weather = new WeatherLayer();
+  private weatherKind: WeatherKind = 'clear';
   private textures = new Map<string, Texture>();
   private wind: WindItem[] = [];
   private voyages = new ShipVoyages();
@@ -120,7 +125,10 @@ export class WorldRenderer {
   private selected: string | null = null;
   private renderSignature = '';
   private onPick: (ref: EntityRef) => void;
-  constructor(onPick: (ref: EntityRef) => void) {
+  constructor(
+    onPick: (ref: EntityRef) => void,
+    private onWeather?: (kind: WeatherKind) => void,
+  ) {
     this.onPick = onPick;
   }
 
@@ -206,7 +214,7 @@ export class WorldRenderer {
         }
     }
     this.world.addChild(this.terrain);
-    this.app.stage.addChild(this.waves, this.world);
+    this.app.stage.addChild(this.waves, this.world, this.weather.view);
     this.bindInput();
     this.observer = new ResizeObserver(() => {
       this.app.resize();
@@ -687,59 +695,72 @@ export class WorldRenderer {
     root.position.set(p.x, p.y);
     root.zIndex = p.y;
     const wood = new Graphics()
-      .ellipse(0, 4, 57, 12)
+      .ellipse(0, 15, 72, 12)
       .fill({ color: 0x345334, alpha: 0.2 })
-      .roundRect(-44, -57, 9, 62, 2)
+      .roundRect(-70, -66, 9, 84, 2)
       .fill(0x745031)
-      .roundRect(35, -57, 9, 62, 2)
+      .roundRect(61, -66, 9, 84, 2)
       .fill(0x745031)
-      .roundRect(-76, -112, 152, 62, 6)
+      .roundRect(-112, -128, 224, 99, 6)
       .fill(0x805630)
-      .roundRect(-72, -108, 144, 54, 4)
+      .roundRect(-108, -124, 216, 91, 4)
       .fill(0xb6844d)
       .stroke({ color: 0xe0b978, width: 2 });
-    for (const y of [-91, -73])
+    for (const y of [-100, -77, -54])
       wood
-        .moveTo(-70, y)
-        .lineTo(70, y)
-        .stroke({ color: 0x81552f, width: 1, alpha: 0.45 });
-    for (const x of [-63, 63])
-      for (const y of [-100, -62]) wood.circle(x, y, 2).fill(0x63472b);
-    root.addChild(wood, this.label('TARGOWISKO', 0, -97, 16, 0xffefc3));
-    const occupied = s.trade.filter(Boolean).length;
+        .moveTo(-106, y)
+        .lineTo(106, y)
+        .stroke({ color: 0x81552f, width: 1, alpha: 0.4 });
+    root.addChild(wood, this.label('TARGOWISKO', 0, -121, 16, 0xffefc3));
+    TRADE_PRICES.forEach(({ good, coins }, i) => {
+      const x = (i - 2) * 43;
+      const icon = this.sprite(good, 35, 35);
+      icon.position.set(x, -65);
+      const coin = new Graphics()
+        .circle(x - 9, -47, 6)
+        .fill(0xf5cd65)
+        .stroke({ color: 0x8d602b, width: 1 })
+        .circle(x - 9, -47, 3.8)
+        .stroke({ color: 0xbc8831, width: 1 });
+      root.addChild(
+        icon,
+        coin,
+        this.label(String(coins), x + 7, -58, 19, 0xffedbf),
+      );
+    });
     root.addChild(
       this.label(
-        occupied + ' / ' + s.trade.length + ' zajęte',
+        s.trade.filter(Boolean).length + ' / ' + s.trade.length + ' zajęte',
         0,
-        -77,
+        -24,
         12,
         0xffe4ac,
       ),
     );
     const crates = new Graphics();
     s.trade.forEach((good, i) => {
-      const x = -45 + i * 30;
+      const x = (i - 1.5) * 30;
       crates
-        .roundRect(x - 11, -28, 22, 20, 3)
+        .roundRect(x - 11, -5, 22, 20, 3)
         .fill(good ? (GOOD_COLOR[good] ?? 0xc6a57a) : 0x9c8854)
         .stroke({ color: good ? 0xf5dfac : 0xd3c48a, width: 1.5 });
       if (!good)
         crates
-          .moveTo(x - 6, -23)
-          .lineTo(x + 6, -13)
+          .moveTo(x - 6, 0)
+          .lineTo(x + 6, 10)
           .stroke({ color: 0xcdbb83, width: 1 });
     });
     root.addChild(crates);
     if (s.legalTargets.includes('trade'))
       root.addChild(
         new Graphics()
-          .ellipse(0, 5, 70, 15)
+          .ellipse(0, 17, 81, 13)
           .stroke({ color: 0xffdd88, width: 2.5 }),
       );
     this.interactive(
       root,
       { key: 'trade', area: 'trade' },
-      new Rectangle(-78, -114, 156, 125),
+      new Rectangle(-114, -130, 228, 151),
     );
     parent.addChild(root);
   }
@@ -822,7 +843,7 @@ export class WorldRenderer {
     const label = this.label('', 0, 0, 13, 0xffebbd);
     caption.addChild(
       new Graphics()
-        .roundRect(-70, -4, 140, 42, 12)
+        .roundRect(-70, -4, 140, 61, 12)
         .fill({ color: 0x154b4f, alpha: 0.94 })
         .stroke({ color: 0xd8c88f, width: 0.8, alpha: 0.5 }),
       label,
@@ -830,8 +851,19 @@ export class WorldRenderer {
     this.interactive(
       caption,
       { key: 'ship:' + index, area: 'port', shipIndex: index },
-      new Rectangle(-70, -4, 140, 42),
+      new Rectangle(-70, -4, 140, 61),
     );
+    const star = new Graphics()
+      .poly(
+        Array.from({ length: 10 }, (_, n) => {
+          const angle = -Math.PI / 2 + (n * Math.PI) / 5,
+            radius = n % 2 ? 2.8 : 6;
+          return [35 + Math.cos(angle) * radius, 46 + Math.sin(angle) * radius];
+        }).flat(),
+      )
+      .fill(0xf6d87d)
+      .stroke({ color: 0xa67b38, width: 0.6 });
+    caption.addChild(this.label('1 towar = 1', -9, 39, 11, 0xf7e4b0), star);
     parent.addChild(wake, boat, caption);
     this.shipViews.set(index, { boat, cargo, wake, label, x, y, cargoKey: '' });
   }
@@ -1215,7 +1247,7 @@ export class WorldRenderer {
   }
   private animate(dt: number) {
     if (this.disposed) return;
-    this.elapsed += this.motion ? dt : 0;
+    this.elapsed += this.motion && !document.hidden ? dt : 0;
     const t = this.elapsed;
     const factor = this.motion ? Math.min(1, dt * 7) : 1;
     for (const k of ['x', 'y', 'zoom'] as const)
@@ -1224,6 +1256,11 @@ export class WorldRenderer {
     this.waves.clear();
     const width = this.app.screen.width,
       height = this.app.screen.height;
+    const climate = this.weather.render(width, height, t, this.motion);
+    if (climate.kind !== this.weatherKind) {
+      this.weatherKind = climate.kind;
+      this.onWeather?.(climate.kind);
+    }
     for (let row = 0; row < Math.ceil(height / 75) + 1; row++)
       for (let col = 0; col < Math.ceil(width / 170) + 2; col++) {
         const x = col * 170 + (row % 2) * 60 + ((t * 11) % 170) - 120,
@@ -1239,7 +1276,9 @@ export class WorldRenderer {
       }
     for (const item of this.wind) {
       if (item.kind === 'tree')
-        item.sprite.rotation = this.motion ? swayAt(t, item.phase) : 0;
+        item.sprite.rotation = this.motion
+          ? swayAt(t, item.phase) * (1 + climate.wind * 0.5)
+          : 0;
       else {
         item.sprite.y = item.baseY + (this.motion ? bobAt(t, item.phase).y : 0);
         item.sprite.rotation = this.motion ? bobAt(t, item.phase).rotation : 0;

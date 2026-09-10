@@ -23,7 +23,7 @@ export const CENTRAL_OUTLINE: Point[] = [
 ].map(([x, y]) => ({ x: x!, y: y! }));
 export const CENTRAL_PLACES = {
   market: { x: 220, y: -20, size: 200 },
-  trade: { x: 245, y: 170, size: 140 },
+  trade: { x: 260, y: 188, size: 140 },
   magistrate: { x: -225, y: -35, size: 145 },
   plantations: { x: -245, y: 165, size: 120 },
   festival: { x: 65, y: 215, size: 140 },

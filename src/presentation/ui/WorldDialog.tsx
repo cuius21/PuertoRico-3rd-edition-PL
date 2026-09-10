@@ -6,8 +6,12 @@ export function WorldDialog({
   onClose,
   children,
   onBack,
+  id: dialogId,
+  className,
 }: {
   title: string;
+  id?: string;
+  className?: string;
   eyebrow?: string;
   onClose: () => void;
   children: ReactNode;
@@ -19,8 +23,13 @@ export function WorldDialog({
   const id = useId();
   useEffect(() => {
     const dialog = ref.current!;
+    const returnFocus = document.activeElement;
     dialog.showModal();
-    return () => dialog.close();
+    return () => {
+      dialog.close();
+      if (returnFocus instanceof HTMLElement && returnFocus.isConnected)
+        returnFocus.focus({ preventScroll: true });
+    };
   }, []);
   useEffect(() => {
     ref.current?.querySelector('.pr-dialog-body')?.scrollTo(0, 0);
@@ -30,7 +39,8 @@ export function WorldDialog({
   }, [title]);
   return (
     <dialog
-      className="pr-dialog"
+      id={dialogId}
+      className={'pr-dialog' + (className ? ' ' + className : '')}
       ref={ref}
       aria-labelledby={id}
       onCancel={(e) => {
@@ -55,7 +65,7 @@ export function WorldDialog({
           <span className="pr-eyebrow">{eyebrow}</span>
           <h2 id={id}>{title}</h2>
         </div>
-        <button autoFocus onClick={onClose} aria-label="Zamknij szczegóły">
+        <button onClick={onClose} aria-label="Zamknij szczegóły">
           ×
         </button>
       </header>

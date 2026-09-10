@@ -68,3 +68,13 @@ ShipVoyages przechowuje wyłącznie historię wizualnych przejść statków i dz
 Adapter kopiuje również ostatni publiczny załadunek z lokalnego actionLog, aby pokazać przypadek napełnienia i opróżnienia statku w jednej akcji. Przejścia pełny/pusty działają także bez tej wskazówki. Wczytanie gry nie odtwarza historycznych rejsów.
 
 Walidacja obejmuje rzeczywiste akcje silnika: pełny i częściowy załadunek, natychmiastowy rozładunek, oczekiwanie na koniec fazy, powrót, kolejne ruchy podczas rejsu, wyłączone animacje i osobne targowisko. Sprawdzono katalog z dodatkami, zniżki i zakup, flagi pięciu graczy oraz układ mobilny. Silnik, boty, zapis i backend pozostają bez zmian.
+
+## Ceny, pogoda i okno Akcje — 10 września 2026
+
+Targowisko pokazuje bazowe ceny sprzedaży nad czterema miejscami: kukurydza 0, indygo 1, cukier 2, tytoń 3, kawa 4 monety. Ta sama legenda jest na drewnianej tabliczce oraz w popupie. adapter/tradePrices.ts pobiera wartości z GOOD_PRICES silnika; premie Kupca i budynków nadal wylicza dotychczasowa logika. W porcie etykiety statków i popup wyjaśniają: jedno miejsce mieści jeden towar, a każdy załadowany towar daje bazowo jeden punkt zwycięstwa (gwiazdka), nie monetę.
+
+Stały, okrągły przycisk „Akcje” w prawym dolnym rogu zastępuje karty w nagłówku. Otwiera modal z trzema kolumnami kart na komputerze i dwiema na telefonie. Wybór aktualnej legalnej roli zamyka okno; aktywna karta pozostaje złota. Pytajnik otwiera opis w tym samym oknie, z powrotem do listy. Przy Burmistrzu także przycisk pokazuje liczbę osób do przydzielenia przez bieżącego gracza. Wyjście z modalu przywraca fokus elementowi, który go otworzył.
+
+renderer/weather.ts definiuje niezależny od RNG i stanu gry, czterominutowy cykl słońca, zachmurzenia, deszczu i krótkiej burzy. Zmiany mieszają się przez osiem sekund. WeatherLayer rysuje przesuwające się chmury, przyciemnienie, ukośne krople i kręgi deszczu; burza ma jeden łagodny błysk trwający 1,4 sekundy. Warstwa nie przechwytuje kliknięć, a wiatr zwiększa kołysanie palm. Wszystko używa dotychczasowego zegara renderera do 30 FPS. Wyłączenie „Animacji” usuwa efekty pogody, a ukrycie karty pauzuje jej zegar. Pogoda nie zmienia produkcji, handlu, żeglugi ani decyzji botów.
+
+Kontrola: TypeScript i 443 testy w 41 plikach, w tym ciągłość pogody na granicach cyklu, wyłączenie efektów, brak użycia RNG i pojedynczy szeroki błysk. Scenariusze przeglądarkowe obejmują ceny, modal ról, wybór i podświetlenie, zachmurzenie/deszcz/burzę, klikanie obiektów przez pogodę oraz układ mobilny. Lokalny sterownik czasu do kontroli pogody pozostaje wyłącznie w work/ui-weather i nie trafia do publikacji.

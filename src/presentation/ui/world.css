@@ -1666,3 +1666,275 @@
 .pr-trading-house .pr-art {
   clip-path: inset(0 0 8% 0);
 }
+
+/* Floating role picker, trade prices and decorative weather. */
+.pr-world {
+  padding-bottom: 140px;
+}
+.pr-map {
+  height: calc(100dvh - 285px);
+}
+.pr-action-launcher {
+  position: fixed;
+  right: 26px;
+  bottom: 22px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  pointer-events: none;
+}
+.pr-action-context {
+  max-width: 190px;
+  padding: 6px 12px;
+  border: 1px solid #e7cc8270;
+  border-radius: 20px;
+  background: #153f46ed;
+  color: #fff0bf;
+  box-shadow: 0 3px 14px #062e423d;
+  font-size: 11px;
+  text-align: center;
+}
+.pr-world .pr-action-fab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 94px;
+  height: 94px;
+  padding: 10px;
+  pointer-events: auto;
+  border-radius: 50%;
+  border: 3px solid #e6c475;
+  background: linear-gradient(145deg, #427c6b, #163f46);
+  color: #fff0bf;
+  box-shadow:
+    0 6px 0 #0d343bc9,
+    0 12px 25px #062b4270,
+    inset 0 0 0 3px #75948254;
+}
+.pr-action-fab svg {
+  width: 44px;
+  height: 34px;
+}
+.pr-action-fab strong {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+.pr-world .pr-action-fab.needs-choice {
+  border-color: #ffe39a;
+  box-shadow:
+    0 0 0 5px #f4d47d26,
+    0 0 30px #ffda7155,
+    0 6px 0 #0d343bc9,
+    inset 0 0 0 3px #75948254;
+}
+.pr-world .pr-action-fab:hover {
+  background: linear-gradient(145deg, #55947c, #24544d);
+  box-shadow:
+    0 0 0 5px #ffe19f70,
+    0 10px 25px #062b4270;
+}
+.pr-fab-workers {
+  position: absolute;
+  top: -6px;
+  right: -5px;
+  min-width: 34px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 5px;
+  border-radius: 18px;
+  background: #ffe2a0;
+  border: 2px solid #fff1c9;
+  color: #315344;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px #072e3f4d;
+}
+.pr-fab-workers span {
+  font-size: 12px;
+}
+.pr-dialog--actions {
+  width: min(800px, calc(100vw - 36px));
+}
+.pr-dialog--actions .pr-deck {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  overflow: visible;
+  padding: 4px 3px 10px;
+}
+.pr-dialog--actions .pr-role {
+  min-width: 0;
+}
+.pr-dialog--actions .pr-role-pick {
+  min-height: 142px;
+  padding: 13px 6px 14px;
+}
+.pr-dialog--actions .pr-role-name {
+  font-size: 14px;
+}
+.pr-weather-badge {
+  position: absolute;
+  top: 15px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border: 1px solid #dfebdf36;
+  border-radius: 20px;
+  background: #173e4abc;
+  color: #f4efce;
+  font-size: 11px;
+  pointer-events: none;
+}
+.pr-weather-badge > span {
+  font-size: 18px;
+  line-height: 1;
+  color: #f0d18b;
+}
+.pr-trade-legend {
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #d8c899;
+  border-radius: 13px;
+  background: #f4e9cb;
+}
+.pr-dialog .pr-trade-legend h3 {
+  margin: 0 0 8px;
+  color: #50634b;
+  font-size: 14px;
+}
+.pr-trade-legend h3 small {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  color: #7c8064;
+  font-weight: normal;
+}
+.pr-trade-legend > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.pr-trade-price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px;
+  border-radius: 10px;
+  background: #fff8e77a;
+}
+.pr-trading-house .pr-trade-price .pr-art {
+  width: 65px;
+  height: 65px;
+}
+.pr-trade-price strong {
+  font-size: 12px;
+  color: #45654e;
+}
+.pr-trade-price .pr-value {
+  font-size: 17px;
+  color: #8e6926;
+}
+.pr-shipping-legend {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border: 1px solid #d8c899;
+  border-radius: 13px;
+  background: #f4e9cb;
+}
+.pr-shipping-legend > strong {
+  flex-shrink: 0;
+  font-size: 17px;
+  color: #426851;
+  white-space: nowrap;
+}
+.pr-shipping-legend > span {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #6e795e;
+}
+@media (max-width: 760px) {
+  .pr-world {
+    padding-bottom: 126px;
+  }
+  .pr-map {
+    height: 65dvh;
+    min-height: 460px;
+  }
+  .pr-action-launcher {
+    right: 17px;
+    bottom: 17px;
+    gap: 7px;
+  }
+  .pr-world .pr-action-fab {
+    width: 82px;
+    height: 82px;
+  }
+  .pr-action-fab svg {
+    width: 37px;
+    height: 29px;
+  }
+  .pr-action-fab strong {
+    font-size: 12px;
+  }
+  .pr-action-context {
+    max-width: 155px;
+    font-size: 10px;
+  }
+  .pr-weather-badge {
+    top: 12px;
+    right: 12px;
+    padding: 6px 9px;
+  }
+  .pr-shipping-legend {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 14px;
+  }
+}
+@media (max-width: 560px) {
+  .pr-dialog--actions .pr-deck {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+  .pr-dialog--actions .pr-role-pick {
+    min-height: 134px;
+  }
+  .pr-dialog--actions .pr-role-name {
+    font-size: 12px;
+  }
+  .pr-trade-legend {
+    padding: 12px 8px;
+  }
+  .pr-trade-legend h3 small {
+    display: block;
+    margin: 5px 0 0;
+  }
+  .pr-trade-legend > div {
+    gap: 4px;
+  }
+  .pr-trading-house .pr-trade-price .pr-art {
+    width: 42px;
+    height: 42px;
+  }
+  .pr-trade-price strong {
+    font-size: 9px;
+  }
+  .pr-trade-price .pr-value {
+    font-size: 15px;
+  }
+}

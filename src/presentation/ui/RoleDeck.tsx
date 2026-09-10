@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import type { Action } from '../../../actions/Action';
 import type { GameState } from '../../../state/GameState';
 import { RoleType } from '../../../core/types';
@@ -7,7 +7,6 @@ import { spriteStyle, idleSpriteStyle } from '../assets/registry';
 import { actionKey } from '../interaction/actionBridge';
 import { roleChoice } from '../interaction/roleChoices';
 import { GameValue, ValueText } from './GameValue';
-import { WorldDialog } from './WorldDialog';
 
 const ART: Record<RoleType, string> = {
   [RoleType.Settler]: 'corn',
@@ -24,13 +23,14 @@ export function RoleDeck({
   actions,
   waiting,
   onChoose,
+  onInfo,
 }: {
   state: GameState;
   actions: Action[];
   waiting: boolean;
   onChoose: (key: string) => void;
+  onInfo: (role: RoleType) => void;
 }) {
-  const [info, setInfo] = useState<RoleType | null>(null);
   const current = state.getCurrentPlayer();
   return (
     <>
@@ -66,7 +66,7 @@ export function RoleDeck({
                 onClick={() =>
                   choice && !waiting
                     ? onChoose(actionKey(choice))
-                    : setInfo(card.type)
+                    : onInfo(card.type)
                 }
               >
                 <span
@@ -132,7 +132,7 @@ export function RoleDeck({
                 aria-label={
                   'Opis postaci: ' + meta.label + ' · karta ' + (index + 1)
                 }
-                onClick={() => setInfo(card.type)}
+                onClick={() => onInfo(card.type)}
               >
                 ?
               </button>
@@ -140,31 +140,28 @@ export function RoleDeck({
           );
         })}
       </div>
-      {info && (
-        <WorldDialog
-          title={ROLE_META[info].label}
-          eyebrow="KARTA POSTACI"
-          onClose={() => setInfo(null)}
-        >
-          <div className="pr-role-description">
-            <span
-              className="pr-art pr-art--large"
-              style={spriteStyle(ART[info])}
-              aria-hidden="true"
-            />
-            <div>
-              <h3>Akcja</h3>
-              <p className="pr-intro">
-                <ValueText text={ROLE_DESCRIPTIONS[info].action} />
-              </p>
-              <h3>Przywilej wybierającego</h3>
-              <p className="pr-intro">
-                <ValueText text={ROLE_DESCRIPTIONS[info].privilege} />
-              </p>
-            </div>
-          </div>
-        </WorldDialog>
-      )}
     </>
+  );
+}
+
+export function RoleInfo({ role }: { role: RoleType }) {
+  return (
+    <div className="pr-role-description">
+      <span
+        className="pr-art pr-art--large"
+        style={spriteStyle(ART[role])}
+        aria-hidden="true"
+      />
+      <div>
+        <h3>Akcja</h3>
+        <p className="pr-intro">
+          <ValueText text={ROLE_DESCRIPTIONS[role].action} />
+        </p>
+        <h3>Przywilej wybierającego</h3>
+        <p className="pr-intro">
+          <ValueText text={ROLE_DESCRIPTIONS[role].privilege} />
+        </p>
+      </div>
+    </div>
   );
 }

@@ -7,7 +7,10 @@ import { describeAction } from '../../game/actionLabels';
 import { BUILDING_DESCRIPTIONS } from '../../game/buildingDescriptions';
 import { GameValue, ValueText } from './GameValue';
 import { AmbientAudio } from './AmbientAudio';
-import { RoleDeck } from './RoleDeck';
+import { RoleDeck, RoleInfo } from './RoleDeck';
+import { TradeLegend, ShippingLegend } from './TradeLegend';
+import type { RoleType } from '../../../core/types';
+import { ROLE_META } from '../../components/RoleCardsBar';
 import { WorldDialog } from './WorldDialog';
 import { FestivalBoardPanel } from '../../components/FestivalBoardPanel';
 import { WorldViewport } from './WorldViewport';
@@ -106,6 +109,8 @@ export function WorldGame({
     [showLog, setShowLog] = useState(false),
     [motion, setMotion] = useState(readMotion);
   const [focus, setFocus] = useState({ id: 'central', sequence: 0 });
+  const [showActions, setShowActions] = useState(false);
+  const [roleInfo, setRoleInfo] = useState<RoleType | null>(null);
   const [stale, setStale] = useState('');
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0 });
@@ -197,6 +202,8 @@ export function WorldGame({
     }
     setStale('');
     setSelected(null);
+    setShowActions(false);
+    setRoleInfo(null);
     onAction(live);
   }
   function label(action: Action) {
@@ -293,7 +300,7 @@ export function WorldGame({
                 localStorage.setItem('puerto-ui-motion', next ? 'on' : 'off');
               } catch {}
             }}
-            title="Fale, wiatr i ruch mieszkańców"
+            title="Fale, pogoda, wiatr i ruch mieszkańców"
           >
             {motion ? '≈ Animacje: wł.' : '≈ Animacje: wył.'}
           </button>
@@ -311,14 +318,6 @@ export function WorldGame({
           {error}
         </div>
       )}
-      <div className="pr-role-strip">
-        <RoleDeck
-          state={state}
-          actions={unique}
-          waiting={waiting || !runner.isCurrentPlayerHuman()}
-          onChoose={act}
-        />
-      </div>
       <nav className="pr-players" aria-label="Wyspy graczy">
         {scene.players.map((p, i) => (
           <button
@@ -586,6 +585,7 @@ export function WorldGame({
                   zajętych miejsc
                 </p>
               </div>
+              <TradeLegend />
               <div
                 className="pr-trade"
                 aria-label="Towary na targowisku"
@@ -693,29 +693,32 @@ export function WorldGame({
             </div>
           )}
           {selected?.area === 'port' && (
-            <div className="pr-harbour">
-              {scene.ships.map((s, i) => (
-                <button
-                  className={selected.key === 'ship:' + i ? 'is-active' : ''}
-                  key={i}
-                  onClick={() =>
-                    choose({ key: 'ship:' + i, area: 'port', shipIndex: i })
-                  }
-                >
-                  <Art id="ship" />
-                  <span>
-                    <strong>Statek {i + 1}</strong>
-                    <small>
-                      {s.good ? GOOD_NAMES[s.good] : 'Pusta ładownia'}
-                    </small>
-                    <progress value={s.count} max={s.capacity} />
-                  </span>
-                  <b>
-                    {s.count}/{s.capacity}
-                  </b>
-                </button>
-              ))}
-            </div>
+            <>
+              <ShippingLegend />
+              <div className="pr-harbour">
+                {scene.ships.map((s, i) => (
+                  <button
+                    className={selected.key === 'ship:' + i ? 'is-active' : ''}
+                    key={i}
+                    onClick={() =>
+                      choose({ key: 'ship:' + i, area: 'port', shipIndex: i })
+                    }
+                  >
+                    <Art id="ship" />
+                    <span>
+                      <strong>Statek {i + 1}</strong>
+                      <small>
+                        {s.good ? GOOD_NAMES[s.good] : 'Pusta ładownia'}
+                      </small>
+                      <progress value={s.count} max={s.capacity} />
+                    </span>
+                    <b>
+                      {s.count}/{s.capacity}
+                    </b>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           {selected?.area === 'magistrate' && (
             <>
@@ -827,8 +830,8 @@ export function WorldGame({
           {stale && !selected && <p role="status">{stale}</p>}
           {scene.phase === 'roleSelection' ? (
             <p className="pr-intro">
-              Wybierz jedną z kart postaci nad mapą. Przycisk ? otwiera opis jej
-              akcji i przywileju.
+              Kliknij przycisk „Akcje” w prawym dolnym rogu, aby wybrać postać.
+              Pytajnik na karcie pokazuje jej opis i przywilej.
             </p>
           ) : (
             <div className="pr-actions">
@@ -857,6 +860,123 @@ export function WorldGame({
           )}
         </div>
       </section>
+      <div className="pr-action-launcher">
+        <span className="pr-action-context">
+          {canAct && scene.phase === 'roleSelection'
+            ? 'Wybierz postać'
+            : PHASES[scene.phase] || scene.phase}
+        </span>
+        <button
+          className={
+            'pr-action-fab' +
+            (canAct && scene.phase === 'roleSelection' ? ' needs-choice' : '')
+          }
+          aria-label="Akcje"
+          aria-haspopup="dialog"
+          aria-expanded={showActions}
+          aria-controls="pr-actions-dialog"
+          onClick={() => {
+            setSelected(null);
+            setRoleInfo(null);
+            setShowActions(true);
+          }}
+        >
+          <svg viewBox="0 0 48 36" aria-hidden="true" focusable="false">
+            <rect
+              x="5"
+              y="8"
+              width="20"
+              height="26"
+              rx="4"
+              transform="rotate(-18 15 21)"
+              fill="#c58d43"
+              stroke="#fff0b7"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="24"
+              y="8"
+              width="20"
+              height="26"
+              rx="4"
+              transform="rotate(18 34 21)"
+              fill="#d8aa57"
+              stroke="#fff0b7"
+              strokeWidth="1.5"
+            />
+            <rect
+              x="14"
+              y="2"
+              width="20"
+              height="28"
+              rx="4"
+              fill="#fff0bd"
+              stroke="#9b6d31"
+              strokeWidth="1.5"
+            />
+            <path
+              d="m24 8 2 5 5 1-4 3 1 5-4-2-4 2 1-5-4-3 5-1Z"
+              fill="#b07b31"
+            />
+          </svg>
+          <strong>Akcje</strong>
+          {scene.phase === 'mayor' &&
+            current.pendingWorkers + current.pendingNobles > 0 && (
+              <span
+                className="pr-fab-workers"
+                aria-label={
+                  'Do przydzielenia: ' +
+                  (current.pendingWorkers + current.pendingNobles)
+                }
+              >
+                <span aria-hidden="true">👤</span>
+                {current.pendingWorkers + current.pendingNobles}
+              </span>
+            )}
+        </button>
+      </div>
+      {showActions && (
+        <WorldDialog
+          id="pr-actions-dialog"
+          className="pr-dialog--actions"
+          title={roleInfo ? ROLE_META[roleInfo].label : 'Akcje'}
+          eyebrow={
+            roleInfo
+              ? 'KARTA POSTACI'
+              : current.name + ' · ' + (PHASES[scene.phase] || scene.phase)
+          }
+          onClose={() => {
+            setShowActions(false);
+            setRoleInfo(null);
+          }}
+          onBack={roleInfo ? () => setRoleInfo(null) : undefined}
+        >
+          {roleInfo ? (
+            <RoleInfo role={roleInfo} />
+          ) : (
+            <>
+              {stale && (
+                <p role="status" className="pr-error">
+                  {stale}
+                </p>
+              )}
+              <RoleDeck
+                state={state}
+                actions={unique}
+                waiting={!canAct}
+                onChoose={act}
+                onInfo={setRoleInfo}
+              />
+              <p className="pr-muted">
+                {scene.phase === 'roleSelection' && canAct
+                  ? 'Wybierz kartę, aby rozpocząć jej akcję.'
+                  : 'Podświetlona karta wskazuje aktualną postać.'}{' '}
+                Pytajnik otwiera opis.
+              </p>
+            </>
+          )}
+        </WorldDialog>
+      )}
       {showLog && (
         <div className="log-modal-overlay" onClick={() => setShowLog(false)}>
           <section

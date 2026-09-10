@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { WorldRenderer } from '../renderer/WorldRenderer';
+import { WEATHER_NAMES, type WeatherKind } from '../renderer/weather';
 import type { EntityRef, SceneSnapshot } from '../adapter/sceneTypes';
 
 interface Props {
@@ -15,11 +16,17 @@ export function WorldViewport(props: Props) {
     renderer = useRef<WorldRenderer | null>(null);
   const latest = useRef(props);
   latest.current = props;
+  const [weather, setWeather] = useState<WeatherKind>('clear');
   const [status, setStatus] = useState('Ładowanie archipelagu…');
   useEffect(() => {
-    const world = new WorldRenderer((ref) => latest.current.onPick(ref));
-    renderer.current = world;
     let active = true;
+    const world = new WorldRenderer(
+      (ref) => latest.current.onPick(ref),
+      (kind) => {
+        if (active) setWeather(kind);
+      },
+    );
+    renderer.current = world;
     void world
       .init(host.current!)
       .then(() => {
@@ -61,7 +68,7 @@ export function WorldViewport(props: Props) {
     renderer.current?.focus(props.focus.id);
   }, [props.focus]);
   return (
-    <div className="pr-map">
+    <div className="pr-map" data-weather={weather}>
       <div ref={host} className="pr-canvas" />
       {status && (
         <div className="pr-map-status" role="status">
@@ -71,6 +78,15 @@ export function WorldViewport(props: Props) {
       <div className="pr-map-caption">
         <span>ARCHIPELAG PUERTO RICO</span>
         <small>Przeciągnij, aby odkrywać · przewiń, aby przybliżyć</small>
+      </div>
+      <div
+        className="pr-weather-badge"
+        title="Pogoda jest dekoracją i nie wpływa na grę"
+      >
+        <span aria-hidden="true">
+          {{ clear: '☀', cloudy: '☁', rain: '☂', storm: 'ϟ' }[weather]}
+        </span>
+        {WEATHER_NAMES[weather]}
       </div>
       <div className="pr-zoom">
         <button
