@@ -36,3 +36,11 @@ Animacje: wyraźniejsze fale, kołysanie palm i statków oraz chód robotników 
 To renderer 2.5D ze sprite’ami, bez obracania kamery w pełnym 3D. Grafiki są wygenerowane i można je niezależnie zastępować w rejestrze. Sześć źródłowych PNG waży około 14 MB; pierwsze otwarcie mapy wymaga ich pobrania. Przy braku WebGL karty postaci, przyciski miejsc i popupy z legalnymi ruchami pozostają dostępne.
 
 Dalsze kosmetyczne ulepszenia (nowe animacje, bardziej szczegółowe brzegi, efekty zakupu i produkcji) można dodawać wewnątrz presentation bez trenowania botów lub zmiany zasad.
+
+## Pracownicy i wybór plantacji — 10 września 2026
+
+Przy Magistracie widać liczby robotników i szlachciców z jego zasobów oraz osobne stojące postacie. Na każdej wyspie oczekuje dokładnie pending + held osób każdego rodzaju; po przydziale grupa maleje, a po pasowaniu pozostaje jako rezerwa. Podczas Burmistrza karta pokazuje pending bieżącego gracza (również gdy rolę wybrał ktoś inny), a kamera przechodzi na jego wyspę. Dekoracyjni spacerowicze nie wchodzą do tych liczników.
+
+Plantator uruchamia wskazówkę i strzałkę na plantacje w San Juan. Kliknięcie ilustracji surowca w popupie wywołuje aktualną legalną akcję bez pośredniego wyboru kafla; duplikaty i zamiana na las mają osobne klucze. Niedostępne kafle są nieaktywne. Wybór sprawdza świeżą listę akcji, a strzałka znika poza odpowiednią turą. Przycisk pod mapą zapewnia alternatywę dla klikania canvasu.
+
+Zmiany obejmują wyłącznie prezentację, zasoby graficzne i testy. Nowe testy sprawdzają faktyczny przydział i rezerwę, przejście magistratu, granice gęstych grup, pojedynczy wybór surowca, Szałas i nieaktualne akcje.

@@ -3,7 +3,7 @@ import type { Action } from '../../../actions/Action';
 import type { GameState } from '../../../state/GameState';
 import { RoleType } from '../../../core/types';
 import { ROLE_META, ROLE_DESCRIPTIONS } from '../../components/RoleCardsBar';
-import { spriteStyle } from '../assets/registry';
+import { spriteStyle, idleSpriteStyle } from '../assets/registry';
 import { actionKey } from '../interaction/actionBridge';
 import { roleChoice } from '../interaction/roleChoices';
 import { WorldDialog } from './WorldDialog';
@@ -30,6 +30,7 @@ export function RoleDeck({
   onChoose: (key: string) => void;
 }) {
   const [info, setInfo] = useState<RoleType | null>(null);
+  const current = state.getCurrentPlayer();
   return (
     <>
       <div className="pr-deck" aria-label="Karty postaci">
@@ -86,6 +87,35 @@ export function RoleDeck({
                           ? 'Wybierz postać'
                           : 'Dostępna'}
                 </span>
+                {active && card.type === RoleType.Mayor && (
+                  <span
+                    className="pr-role-workforce"
+                    role="status"
+                    aria-label={
+                      current.name +
+                      ': do przydzielenia ' +
+                      current.pendingWorkers +
+                      ' robotników i ' +
+                      current.pendingNobles +
+                      ' szlachciców'
+                    }
+                  >
+                    <span>
+                      <i style={idleSpriteStyle('worker')} aria-hidden="true" />{' '}
+                      <b>{current.pendingWorkers}</b>
+                      {state.nobleExpansion && (
+                        <>
+                          <i
+                            style={idleSpriteStyle('noble')}
+                            aria-hidden="true"
+                          />{' '}
+                          <b>{current.pendingNobles}</b>
+                        </>
+                      )}
+                    </span>
+                    <small>Do przydziału · {current.name}</small>
+                  </span>
+                )}
                 {card.doubloonsOnCard > 0 && (
                   <span className="pr-role-coins">
                     +{card.doubloonsOnCard} D

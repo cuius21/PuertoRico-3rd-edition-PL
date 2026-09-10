@@ -6,6 +6,7 @@ interface Props {
   scene: SceneSnapshot;
   onPick: (ref: EntityRef) => void;
   motion: boolean;
+  guide: boolean;
   selected: string | null;
   focus: { id: string; sequence: number };
 }
@@ -26,6 +27,7 @@ export function WorldViewport(props: Props) {
         world.setMotion(latest.current.motion);
         world.update(latest.current.scene);
         world.select(latest.current.selected);
+        world.guide(latest.current.guide);
         world.focus(latest.current.focus.id, true);
         setStatus('');
       })
@@ -52,6 +54,9 @@ export function WorldViewport(props: Props) {
   useEffect(() => {
     renderer.current?.select(props.selected);
   }, [props.selected]);
+  useEffect(() => {
+    renderer.current?.guide(props.guide);
+  }, [props.guide]);
   useEffect(() => {
     renderer.current?.focus(props.focus.id);
   }, [props.focus]);

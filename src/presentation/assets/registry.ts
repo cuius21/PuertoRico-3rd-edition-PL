@@ -1,3 +1,5 @@
+import idleWorkers from '../../assets/isometric/idle-workers.png';
+export const IDLE_URL = idleWorkers;
 import market from '../../assets/isometric/market.png';
 import walkers from '../../assets/isometric/walkers.png';
 export const MARKET_URL = market;
@@ -96,4 +98,14 @@ export function spriteStyle(id: string) {
         backgroundPosition: `${((f.cell % 5) / 4) * 100}% ${(Math.floor(f.cell / 5) / 2) * 100}%`,
       }
     : {};
+}
+
+export function idleSpriteStyle(kind: 'worker' | 'noble') {
+  // The transparent gap between rows is at y=486 in this atlas.
+  return {
+    backgroundImage: 'url(' + IDLE_URL + ')',
+    backgroundSize:
+      '400% ' + (1024 / (kind === 'worker' ? 486 : 538)) * 100 + '%',
+    backgroundPosition: kind === 'worker' ? '0 0' : '0 100%',
+  };
 }

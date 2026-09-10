@@ -14,6 +14,7 @@ import {
   ATLAS_URLS,
   MARKET_URL,
   WALKERS_URL,
+  IDLE_URL,
 } from '../assets/registry';
 import {
   parcel,
@@ -30,6 +31,7 @@ import {
   CENTRAL_WALKS,
   PLAYER_WALKS,
 } from '../iso/layout';
+import { idleFormation, waitingWorkforce } from '../iso/workforce';
 import { walkAt, swayAt, bobAt } from './ambient';
 import type {
   EntityRef,
@@ -68,6 +70,15 @@ export class WorldRenderer {
   private waves = new Graphics();
   private textures = new Map<string, Texture>();
   private wind: WindItem[] = [];
+  private idlers: {
+    sprite: Sprite;
+    baseY: number;
+    lean: number;
+    phase: number;
+  }[] = [];
+  private guiding = false;
+  private arrow: Container | null = null;
+  private arrowY = 0;
   private walkers = new Map<string, Walker>();
   private residents = new Map<
     string,
@@ -119,7 +130,7 @@ export class WorldRenderer {
     this.app.canvas.setAttribute('role', 'img');
     this.app.ticker.maxFPS = 30;
     const sheets = await Promise.all(
-      [...ATLAS_URLS, MARKET_URL, WALKERS_URL].map((url) =>
+      [...ATLAS_URLS, MARKET_URL, WALKERS_URL, IDLE_URL].map((url) =>
         Assets.load<Texture>(url),
       ),
     );
@@ -147,24 +158,37 @@ export class WorldRenderer {
       }),
     );
     this.textures.set('market', sheets[4]!);
-    const walks = sheets[5]!;
-    for (let row = 0; row < 2; row++)
-      for (let col = 0; col < 4; col++) {
-        const x = Math.floor((walks.width * col) / 4),
-          y = Math.floor((walks.height * row) / 2);
-        this.textures.set(
-          (row === 0 ? 'worker' : 'noble') + col,
-          new Texture({
-            source: walks.source,
-            frame: new Rectangle(
-              x,
-              y,
-              Math.floor((walks.width * (col + 1)) / 4) - x,
-              Math.floor((walks.height * (row + 1)) / 2) - y,
-            ),
-          }),
-        );
-      }
+    for (const [index, prefix] of [
+      [5, ''],
+      [6, 'idle-'],
+    ] as const) {
+      const walks = sheets[index]!;
+      for (let row = 0; row < 2; row++)
+        for (let col = 0; col < 4; col++) {
+          const x = Math.floor((walks.width * col) / 4),
+            y = prefix
+              ? row === 0
+                ? 0
+                : 486
+              : Math.floor((walks.height * row) / 2);
+          this.textures.set(
+            prefix + (row === 0 ? 'worker' : 'noble') + col,
+            new Texture({
+              source: walks.source,
+              frame: new Rectangle(
+                x,
+                y,
+                Math.floor((walks.width * (col + 1)) / 4) - x,
+                (prefix
+                  ? row === 0
+                    ? 486
+                    : walks.height
+                  : Math.floor((walks.height * (row + 1)) / 2)) - y,
+              ),
+            }),
+          );
+        }
+    }
     this.world.addChild(this.terrain);
     this.app.stage.addChild(this.waves, this.world);
     this.bindInput();
@@ -192,6 +216,8 @@ export class WorldRenderer {
     for (const child of this.terrain.removeChildren())
       child.destroy({ children: true });
     this.wind = [];
+    this.idlers = [];
+    this.arrow = null;
     const centers = islandCenters(snapshot.players.length);
     this.central(snapshot);
     snapshot.players.forEach((p, i) => {
@@ -231,13 +257,28 @@ export class WorldRenderer {
         [-0.5, 1.3],
         [-0.7, 3.2],
         [0.6, 4.1],
-        [3, 4.2],
-        [6, 4.1],
+        [1.6, 4.2],
+        [8.8, 3.9],
         [9.5, 2.8],
         [9.3, -0.6],
       ]) {
         const q = parcel(u!, v!);
         this.palm(objects, q.x, q.y, 76, (i + 1) * 7 + u!);
+      }
+      const waiting = waitingWorkforce(p);
+      const ref: EntityRef = { key: p.id, area: 'island', playerId: p.id };
+      this.waitingPeople(objects, waiting.workers, waiting.nobles, false, ref);
+      if (waiting.workers + waiting.nobles > 0) {
+        this.workforceBadge(
+          objects,
+          -150,
+          210,
+          waiting.workers,
+          waiting.nobles,
+          snapshot.nobles,
+          p.pending + p.pendingNobles > 0 ? 'Do przydzielenia' : 'W rezerwie',
+          ref,
+        );
       }
       const farm = parcel(1.5, -0.7),
         city = parcel(6.5, -0.7);
@@ -534,6 +575,40 @@ export class WorldRenderer {
         area,
       );
     }
+    this.waitingPeople(objects, s.magistrate, s.magistrateNobles, true, {
+      key: 'magistrate',
+      area: 'magistrate',
+    });
+    this.workforceBadge(
+      objects,
+      -225,
+      -213,
+      s.magistrate,
+      s.magistrateNobles,
+      s.nobles,
+      'Dostępni w magistracie',
+      { key: 'magistrate', area: 'magistrate' },
+    );
+    const p = CENTRAL_PLACES.plantations;
+    const arrow = new Container();
+    arrow.position.set(p.x, p.y - p.size + 4);
+    arrow.zIndex = 20000;
+    arrow.addChild(
+      new Graphics()
+        .poly([-9, -28, 9, -28, 9, -10, 21, -10, 0, 9, -21, -10, -9, -10])
+        .fill(0xffda70)
+        .stroke({ color: 0x785b2c, width: 3, join: 'round' }),
+    );
+    this.interactive(
+      arrow,
+      { key: 'plantations', area: 'plantations' },
+      new Rectangle(-32, -36, 64, 50),
+    );
+    arrow.visible = this.guiding;
+    objects.addChild(arrow);
+    this.arrow = arrow;
+    this.arrowY = arrow.y;
+
     const f = CENTRAL_PLACES.festival;
     if (s.festival)
       this.landmark(
@@ -558,8 +633,8 @@ export class WorldRenderer {
       objects.addChild(sign);
     }
     for (const [x, y, phase] of [
-      [-440, -30, 2],
-      [-390, 115, 3],
+      [-420, -155, 2],
+      [-490, 150, 3],
       [-125, 275, 4],
       [335, -125, 5],
       [530, 10, 6],
@@ -614,6 +689,107 @@ export class WorldRenderer {
       this.label('WSPÓLNA WYSPA · RYNEK, PORT I DODATKI', 0, 505, 13, 0xc3ece3),
     );
   }
+  private workforceBadge(
+    parent: Container,
+    x: number,
+    y: number,
+    workers: number,
+    nobles: number,
+    showNobles: boolean,
+    title: string,
+    ref: EntityRef,
+  ) {
+    const group = new Container();
+    group.position.set(x, y);
+    group.zIndex = 12000 + y;
+    const width = Math.max(showNobles ? 166 : 122, title.length * 7.5 + 20);
+    group.addChild(
+      new Graphics()
+        .roundRect(-width / 2, -28, width, 65, 12)
+        .fill({ color: 0x153f42, alpha: 0.97 })
+        .stroke({ color: 0xeac979, width: 1.5 }),
+    );
+    const worker = this.sprite('idle-worker0', 29, 39);
+    worker.position.set(showNobles ? -53 : -27, 10);
+    group.addChild(
+      worker,
+      this.label(String(workers), showNobles ? -25 : 7, -22, 24, 0xffe5a4),
+    );
+    if (showNobles) {
+      const noble = this.sprite('idle-noble0', 29, 39);
+      noble.position.set(25, 10);
+      group.addChild(noble, this.label(String(nobles), 54, -22, 24, 0xffc3d1));
+    }
+    group.addChild(this.label(title, 0, 15, 12, 0xf2e8c6));
+    this.interactive(group, ref, new Rectangle(-width / 2, -28, width, 65));
+    parent.addChild(group);
+  }
+  private waitingPeople(
+    parent: Container,
+    workers: number,
+    nobles: number,
+    central: boolean,
+    ref: EntityRef,
+  ) {
+    const people = idleFormation(workers, nobles, central);
+    if (!people.length) return;
+    const plaza = new Graphics();
+    if (central) plaza.ellipse(-416, 4, 100, 91);
+    else
+      plaza.poly(
+        [
+          [2.6, 3.7],
+          [7.15, 3.7],
+          [7.15, 4.65],
+          [2.6, 4.65],
+        ].flatMap(([u, v]) => {
+          const p = parcel(u!, v!);
+          return [p.x, p.y];
+        }),
+      );
+    plaza
+      .fill({ color: 0xd5c398, alpha: 0.8 })
+      .stroke({ color: 0xf3dfa4, width: 1, alpha: 0.7 });
+    plaza.zIndex = -1000;
+    parent.addChild(plaza);
+    for (const [i, person] of people.entries()) {
+      const sprite = this.sprite(
+        'idle-' + person.kind + person.pose,
+        person.size * 0.75,
+        person.size,
+      );
+      sprite.anchor.y = person.kind === 'worker' ? 0.985 : 0.935;
+      sprite.position.set(person.x, person.y);
+      sprite.rotation = person.lean;
+      sprite.zIndex = person.y;
+      const root = new Container();
+      root.position.copyFrom(sprite.position);
+      root.zIndex = person.y;
+      sprite.position.set(0, 0);
+      root.addChild(
+        new Graphics()
+          .ellipse(0, -1, person.size * 0.2, 3)
+          .fill({ color: 0x36513a, alpha: 0.18 }),
+        sprite,
+      );
+      this.interactive(
+        root,
+        ref,
+        new Rectangle(
+          -person.size * 0.3,
+          -person.size,
+          person.size * 0.6,
+          person.size + 3,
+        ),
+      );
+      parent.addChild(root);
+      this.idlers.push({ sprite, baseY: 0, lean: person.lean, phase: i * 1.9 });
+    }
+  }
+  guide(enabled: boolean) {
+    this.guiding = enabled;
+    if (this.arrow) this.arrow.visible = enabled;
+  }
   private dock(parent: Container, x: number, y: number) {
     const g = new Graphics();
     g.position.set(x, y);
@@ -659,7 +835,7 @@ export class WorldRenderer {
             old.kind = n < o.workers ? 'worker' : 'noble';
             continue;
           }
-          const start = parcel(8.5, 3.6),
+          const start = parcel(4.5, 4.0),
             bend = parcel(o.u, 3.6);
           const from = { x: start.x, y: start.y };
           const sprite = this.sprite(
@@ -835,6 +1011,14 @@ export class WorldRenderer {
         item.sprite.rotation = this.motion ? bobAt(t, item.phase).rotation : 0;
       }
     }
+    for (const w of this.idlers) {
+      w.sprite.rotation =
+        w.lean + (this.motion ? Math.sin(t * 0.8 + w.phase) * 0.015 : 0);
+      w.sprite.y =
+        w.baseY + (this.motion ? Math.sin(t * 1.2 + w.phase) * 0.8 : 0);
+    }
+    if (this.arrow)
+      this.arrow.y = this.arrowY + (this.motion ? Math.sin(t * 3.6) * 6 : 0);
     for (const w of this.residents.values()) {
       const p = walkAt(w.route, t + w.phase);
       w.sprite.position.set(p.x, p.y);

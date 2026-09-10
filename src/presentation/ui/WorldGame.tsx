@@ -16,6 +16,10 @@ import {
   actionsForTarget,
   resolveCurrentAction,
 } from '../interaction/actionBridge';
+import {
+  plantationTiles,
+  plantationGuide,
+} from '../interaction/plantationChoices';
 import { spriteStyle } from '../assets/registry';
 import './world.css';
 
@@ -137,6 +141,23 @@ export function WorldGame({
       )
     : [];
   const current = state.getCurrentPlayer();
+  const canAct = !waiting && runner.isCurrentPlayerHuman();
+  const guidePlantations = plantationGuide(scene.phase, unique, canAct);
+  const guideTurn = guidePlantations
+    ? 'settler:' + scene.round + ':' + current.id
+    : canAct && scene.phase === 'mayor'
+      ? 'mayor:' + scene.round + ':' + current.id
+      : '';
+  useEffect(() => {
+    if (guideTurn) {
+      setFocus((p) => ({
+        id: guideTurn.startsWith('mayor:') ? current.id : 'central',
+        sequence: p.sequence + 1,
+      }));
+      setSelected(null);
+    }
+  }, [guideTurn]);
+  const crops = plantationTiles(state, unique);
   const price = (b: (typeof catalog)[number]) =>
     scene.phase === 'builder' ? calcBuildCost(state, current, b) : b.cost;
   const humanIndex = state.players.findIndex(
@@ -313,6 +334,17 @@ export function WorldGame({
             <span className="pr-player-values">
               <b>{p.coins} D</b>
               <small>{p.vp} PZ</small>
+              {p.pending + p.pendingNobles + p.held + p.heldNobles > 0 && (
+                <small
+                  className="pr-player-workers"
+                  title="Pracownicy oczekujący na wyspie"
+                >
+                  👤 {p.pending + p.pendingNobles + p.held + p.heldNobles}
+                  {p.pending + p.pendingNobles > 0
+                    ? ' do przydziału'
+                    : ' w rezerwie'}
+                </small>
+              )}
             </span>
           </button>
         ))}
@@ -350,7 +382,17 @@ export function WorldGame({
             motion={motion}
             selected={selected?.key ?? null}
             focus={focus}
+            guide={guidePlantations && selected?.area !== 'plantations'}
           />
+          {guidePlantations && (
+            <button
+              className="pr-next-step"
+              onClick={() => area('plantations')}
+            >
+              <span aria-hidden="true">➜</span> Kliknij plantacje na wyspie San
+              Juan i wybierz surowiec
+            </button>
+          )}
           <div className="pr-live" aria-live="polite">
             {notice ? (
               <strong>{notice}</strong>
@@ -548,50 +590,26 @@ export function WorldGame({
             </>
           )}
           {selected?.area === 'plantations' && (
-            <>
-              <p className="pr-muted">
-                Odkryte plantacje oraz wspólna pula kamieniołomów.
-              </p>
-              <div className="pr-catalog">
-                {state.supply.revealedPlantations.map((p, i) => (
-                  <button
-                    key={i}
-                    onClick={() =>
-                      choose({
-                        key: 'plantations:revealed:' + i,
-                        area: 'plantations',
-                        slotIndex: i,
-                      })
-                    }
-                    className={
-                      selected?.key === 'plantations:revealed:' + i
-                        ? 'is-active'
-                        : ''
-                    }
-                  >
-                    <Art id={p.type} />
-                    <span>
-                      {GOOD_NAMES[p.type]}
-                      <small>Plantacja {i + 1}</small>
-                    </span>
-                  </button>
-                ))}
+            <div className="pr-crop-choices" aria-label="Wybór plantacji">
+              {crops.map((tile) => (
                 <button
-                  onClick={() =>
-                    choose({ key: 'plantations:quarry', area: 'plantations' })
-                  }
-                  className={
-                    selected?.key === 'plantations:quarry' ? 'is-active' : ''
-                  }
+                  key={tile.key}
+                  disabled={!canAct || !tile.action}
+                  className="pr-crop-choice"
+                  onClick={() => tile.action && act(actionKey(tile.action))}
+                  aria-label={tile.name + ' · ' + tile.detail}
                 >
-                  <Art id="quarry" />
-                  <span>
-                    Kamieniołomy
-                    <small>{state.supply.quarryStack.length} w puli</small>
-                  </span>
+                  <Art id={tile.sprite} large />
+                  <strong>{tile.name}</strong>
+                  <small>{tile.detail}</small>
+                  {!tile.action && (
+                    <span className="pr-crop-unavailable">
+                      Niedostępne w tej turze
+                    </span>
+                  )}
                 </button>
-              </div>
-            </>
+              ))}
+            </div>
           )}
           {selected?.area === 'port' && (
             <div className="pr-harbour">
@@ -661,11 +679,8 @@ export function WorldGame({
               </p>
             </>
           )}
-          {!!nearby.length && (
-            <div className="pr-nearby">
-              <h3>Ruchy w tym miejscu</h3>
-              {actionButtons(nearby)}
-            </div>
+          {!!nearby.length && selected.area !== 'plantations' && (
+            <div className="pr-nearby">{actionButtons(nearby)}</div>
           )}
 
           {selected.area === 'supplies' && (
@@ -705,12 +720,14 @@ export function WorldGame({
               </div>
             </div>
           )}
-          {!nearby.length && selected.area !== 'scenery' && (
-            <p className="pr-muted">
-              Dostępne ruchy zależą od aktualnej postaci i gracza, którego trwa
-              tura.
-            </p>
-          )}
+          {!nearby.length &&
+            selected.area !== 'scenery' &&
+            selected.area !== 'plantations' && (
+              <p className="pr-muted">
+                Dostępne ruchy zależą od aktualnej postaci i gracza, którego
+                trwa tura.
+              </p>
+            )}
         </WorldDialog>
       )}
       <section className="pr-moves pr-commandbar" aria-label="Dostępne ruchy">
@@ -733,6 +750,14 @@ export function WorldGame({
             </p>
           ) : (
             <div className="pr-actions">
+              {guidePlantations && (
+                <button
+                  className="pr-action"
+                  onClick={() => area('plantations')}
+                >
+                  Wybierz plantację w San Juan <span>›</span>
+                </button>
+              )}
               {scene.phase === 'builder' && (
                 <button className="pr-action" onClick={() => area('market')}>
                   Otwórz budynki w San Juan <span>›</span>
@@ -740,7 +765,10 @@ export function WorldGame({
               )}
               {actionButtons(
                 unique.filter(
-                  (a) => a.type !== 'SELECT_ROLE' && a.type !== 'BUILD',
+                  (a) =>
+                    a.type !== 'SELECT_ROLE' &&
+                    a.type !== 'BUILD' &&
+                    a.type !== 'TAKE_PLANTATION',
                 ),
               )}
             </div>
