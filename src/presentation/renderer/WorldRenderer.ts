@@ -31,6 +31,9 @@ import {
   CENTRAL_WALKS,
   PLAYER_WALKS,
   PLAYER_FLAG,
+  PLAYER_DOCK,
+  PLAYER_STOCK,
+  STOCK_SLOTS,
 } from '../iso/layout';
 import { idleFormation, waitingWorkforce } from '../iso/workforce';
 import { walkAt, swayAt, bobAt } from './ambient';
@@ -45,6 +48,7 @@ import type {
   EntityRef,
   SceneSnapshot,
   SceneObject,
+  PlayerScene,
 } from '../adapter/sceneTypes';
 
 type WindItem = {
@@ -113,6 +117,9 @@ export class WorldRenderer {
   >();
   private highlights = new Map<string, Graphics[]>();
   private snapshot: SceneSnapshot | null = null;
+  private tutorialTarget: string | null = null;
+  private tutorialFocus: string | null = null;
+  private tutorialCue = new Container();
   private keyboard: KeyboardPan | null = null;
   private keyboardEnabled = true;
   private camera = { x: 0, y: 0, zoom: 1 };
@@ -221,7 +228,36 @@ export class WorldRenderer {
           );
         }
     }
-    this.world.addChild(this.terrain, this.actionVisuals.view);
+    const cueInk = new Graphics()
+      .ellipse(0, 0, 44, 16)
+      .stroke({ color: 0xffdf7b, width: 3 })
+      .moveTo(0, -23)
+      .lineTo(-9, -38)
+      .lineTo(9, -38)
+      .closePath()
+      .fill(0xffdf7b)
+      .roundRect(-35, -67, 70, 25, 8)
+      .fill(0xffe6a1)
+      .stroke({ color: 0x80612f, width: 1 });
+    const cueText = new Text({
+      text: 'Tutaj',
+      style: {
+        fontFamily: 'Trebuchet MS',
+        fontSize: 12,
+        fontWeight: 'bold',
+        fill: 0x584124,
+      },
+    });
+    cueText.anchor.set(0.5);
+    cueText.position.set(0, -54);
+    this.tutorialCue.addChild(cueInk, cueText);
+    this.tutorialCue.eventMode = 'none';
+    this.tutorialCue.interactiveChildren = false;
+    this.world.addChild(
+      this.terrain,
+      this.actionVisuals.view,
+      this.tutorialCue,
+    );
     this.app.stage.addChild(this.waves, this.world, this.weather.view);
     this.bindInput();
     this.observer = new ResizeObserver(() => {
@@ -331,12 +367,13 @@ export class WorldRenderer {
         this.label('PLANTACJE', farm.x, farm.y - 6, 10, 0xf9eac8),
         this.label('MIASTO', city.x, city.y - 6, 10, 0xf9eac8),
       );
-      const dock = parcel(7.6, 4.8);
+      const dock = PLAYER_DOCK;
+      this.stockyard(objects, p);
       this.dock(group, dock.x, dock.y);
       const mark = this.label(
         `${p.ruralUsed}/12 pól · ${p.urbanUsed}/12 miejsc miasta`,
         0,
-        290,
+        345,
         11,
         0xd3f0e8,
       );
@@ -347,6 +384,105 @@ export class WorldRenderer {
     this.animateShips();
     this.animateFlags();
     this.positionCamera();
+  }
+  private stockyard(parent: Container, player: PlayerScene) {
+    const yard = new Container();
+    const edge = [
+      [4.75, 4.1],
+      [9.8, 4.1],
+      [9.8, 5.45],
+      [4.75, 5.45],
+    ].flatMap(([u, v]) => {
+      const p = parcel(u!, v!);
+      return [p.x, p.y];
+    });
+    const deck = new Graphics()
+      .poly(edge)
+      .fill(0x9b784b)
+      .stroke({ color: 0xddbc80, width: 2 });
+    for (let u = 4.85; u < 9.8; u += 0.25) {
+      const a = parcel(u, 4.1),
+        b = parcel(u, 5.45);
+      deck
+        .moveTo(a.x, a.y)
+        .lineTo(b.x, b.y)
+        .stroke({ color: 0x6f573c, width: 1, alpha: 0.5 });
+    }
+    yard.zIndex = PLAYER_STOCK.y;
+    yard.addChild(deck);
+    const ref: EntityRef = {
+      key: 'stock:' + player.id,
+      area: 'stock',
+      playerId: player.id,
+    };
+    const hit = [
+      [3.8, 3.2],
+      [10.1, 3.2],
+      [10.1, 5.9],
+      [3.8, 5.9],
+    ].flatMap(([u, v]) => {
+      const p = parcel(u!, v!);
+      return [p.x, p.y];
+    });
+    this.interactive(yard, ref, new Polygon(hit));
+    for (const slot of STOCK_SLOTS) {
+      const count = player.goods[slot.good] || 0;
+      if (!count) continue;
+      const pile = new Container();
+      pile.position.set(slot.x, slot.y);
+      const ink = new Graphics();
+      for (let i = 0; i < Math.min(count, 5); i++) {
+        const x = (i % 2) * 17 - 8,
+          y = Math.floor(i / 2) * -14;
+        ink
+          .poly([x - 16, y - 8, x, y - 16, x + 16, y - 8, x, y])
+          .fill(GOOD_COLOR[slot.good]!)
+          .stroke({ color: 0xffe7b8, width: 1 });
+        ink
+          .poly([x - 16, y - 8, x, y, x, y + 15, x - 16, y + 7])
+          .fill(0x82603f)
+          .stroke({ color: 0x533e2e, width: 1 });
+        ink
+          .poly([x, y, x + 16, y - 8, x + 16, y + 7, x, y + 15])
+          .fill(0xb78b54)
+          .stroke({ color: 0x533e2e, width: 1 });
+        ink
+          .moveTo(x - 12, y - 3)
+          .lineTo(x - 4, y + 9)
+          .moveTo(x + 4, y + 9)
+          .lineTo(x + 12, y - 3)
+          .stroke({ color: 0xe9ca8d, width: 2 });
+      }
+      pile.addChild(ink);
+      const art = this.sprite(slot.good, 41, 41);
+      art.position.set(0, -26);
+      pile.addChild(art);
+      const badge = new Graphics()
+        .roundRect(-17, 20, 34, 23, 9)
+        .fill(0x163d3b)
+        .stroke({ color: 0xf4d58c, width: 1.5 });
+      pile.addChild(badge, this.label(String(count), 0, 21, 17, 0xfff0c5));
+      yard.addChild(pile);
+    }
+    const sign = this.label(
+      'TOWARY',
+      PLAYER_STOCK.x - 86,
+      PLAYER_STOCK.y + 43,
+      14,
+      0xffedbc,
+    );
+    yard.addChild(sign);
+    if (!STOCK_SLOTS.some((s) => (player.goods[s.good] || 0) > 0))
+      yard.addChild(
+        this.label(
+          'Brak towarów',
+          PLAYER_STOCK.x,
+          PLAYER_STOCK.y - 10,
+          14,
+          0xffe6b0,
+        ),
+      );
+    parent.addChild(yard);
   }
   private land(
     center: Point,
@@ -1236,6 +1372,10 @@ export class WorldRenderer {
     };
     if (instant) this.camera = { ...this.destination };
   }
+  setTutorialTarget(key: string | null, focus: string | null = null) {
+    this.tutorialFocus = focus;
+    this.tutorialTarget = key;
+  }
   setKeyboardEnabled(enabled: boolean) {
     this.keyboardEnabled = enabled;
     if (!enabled) this.keyboard?.clear();
@@ -1302,7 +1442,7 @@ export class WorldRenderer {
         actionFrame?.follow &&
         this.snapshot
       ) {
-        this.focus(this.snapshot.currentId);
+        this.focus(this.tutorialFocus ?? this.snapshot.currentId);
       }
     }
     this.actionVisuals.render(
@@ -1315,6 +1455,19 @@ export class WorldRenderer {
     for (const k of ['x', 'y', 'zoom'] as const)
       this.camera[k] += (this.destination[k] - this.camera[k]) * factor;
     this.positionCamera();
+    this.tutorialCue.visible =
+      !!this.tutorialTarget &&
+      this.tutorialTarget !== 'actions' &&
+      !!this.snapshot &&
+      !actionBeat;
+    if (this.tutorialCue.visible && this.snapshot) {
+      const key = this.tutorialTarget!.startsWith('market:')
+        ? 'market'
+        : this.tutorialTarget!;
+      const point = cuePoint(this.snapshot, key);
+      this.tutorialCue.position.set(point.x, point.y);
+      this.tutorialCue.scale.set(1 / this.camera.zoom);
+    }
     this.waves.clear();
     const width = this.app.screen.width,
       height = this.app.screen.height;

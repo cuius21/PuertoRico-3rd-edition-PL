@@ -2,7 +2,7 @@ import { Container, Graphics, Sprite, Text, type Texture } from 'pixi.js';
 import type { SceneSnapshot } from '../adapter/sceneTypes';
 import type { ActionBeat } from '../playback/actionBeats';
 import { islandCenters, parcel, type Point } from '../iso/projection';
-import { CENTRAL_PLACES } from '../iso/layout';
+import { CENTRAL_PLACES, PLAYER_STOCK } from '../iso/layout';
 import { idleFormation, waitingWorkforce } from '../iso/workforce';
 
 export function cuePoint(scene: SceneSnapshot, key: string): Point {
@@ -14,11 +14,13 @@ export function cuePoint(scene: SceneSnapshot, key: string): Point {
   }
   if (Object.hasOwn(CENTRAL_PLACES, key))
     return CENTRAL_PLACES[key as keyof typeof CENTRAL_PLACES];
-  const special = key.startsWith('dock:')
-    ? 'dock'
-    : key.startsWith('waiting:')
-      ? 'waiting'
-      : null;
+  const special = key.startsWith('stock:')
+    ? 'stock'
+    : key.startsWith('dock:')
+      ? 'dock'
+      : key.startsWith('waiting:')
+        ? 'waiting'
+        : null;
   const id = special ? key.slice(special.length + 1) : key;
   const index = scene.players.findIndex(
     (p) =>
@@ -40,8 +42,8 @@ export function cuePoint(scene: SceneSnapshot, key: string): Point {
     : parcel(4.1, 3.9);
   const local = object
     ? parcel(object.u + (object.size - 1) * 0.5, object.v)
-    : special === 'dock'
-      ? parcel(7.6, 4.8)
+    : special === 'dock' || special === 'stock'
+      ? PLAYER_STOCK
       : special === 'waiting'
         ? waiting
         : { x: 0, y: 0 };

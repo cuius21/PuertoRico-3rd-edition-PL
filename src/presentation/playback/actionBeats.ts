@@ -350,13 +350,13 @@ export function buildActionBeats(
         a.target?.kind === 'ship' ? before.ships[a.target.shipIndex!] : null;
       loaded = ship ? Math.min(stock, ship.capacity - ship.count) : stock;
       count = loaded;
-      from = 'waiting:' + p.id;
+      from = 'stock:' + p.id;
       to = 'dock:' + p.id;
       detail =
         'Przekazuje ' + loaded + ' × ' + GOOD_NAMES[a.good!] + ' do portu.';
     }
     if (kind === 'trade') {
-      from = 'waiting:' + p.id;
+      from = 'stock:' + p.id;
       to = 'dock:' + p.id;
       detail = 'Wysyła towar na targowisko.';
     }

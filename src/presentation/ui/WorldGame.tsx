@@ -36,7 +36,21 @@ interface Runner {
   getSetup(index: number): PlayerSetup;
   log: GameEvent[];
 }
+export interface WorldTeaching {
+  stepKey: string;
+  actionable: boolean;
+  focusRequest?: number;
+  targetKey: string | null;
+  focusId: string;
+  text: string;
+  title: string;
+  onInspect?: ((key: string) => void) | undefined;
+  onContinue?: (() => void) | undefined;
+}
 interface Props {
+  extraTools?: ReactNode;
+  sidebarContent?: ReactNode;
+  teaching?: WorldTeaching | undefined;
   playback?: ActionPlayback;
   state: GameState;
   runner: Runner;
@@ -72,6 +86,7 @@ const AREAS: Record<Area, string> = {
   magistrate: 'Magistrat',
   corsair: 'Korsarz',
   island: 'Wyspa gracza',
+  stock: 'Skład towarów',
   supplies: 'Wspólne zapasy',
   scenery: 'Życie na wyspach',
 };
@@ -96,6 +111,9 @@ function readMotion() {
   }
 }
 export function WorldGame({
+  extraTools,
+  sidebarContent,
+  teaching,
   playback,
   state,
   runner,
@@ -118,6 +136,7 @@ export function WorldGame({
   const [stale, setStale] = useState('');
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0 });
+    document.getElementById('root')?.scrollTo({ top: 0, left: 0 });
   }, []);
   // GameState is mutable: build on every React update, never memoize by object identity.
   const actions = runner.getValidActionsForCurrentPlayer();
@@ -177,7 +196,12 @@ export function WorldGame({
   const shownPending = shownPlayer
     ? shownPlayer.pending + shownPlayer.pendingNobles
     : current.pendingWorkers + current.pendingNobles;
-  const canAct = !waiting && !playbackBlocked && runner.isCurrentPlayerHuman();
+  const lessonReading = !!teaching && !teaching.actionable;
+  const canAct =
+    !waiting &&
+    !playbackBlocked &&
+    runner.isCurrentPlayerHuman() &&
+    !lessonReading;
   const guidePlantations = plantationGuide(scene.phase, unique, canAct);
   const guideTurn = guidePlantations
     ? 'settler:' + scene.round + ':' + current.id
@@ -193,6 +217,22 @@ export function WorldGame({
       setSelected(null);
     }
   }, [guideTurn]);
+  useEffect(() => {
+    if (!teaching) return;
+    setSelected(null);
+    setShowActions(false);
+    setRoleInfo(null);
+    setFocus((p) => ({ id: teaching.focusId, sequence: p.sequence + 1 }));
+  }, [teaching?.stepKey, teaching?.focusRequest]);
+  const lessonCallout = teaching && (
+    <aside className="pr-lesson-callout" aria-label="Wskazówka samouczka">
+      <strong>{teaching.title}</strong>
+      <p>{teaching.text}</p>
+      {teaching.onContinue && (
+        <button onClick={teaching.onContinue}>Dalej w samouczku</button>
+      )}
+    </aside>
+  );
   const crops = plantationTiles(state, unique);
   const price = (b: (typeof catalog)[number]) =>
     scene.phase === 'builder' ? calcBuildCost(state, current, b) : b.cost;
@@ -206,6 +246,7 @@ export function WorldGame({
   }
   function choose(ref: EntityRef) {
     setSelected(ref);
+    teaching?.onInspect?.(ref.key);
     setStale('');
   }
   function area(area: Area) {
@@ -293,7 +334,14 @@ export function WorldGame({
     ...(scene.corsair ? ['corsair' as const] : []),
   ];
   return (
-    <main className={'pr-world' + (playback ? ' pr-world--playback' : '')}>
+    <main
+      className={
+        'pr-world' +
+        (playback ? ' pr-world--playback' : '') +
+        (teaching ? ' pr-world--tutorial' : '') +
+        (teaching?.targetKey ? ' is-guided' : '')
+      }
+    >
       <header className="pr-header">
         <div className="pr-brand">
           <span className="pr-brand-mark">PR</span>
@@ -306,19 +354,24 @@ export function WorldGame({
           <span>RUNDA {scene.round}</span>
           <strong>{PHASES[scene.phase] || scene.phase}</strong>
           <small>
-            {beat?.actorName ?? current.name}
+            {lessonReading && !observing
+              ? 'Szkoła gubernatorów'
+              : (beat?.actorName ?? current.name)}
             {observing
               ? ' · pokaz ruchu'
               : playback?.state.paused
                 ? ' · pauza'
-                : waiting
-                  ? ' · bot myśli…'
-                  : ' · tura'}
+                : lessonReading
+                  ? ' · twój krok'
+                  : waiting
+                    ? ' · bot myśli…'
+                    : ' · tura'}
             {connection ? ' · ' + connection : ''}
           </small>
         </div>
         <nav className="pr-tools" aria-label="Ustawienia gry">
           <AmbientAudio />
+          {extraTools}
           <button
             aria-pressed={motion}
             onClick={() => {
@@ -399,16 +452,22 @@ export function WorldGame({
             </button>
           ))}
         </nav>
-        {playback && <ActionPlaybackPanel playback={playback} />}
+        {sidebarContent ??
+          (playback && <ActionPlaybackPanel playback={playback} />)}
         <div className="pr-action-launcher">
           <span className="pr-action-context">
-            {canAct && scene.phase === 'roleSelection'
-              ? 'Wybierz postać'
-              : PHASES[scene.phase] || scene.phase}
+            {lessonReading
+              ? 'Samouczek'
+              : canAct && scene.phase === 'roleSelection'
+                ? 'Wybierz postać'
+                : lessonReading
+                  ? teaching.title
+                  : PHASES[scene.phase] || scene.phase}
           </span>
           <button
             className={
               'pr-action-fab' +
+              (teaching?.targetKey === 'actions' ? ' is-tutorial-target' : '') +
               (canAct && scene.phase === 'roleSelection' ? ' needs-choice' : '')
             }
             aria-label="Akcje"
@@ -502,6 +561,8 @@ export function WorldGame({
           <WorldViewport
             playback={playback}
             keyboardEnabled={!selected && !showActions && !showLog}
+            tutorialTarget={teaching?.targetKey ?? null}
+            tutorialFocus={teaching?.focusId ?? null}
             scene={scene}
             onPick={choose}
             motion={motion}
@@ -560,6 +621,9 @@ export function WorldGame({
           title={
             building?.displayName ||
             selectedObject?.name ||
+            (selected?.area === 'stock' && selectedPlayer
+              ? 'Towary · ' + selectedPlayer.name
+              : '') ||
             selectedPlayer?.name ||
             AREAS[selected.area]
           }
@@ -577,6 +641,7 @@ export function WorldGame({
                 : undefined
           }
         >
+          {lessonCallout}
           {stale && (
             <p role="status" className="pr-error">
               {stale}
@@ -630,7 +695,7 @@ export function WorldGame({
               / {selectedObject.capacity} miejsc.
             </p>
           )}
-          {selectedPlayer && !selectedObject && (
+          {selectedPlayer && !selectedObject && selected?.area !== 'stock' && (
             <>
               <div className="pr-stat-grid">
                 <span>
@@ -663,6 +728,18 @@ export function WorldGame({
                   : ''}
                 .
               </p>
+              <button
+                className="pr-action"
+                onClick={() =>
+                  choose({
+                    key: 'stock:' + selectedPlayer.id,
+                    area: 'stock',
+                    playerId: selectedPlayer.id,
+                  })
+                }
+              >
+                Skład towarów przy porcie
+              </button>
               <div className="pr-goods">
                 {GOODS.map((g) => (
                   <span key={g} title={GOOD_NAMES[g]}>
@@ -685,6 +762,50 @@ export function WorldGame({
                 ))}
               </div>
             </>
+          )}
+          {selected?.area === 'stock' && selectedPlayer && (
+            <section className="pr-stock-details">
+              <p className="pr-intro">
+                Zapasy na nabrzeżu gracza {selectedPlayer.name}. Każdy licznik
+                oznacza liczbę towarów gotowych do sprzedaży lub wysyłki.
+              </p>
+              <div
+                className="pr-goods"
+                aria-label={'Zapasy: ' + selectedPlayer.name}
+                aria-live="polite"
+              >
+                {GOODS.map((g) => (
+                  <span
+                    key={g}
+                    title={GOOD_NAMES[g]}
+                    aria-label={
+                      GOOD_NAMES[g] + ': ' + (selectedPlayer.goods[g] || 0)
+                    }
+                  >
+                    <Art id={g} />
+                    <strong>{selectedPlayer.goods[g] || 0}</strong>
+                    <small>{GOOD_NAMES[g]}</small>
+                  </span>
+                ))}
+              </div>
+              <p className="pr-muted">
+                Produkcja zwiększa zapas. Sprzedaż, załadunek i odrzucenie go
+                zmniejszają. Skład to widok zapasów — ochronę przed utratą
+                towarów dają odpowiednie budynki magazynowe.
+              </p>
+              <button
+                className="pr-action"
+                onClick={() =>
+                  choose({
+                    key: selectedPlayer.id,
+                    area: 'island',
+                    playerId: selectedPlayer.id,
+                  })
+                }
+              >
+                Otwórz wyspę gracza
+              </button>
+            </section>
           )}
           {selected?.area === 'trade' && (
             <div className="pr-trading-house">
@@ -752,7 +873,12 @@ export function WorldGame({
                     <div className="pr-offers">
                       {buildings.map((b) => (
                         <button
-                          className="pr-offer"
+                          className={
+                            'pr-offer' +
+                            (teaching?.targetKey === 'market:' + b.id
+                              ? ' is-tutorial-target'
+                              : '')
+                          }
                           key={b.id}
                           onClick={() =>
                             choose({
@@ -797,7 +923,12 @@ export function WorldGame({
                   <button
                     key={tile.key}
                     disabled={!canAct || !tile.action}
-                    className="pr-crop-choice"
+                    className={
+                      'pr-crop-choice' +
+                      (teaching?.targetKey === 'plantations' && tile.action
+                        ? ' is-tutorial-target'
+                        : '')
+                    }
                     onClick={() => tile.action && act(actionKey(tile.action))}
                     aria-label={tile.name + ' · ' + tile.detail}
                   >
@@ -931,6 +1062,7 @@ export function WorldGame({
           )}
           {!nearby.length &&
             selected.area !== 'scenery' &&
+            selected.area !== 'stock' &&
             selected.area !== 'plantations' && (
               <p className="pr-muted">
                 Dostępne ruchy zależą od aktualnej postaci i gracza, którego
@@ -946,16 +1078,20 @@ export function WorldGame({
               ? 'OBSERWUJ RUCH'
               : playback?.state.paused
                 ? 'PAUZA'
-                : waiting
-                  ? 'RUCH PRZECIWNIKA'
-                  : 'TWOJA TURA'}
+                : lessonReading
+                  ? 'SAMOUCZEK'
+                  : waiting
+                    ? 'RUCH PRZECIWNIKA'
+                    : 'TWOJA TURA'}
           </span>
           <h2>
             {observing
               ? beat.actorName + ' · ' + (PHASES[beat.role] || 'Akcja')
-              : waiting
-                ? current.name + ' myśli…'
-                : PHASES[scene.phase] || scene.phase}
+              : lessonReading
+                ? teaching.title
+                : waiting
+                  ? current.name + ' myśli…'
+                  : PHASES[scene.phase] || scene.phase}
           </h2>
         </div>
         <div className="pr-command-content">
@@ -965,6 +1101,11 @@ export function WorldGame({
               {observing
                 ? 'Oglądasz wykonany ruch. Możesz zatrzymać pokaz albo przejść dalej.'
                 : 'Wznów pokaz, aby kontynuować grę.'}
+            </p>
+          ) : lessonReading ? (
+            <p className="pr-intro">
+              Wykonaj zadanie z panelu samouczka. Mapę i szczegóły możesz
+              oglądać w dowolnej chwili.
             </p>
           ) : scene.phase === 'roleSelection' ? (
             <p className="pr-intro">
@@ -1014,6 +1155,7 @@ export function WorldGame({
           }}
           onBack={roleInfo ? () => setRoleInfo(null) : undefined}
         >
+          {lessonCallout}
           {roleInfo ? (
             <RoleInfo role={roleInfo} />
           ) : (

@@ -8,7 +8,8 @@ export type Area =
   | 'corsair'
   | 'supplies'
   | 'scenery'
-  | 'island';
+  | 'island'
+  | 'stock';
 export interface EntityRef {
   key: string;
   area: Area;

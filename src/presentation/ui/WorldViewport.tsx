@@ -7,6 +7,8 @@ import type { EntityRef, SceneSnapshot } from '../adapter/sceneTypes';
 interface Props {
   playback?: ActionPlayback | undefined;
   keyboardEnabled: boolean;
+  tutorialTarget?: string | null | undefined;
+  tutorialFocus?: string | null | undefined;
   scene: SceneSnapshot;
   onPick: (ref: EntityRef) => void;
   motion: boolean;
@@ -35,6 +37,10 @@ export function WorldViewport(props: Props) {
       .init(host.current!)
       .then(() => {
         if (!active) return;
+        world.setTutorialTarget(
+          latest.current.tutorialTarget ?? null,
+          latest.current.tutorialFocus ?? null,
+        );
         world.setKeyboardEnabled(latest.current.keyboardEnabled);
         world.setMotion(latest.current.motion);
         world.setPlayback(latest.current.playback?.controller ?? null);
@@ -95,6 +101,12 @@ export function WorldViewport(props: Props) {
   useEffect(() => {
     renderer.current?.setKeyboardEnabled(props.keyboardEnabled);
   }, [props.keyboardEnabled]);
+  useEffect(() => {
+    renderer.current?.setTutorialTarget(
+      props.tutorialTarget ?? null,
+      props.tutorialFocus ?? null,
+    );
+  }, [props.tutorialTarget, props.tutorialFocus]);
   return (
     <div
       className={'pr-map' + (props.playback ? ' has-playback' : '')}

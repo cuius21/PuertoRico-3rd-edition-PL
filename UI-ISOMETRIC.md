@@ -100,12 +100,26 @@ Walidacja: TypeScript i 456 testów w 42 plikach. Nowe testy obejmują budowę i
 
 To podstawa późniejszego samouczka: etapy mają gracza, rolę, obiekty, opis i bilans. Obecny pokaz opisuje wykonane ruchy; dydaktyczne dymki, cele lekcji i ćwiczenia pozostają na osobny etap. Protokół LAN i zdalny harmonogram nie były rozszerzane.
 
-
 ### Układ ekranu i nawigacja klawiaturą
 
 Powyżej 760 px szerokości gra mieści się w 100dvh: mapa w elastycznej lewej kolumnie, drewniane tabliczki graczy po prawej, pod nimi przycisk Akcje. Listy ruchów i zawartość okien przewijają się niezależnie. Na telefonie pozostaje przewijany widok. Tabliczka wskazuje gracza oglądanego ruchu.
 
 WASD przesuwa kamerę płynnie przy przytrzymaniu (W do góry, S w dół, A w lewo, D w prawo), niezależnie od dekoracyjnych animacji. Ruch jest normalizowany po przekątnej i względem powiększenia. Skróty nie działają w oknach szczegółów, historii ani polach edycji; utrata fokusu czy ukrycie karty czyści przytrzymane klawisze. Sterowanie nie korzysta z logiki gry ani RNG.
 
-
 Panel obserwacji ma drewniany wygląd i znajduje się pod tabliczkami graczy. Na komputerze obie sekcje oraz przycisk Akcje tworzą jedną prawą kolumnę; na telefonie obserwacja jest pod poziomym paskiem graczy. Długie opisy mają własne przewijanie, a przyciski pokazu pozostają widoczne. Panel jest pojedynczą instancją, niezależną od renderera mapy.
+
+## Samouczek, opiekun i zapasy na nabrzeżu — 11 września 2026
+
+Przycisk „Naucz się grać” w menu otwiera 12 krótkich rozdziałów podstaw, samodzielną próbę oraz 4 wprowadzenia do dodatków. Każdy rozdział ma przygotowaną pozycję początkową; dalej wszystkie ruchy przechodzą przez zwykły GameRunner i legalne akcje silnika. Ćwiczenia uczą produkcji, przydziału pracowników, zakupów, handlu, żeglugi, utraty nadwyżek, rund i końcowego wyniku.
+
+- src/tutorial/scenarios.ts przygotowuje pozycje szkoleniowe z normalnych elementów gry, uwzględniając zajęte zasoby.
+- lessons.ts opisuje cele, krótkie wyjaśnienia, wskazywane obiekty i warunki zaliczenia. LessonRun filtruje legalne ruchy w zadaniach prowadzonych, a samodzielna próba udostępnia wszystkie legalne ruchy. Dwoje przeciwników szkoleniowych wybiera jawne, proste akcje.
+- TutorialScreen łączy lekcje z istniejącą mapą, popupami i kolejką obserwacji. Kolejny krok czeka na pokaz skutków. Żółta wskazówka i „Pokaż miejsce” wskazują obiekt; w ostatniej próbie gracz działa samodzielnie.
+- Postęp i stan bieżącej lekcji zapisują się w osobnym kluczu puerto_rico_tutorial_v1. Powrót przez Menu zachowuje krok. Każdy rozdział można powtórzyć. Zwykły zapis partii nie jest zastępowany przez lekcje.
+- CoachPanel podaje kontekstową wskazówkę w normalnej partii; można go włączać i wyłączać przyciskiem Opiekun. Start „Zagraj z opiekunem” uruchamia grę z dwoma dotychczasowymi botami Zachłannymi. Opiekun nie wykonuje ruchów za gracza.
+
+Każda wyspa ma powiększone nabrzeże i klikalny skład TOWARY. Pięć stałych miejsc odpowiada kukurydzy, indygo, cukrowi, tytoniowi i kawie. Pojawiają się skrzynki z ikoną rodzaju i dokładnym licznikiem zapasu; przy zerze skrzynki znikają. Wielkość ozdobnego stosu jest ograniczona do pięciu skrzynek, licznik pokazuje pełną ilość. Dane pochodzą z PlayerScene.goods, a w czasie obserwacji z prezentowanego etapu. Produkcja, bonusy, sprzedaż, załadunek, piractwo i odrzucenie towarów są widoczne bez dodatkowej symulacji. Skład otwiera popup zapasów; dostępna jest też droga przez tabliczkę gracza → „Skład towarów przy porcie”. Skład nie jest budynkiem i nie chroni towarów przed odrzuceniem.
+
+Lekcje produkcji, sprzedaży, wysyłki i przechowywania zawierają obowiązkowe obejrzenie zapasu po wykonanej akcji. Renderer i wskazówki transportu współdzielą położenie składu. Logika zasad, modele botów, serializacja zwykłej gry i backend pozostają bez zmian.
+
+Testy przechodzą wszystkie 17 lekcji legalnymi ruchami, odtwarzając zapis po każdym kroku; sprawdzają faktyczne punkty, sprzedaż, odrzucenie, zakończenie gry i nagrody dodatków. Oddzielnie sprawdzane są niewłaściwe ruchy, pytania kontrolne, wymagane odwiedzenie obiektu i niezależność zapisu.

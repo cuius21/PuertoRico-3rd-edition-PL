@@ -2828,3 +2828,21 @@
     height: 54px;
   }
 }
+
+.pr-stock-details .pr-goods {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pr-stock-details .pr-goods > span {
+  flex-direction: column;
+  min-width: 90px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #e8dfc5;
+}
+.pr-stock-details .pr-goods strong {
+  font-size: 24px;
+}
+.pr-stock-details .pr-goods small {
+  font-size: 12px;
+}

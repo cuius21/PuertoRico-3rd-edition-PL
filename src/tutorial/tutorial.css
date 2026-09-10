@@ -1,0 +1,316 @@
+.pr-school-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  width: 100%;
+  margin: 0 0 24px;
+  padding: 17px 20px;
+  background: linear-gradient(135deg, #e5c484, #fff0c6);
+  color: #4e3820;
+  border: 1px solid #a98346;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.pr-school-entry strong {
+  font-size: 18px;
+}
+.pr-school-entry span {
+  font-size: 12px;
+}
+.pr-school {
+  min-height: 100dvh;
+  padding: clamp(20px, 4vw, 60px);
+  background: radial-gradient(ellipse at 25% 20%, #287c76, #143f47);
+  color: #fff1ce;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+.pr-school button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid #cda260;
+  border-radius: 9px;
+  padding: 11px 16px;
+  background: #66432c;
+  color: #fff0cd;
+}
+.pr-school button:focus-visible,
+.pr-tutor-panel button:focus-visible {
+  outline: 3px solid #ffdf81;
+  outline-offset: 3px;
+}
+.pr-school-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.pr-school-heading span {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #efd18e;
+}
+.pr-school h1 {
+  font:
+    clamp(28px, 4vw, 42px) Georgia,
+    serif;
+  margin: 8px 0 12px;
+}
+.pr-school p {
+  line-height: 1.6;
+  font-size: 14px;
+  max-width: 740px;
+}
+.pr-school h2 {
+  font:
+    24px Georgia,
+    serif;
+  margin: 0 0 9px;
+}
+.pr-school-start,
+.pr-school-practice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border: 1px solid #cea76288;
+  padding: 24px;
+  border-radius: 14px;
+  background: #123f4280;
+}
+.pr-school-start > div:last-child {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pr-school-start small {
+  display: block;
+  margin-top: 8px;
+  color: #c9ded0;
+  font-size: 12px;
+}
+.pr-school-group {
+  margin: 30px 0;
+}
+.pr-school-lessons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 12px;
+}
+.pr-school-lessons > button {
+  display: flex;
+  gap: 14px;
+  text-align: left;
+  align-items: flex-start;
+  padding: 18px;
+  background: linear-gradient(170deg, #916438, #69452c);
+  box-shadow: 0 4px 0 #38271d55;
+}
+.pr-school-lessons > button:hover {
+  border-color: #ffe3a0;
+  background: #946a3e;
+}
+.pr-school-number {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  background: #eed394;
+  border-radius: 50%;
+  color: #503b24;
+  font-size: 13px;
+  font-weight: bold;
+}
+.pr-school-lessons strong {
+  display: block;
+  font-size: 15px;
+}
+.pr-school-lessons small {
+  display: block;
+  margin: 7px 0;
+  color: #f4dfbe;
+  line-height: 1.5;
+  font-size: 12px;
+}
+.pr-school-lessons em {
+  font-size: 10px;
+  font-style: normal;
+  color: #e8c785;
+}
+.pr-school .pr-school-primary,
+.pr-world .pr-school-primary {
+  background: #ebce8c;
+  color: #403221;
+  border-color: #ffe2a3;
+  font-weight: bold;
+}
+.pr-tutor-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  align-self: start;
+  border: 2px solid #ba8d4f;
+  border-bottom: 4px solid #432c20;
+  border-radius: 10px;
+  background: linear-gradient(150deg, #956637, #68442d);
+  color: #fff0ce;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 #f0d09155,
+    0 5px 12px #092f3955;
+}
+.pr-tutor-scroll {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 14px;
+}
+.pr-tutor-eyebrow {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #f4d490;
+  font-weight: bold;
+}
+.pr-world .pr-tutor-panel h2,
+.pr-world .pr-coach-panel h2 {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 17px;
+  color: #fff2cb;
+  line-height: 1.3;
+  margin: 8px 0;
+}
+.pr-tutor-panel p,
+.pr-coach-panel p {
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 7px 0;
+}
+.pr-tutor-controls {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  border-top: 1px solid #e6bc7044;
+  background: #3c281d44;
+}
+.pr-tutor-panel button,
+.pr-coach-panel button {
+  border: 1px solid #c39a6188;
+  background: #4e3526;
+  color: #fff0c9;
+  border-radius: 7px;
+  padding: 7px 9px;
+  font-size: 11px;
+}
+.pr-tutor-hint,
+.pr-tutor-note {
+  background: #3c2b2155;
+  border-left: 2px solid #edcc83;
+  padding: 8px;
+}
+.pr-tutor-success,
+.pr-tutor-checklist {
+  color: #ffe5a1;
+  font-weight: bold;
+}
+.pr-tutor-answers {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pr-tutor-score small {
+  display: block;
+  font-size: 10px;
+  color: #ecd6b1;
+}
+.pr-lesson-callout {
+  padding: 12px 15px;
+  border: 1px solid #d1aa57;
+  background: #ffedb9;
+  color: #624720;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pr-lesson-callout strong {
+  font-size: 14px;
+}
+.pr-lesson-callout p {
+  margin: 5px 0;
+}
+.pr-lesson-callout button {
+  padding: 7px 12px;
+  background: #32685c;
+  color: #fff0c6;
+  border: 1px solid #285747;
+  margin-top: 5px;
+}
+.pr-world .is-tutorial-target,
+.pr-world--tutorial.is-guided .pr-role.is-playable {
+  outline: 3px solid #ffe393;
+  outline-offset: 2px;
+  box-shadow: 0 0 22px #ffd97970;
+}
+.pr-coach-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  max-height: 100%;
+  align-self: start;
+}
+.pr-coach-panel {
+  padding: 12px;
+  border: 2px solid #bb9259;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #8d6237, #65432d);
+  color: #ffefc9;
+  min-height: 0;
+  overflow: auto;
+}
+.pr-coach-panel small {
+  display: block;
+  font-size: 9px;
+  margin-top: 7px;
+  color: #ead3a9;
+}
+.pr-player-rail .pr-coach-stack .pr-observer {
+  flex-shrink: 0;
+}
+@media (min-width: 761px) {
+  .pr-player-rail:has(.pr-tutor-panel),
+  .pr-player-rail:has(.pr-coach-stack) {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+}
+@media (max-width: 760px) {
+  .pr-school {
+    padding: 20px 14px;
+  }
+  .pr-school-heading,
+  .pr-school-start,
+  .pr-school-practice {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pr-school-lessons {
+    grid-template-columns: 1fr;
+  }
+  .pr-tutor-panel,
+  .pr-coach-stack {
+    margin-bottom: 14px;
+    max-height: 460px;
+  }
+  .pr-tutor-scroll {
+    padding: 13px;
+  }
+  .pr-tutor-panel p {
+    font-size: 13px;
+  }
+}

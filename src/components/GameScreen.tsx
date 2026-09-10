@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { CoachPanel } from '../tutorial/CoachPanel';
+import { ActionPlaybackPanel } from '../presentation/ui/ActionPlaybackPanel';
 import { useActionPlayback } from '../presentation/playback/useActionPlayback';
 import { useGameRunner } from '../hooks/useGameRunner';
 import type { PlayerSetup } from '../game/GameRunner';
@@ -8,17 +10,31 @@ import { serializeGame } from '../game/GameSerializer';
 import { GameOverScreen } from './GameOverScreen';
 import { WorldGame } from '../presentation/ui/WorldGame';
 interface Props {
+  coached?: boolean;
   setups: PlayerSetup[];
   expansions: ExpansionConfig;
   savedState?: GameState;
   onReturnToMenu: () => void;
 }
 export function GameScreen({
+  coached = false,
   setups,
   expansions,
   savedState,
   onReturnToMenu,
 }: Props) {
+  const [coach, setCoach] = useState(() => {
+    try {
+      return coached || localStorage.getItem('puerto-coach-enabled') === 'on';
+    } catch {
+      return coached;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('puerto-coach-enabled', coach ? 'on' : 'off');
+    } catch {}
+  }, [coach]);
   const playback = useActionPlayback();
   const {
     runner,
@@ -47,6 +63,33 @@ export function GameScreen({
   return (
     <WorldGame
       playback={playback}
+      extraTools={
+        <button
+          aria-pressed={coach}
+          onClick={() => {
+            setCoach((v) => {
+              const next = !v;
+              try {
+                localStorage.setItem(
+                  'puerto-coach-enabled',
+                  next ? 'on' : 'off',
+                );
+              } catch {}
+              return next;
+            });
+          }}
+        >
+          {coach ? 'Opiekun: wł.' : 'Opiekun: wył.'}
+        </button>
+      }
+      sidebarContent={
+        coach && !playback.state.beat && runner.isCurrentPlayerHuman() ? (
+          <div className="pr-coach-stack">
+            <CoachPanel state={state} />
+            <ActionPlaybackPanel playback={playback} />
+          </div>
+        ) : undefined
+      }
       state={state}
       runner={runner}
       onAction={applyHumanAction}

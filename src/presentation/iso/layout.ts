@@ -6,9 +6,9 @@ export const PLAYER_OUTLINE = [
   [-0.4, -2.5],
   [9.2, -2.5],
   [10.6, -0.1],
-  [10.6, 3.5],
-  [9.4, 4.8],
-  [-0.4, 4.8],
+  [10.6, 4.8],
+  [9.4, 6.1],
+  [-0.4, 6.1],
   [-2.3, 3.4],
 ].map(([u, v]) => parcel(u!, v!));
 export const CENTRAL_OUTLINE: Point[] = [
@@ -72,3 +72,12 @@ export const PLAYER_WALKS = [
   [parcel(-0.2, 3.5), parcel(4.1, 3.5), parcel(9, 3.5), parcel(4.1, 3.5)],
   [parcel(4.1, -0.5), parcel(4.1, 3.5)],
 ];
+
+export const PLAYER_DOCK = parcel(8.6, 6.1);
+export const PLAYER_STOCK = parcel(7.3, 4.7);
+export const STOCK_SLOTS = ['corn', 'indigo', 'sugar', 'tobacco', 'coffee'].map(
+  (good, i) => ({
+    good,
+    ...parcel(5.3 + i, 4.7),
+  }),
+);
