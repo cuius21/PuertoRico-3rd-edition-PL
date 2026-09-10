@@ -44,3 +44,11 @@ Przy Magistracie widać liczby robotników i szlachciców z jego zasobów oraz o
 Plantator uruchamia wskazówkę i strzałkę na plantacje w San Juan. Kliknięcie ilustracji surowca w popupie wywołuje aktualną legalną akcję bez pośredniego wyboru kafla; duplikaty i zamiana na las mają osobne klucze. Niedostępne kafle są nieaktywne. Wybór sprawdza świeżą listę akcji, a strzałka znika poza odpowiednią turą. Przycisk pod mapą zapewnia alternatywę dla klikania canvasu.
 
 Zmiany obejmują wyłącznie prezentację, zasoby graficzne i testy. Nowe testy sprawdzają faktyczny przydział i rezerwę, przejście magistratu, granice gęstych grup, pojedynczy wybór surowca, Szałas i nieaktualne akcje.
+
+## Dźwięki wyspy — 10 września 2026
+
+Warstwa prezentacji odtwarza ciche pętle traffic i birds z dostarczonego katalogu audio. Church dołącza po 90 sekundach, następnie co 270 sekund. Dwa długie nagrania są strumieniowane, a krótkie dzwony korzystają z bufora Web Audio. Odtwarzanie nie korzysta ze stanu gry ani jej RNG.
+
+Przycisk Dźwięk wycisza odgłosy; strzałka obok otwiera suwak głośności. Domyślnie 22%, ustawienia przechowywane lokalnie. Jeśli przeglądarka wymaga gestu, przycisk pokazuje Włącz dźwięk. Ukryta karta pauzuje nagrania i czas harmonogramu; wyjście do menu zwalnia odtwarzacze, połączenia audio i zegar. Brak dzwonów przy problemie sieciowym nie przerywa dwóch głównych nagrań ani gry.
+
+Pliki src/assets/audio ważą łącznie 3,3 MB. Oryginały audio nie były zmieniane. Testy sprawdzają rzadkie dzwony, głośność, pauzę i wznowienie, obsługę blokady autoplay, wyjście podczas startu oraz zwolnienie zasobów.

@@ -5,6 +5,7 @@ import type { GameState } from '../../../state/GameState';
 import type { GameEvent, PlayerSetup } from '../../game/GameRunner';
 import { describeAction } from '../../game/actionLabels';
 import { BUILDING_DESCRIPTIONS } from '../../game/buildingDescriptions';
+import { AmbientAudio } from './AmbientAudio';
 import { RoleDeck } from './RoleDeck';
 import { WorldDialog } from './WorldDialog';
 import { FestivalBoardPanel } from '../../components/FestivalBoardPanel';
@@ -273,6 +274,7 @@ export function WorldGame({
           </small>
         </div>
         <nav className="pr-tools" aria-label="Ustawienia gry">
+          <AmbientAudio />
           <button
             aria-pressed={motion}
             onClick={() => {
