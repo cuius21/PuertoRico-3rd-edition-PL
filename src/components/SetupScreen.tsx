@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MenuShell } from '../presentation/menu/MenuShell';
 import { createBot } from '../bots/createBot';
 import type { BotDifficulty } from '../bots/createBot';
 import type { PlayerSetup } from '../game/GameRunner';
@@ -156,24 +157,38 @@ export function SetupScreen({
   }
 
   return (
-    <div className="setup-screen">
-      <div className="setup-card">
+    <MenuShell className="setup-screen">
+      <header className="pr-menu-brand">
+        <span className="pr-menu-edition">SAN JUAN · TRZECIA EDYCJA</span>
         <h1 className="setup-title">Puerto Rico</h1>
-        <p className="setup-subtitle">Nowa gra</p>
-        {onTutorial && (
-          <button className="pr-school-entry" onClick={onTutorial}>
-            <strong>⚑ Naucz się grać</strong>
-            <span>Samouczek na planszy · lekcje i partia z opiekunem</span>
-          </button>
-        )}
-
-        <div className="setup-section">
+        <p>Twoja wyspa. Twój pomysł na zwycięstwo.</p>
+      </header>
+      <div className="setup-card">
+        <div className="pr-menu-intro">
+          <div className="pr-menu-card-heading">
+            <span aria-hidden="true">⚑</span>
+            <div>
+              <h2>Przygotuj wyprawę</h2>
+              <p className="setup-subtitle">
+                Wybierz graczy i odkryj swój archipelag.
+              </p>
+            </div>
+          </div>
+          {onTutorial && (
+            <button className="pr-school-entry" onClick={onTutorial}>
+              <strong>⚑ Naucz się grać</strong>
+              <span>Samouczek na planszy · lekcje i partia z opiekunem</span>
+            </button>
+          )}
+        </div>
+        <div className="setup-section setup-section--count">
           <label className="setup-label">Liczba graczy</label>
           <div className="player-count-buttons">
             {[3, 4, 5].map((n) => (
               <button
                 key={n}
                 className={`count-btn ${playerCount === n ? 'active' : ''}`}
+                aria-pressed={playerCount === n}
                 onClick={() => updateCount(n)}
               >
                 {n}
@@ -190,6 +205,7 @@ export function SetupScreen({
                 <span className="player-number">{i + 1}.</span>
                 <input
                   className="player-name-input"
+                  aria-label={'Nazwa gracza ' + (i + 1)}
                   value={p.name}
                   onChange={(e) => updatePlayer(i, { name: e.target.value })}
                   maxLength={20}
@@ -351,25 +367,27 @@ export function SetupScreen({
           </p>
         )}
 
-        <button className="start-btn" onClick={handleStart}>
-          Rozpocznij grę
-        </button>
-
-        {savedGame && (
-          <button className="load-btn" onClick={onLoad}>
-            <span className="load-btn__label">Wczytaj zapisaną grę</span>
-            <span className="load-btn__date">
-              {formatSaveDate(savedGame.savedAt)}
-            </span>
+        <div className="pr-menu-submit">
+          <button className="start-btn" onClick={handleStart}>
+            Rozpocznij grę
           </button>
-        )}
 
-        {import.meta.env.VITE_LAN_ENABLED !== 'false' && (
-          <button className="multiplayer-btn" onClick={onMultiplayer}>
-            🌐 Gra sieciowa (LAN)
-          </button>
-        )}
+          {savedGame && (
+            <button className="load-btn" onClick={onLoad}>
+              <span className="load-btn__label">Wczytaj zapisaną grę</span>
+              <span className="load-btn__date">
+                {formatSaveDate(savedGame.savedAt)}
+              </span>
+            </button>
+          )}
+
+          {import.meta.env.VITE_LAN_ENABLED !== 'false' && (
+            <button className="multiplayer-btn" onClick={onMultiplayer}>
+              🌐 Gra sieciowa (LAN)
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </MenuShell>
   );
 }

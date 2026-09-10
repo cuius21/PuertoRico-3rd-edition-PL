@@ -123,3 +123,12 @@ Każda wyspa ma powiększone nabrzeże i klikalny skład TOWARY. Pięć stałych
 Lekcje produkcji, sprzedaży, wysyłki i przechowywania zawierają obowiązkowe obejrzenie zapasu po wykonanej akcji. Renderer i wskazówki transportu współdzielą położenie składu. Logika zasad, modele botów, serializacja zwykłej gry i backend pozostają bez zmian.
 
 Testy przechodzą wszystkie 17 lekcji legalnymi ruchami, odtwarzając zapis po każdym kroku; sprawdzają faktyczne punkty, sprzedaż, odrzucenie, zakończenie gry i nagrody dodatków. Oddzielnie sprawdzane są niewłaściwe ruchy, pytania kontrolne, wymagane odwiedzenie obiektu i niezależność zapisu.
+
+ 
+## Żywe menu wyspy — 11 września 2026
+
+Menu nowej gry i katalog samouczka korzystają ze wspólnej dekoracji MenuShell: zatoka, piasek, palmy, dryfujący żaglowiec, ptaki i łagodne fale. Scena powstaje w SVG; nie wymaga dodatkowych pobrań grafik ani renderera gry. Palmy, korony, fale i żaglówka mają niezależne animacje CSS. Ukrycie karty zatrzymuje animacje, a demontaż menu usuwa nasłuchiwanie zdarzeń.
+
+Przyciski mają warstwy drewna lub pergaminu, uniesienie przy najechaniu, wciśnięcie przy aktywacji oraz widoczny fokus klawiatury. Główny przycisk delikatnie rozświetla się i ma rzadki połysk. Nazwy, trudności, opisy botów, rozszerzenia, wczytywanie i rozpoczęcie partii zachowują dotychczasową obsługę.
+
+Przełącznik „Tło: animowane / spokojne” zapisuje preferencję w osobnym kluczu puerto-menu-motion. Systemowe ograniczenie ruchu domyślnie wyłącza animacje; także wejście na kartę i zmiana ustawienia systemowego są obsłużone. Ruch można świadomie włączyć ponownie. Tryb spokojny zachowuje czytelne menu od pierwszej klatki. Efekty menu nie zmieniają ustawień ruchu na mapie ani logiki gry.

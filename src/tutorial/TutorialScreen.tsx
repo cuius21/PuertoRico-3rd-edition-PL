@@ -14,6 +14,7 @@ import {
   teachingAction,
   type LessonSave,
 } from './LessonRun';
+import { MenuShell } from '../presentation/menu/MenuShell';
 import { HUMAN, type ScenarioId } from './scenarios';
 import './tutorial.css';
 
@@ -83,7 +84,7 @@ export function TutorialScreen({
     );
   const basics = LESSONS.filter((l) => l.group !== 'expansions');
   return (
-    <main className="pr-school">
+    <MenuShell as="main" className="pr-school">
       <header className="pr-school-heading">
         <div>
           <span>SZKOŁA GUBERNATORÓW</span>
@@ -174,7 +175,7 @@ export function TutorialScreen({
           Zagraj z opiekunem
         </button>
       </section>
-    </main>
+    </MenuShell>
   );
 }
 function LessonGame({
