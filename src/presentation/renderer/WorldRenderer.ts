@@ -30,9 +30,11 @@ import {
   CENTRAL_PATHS,
   CENTRAL_WALKS,
   PLAYER_WALKS,
+  PLAYER_FLAG,
 } from '../iso/layout';
 import { idleFormation, waitingWorkforce } from '../iso/workforce';
 import { walkAt, swayAt, bobAt } from './ambient';
+import { ShipVoyages, voyageFrame } from './shipVoyages';
 import type {
   EntityRef,
   SceneSnapshot,
@@ -70,6 +72,20 @@ export class WorldRenderer {
   private waves = new Graphics();
   private textures = new Map<string, Texture>();
   private wind: WindItem[] = [];
+  private voyages = new ShipVoyages();
+  private shipViews = new Map<
+    number,
+    {
+      boat: Container;
+      cargo: Graphics;
+      wake: Graphics;
+      label: Text;
+      x: number;
+      y: number;
+      cargoKey: string;
+    }
+  >();
+  private flags: { cloth: Graphics; color: number; phase: number }[] = [];
   private idlers: {
     sprite: Sprite;
     baseY: number;
@@ -208,6 +224,7 @@ export class WorldRenderer {
     const signature = JSON.stringify([snapshot, this.selected]);
     if (signature === this.renderSignature) return;
     this.renderSignature = signature;
+    this.voyages.update(snapshot, this.elapsed, this.motion);
     this.snapshot = snapshot;
     for (const w of this.walkers.values()) w.sprite.removeFromParent();
     for (const w of this.residents.values()) w.sprite.removeFromParent();
@@ -216,6 +233,8 @@ export class WorldRenderer {
     for (const child of this.terrain.removeChildren())
       child.destroy({ children: true });
     this.wind = [];
+    this.flags = [];
+    this.shipViews.clear();
     this.idlers = [];
     this.arrow = null;
     const centers = islandCenters(snapshot.players.length);
@@ -265,6 +284,7 @@ export class WorldRenderer {
         const q = parcel(u!, v!);
         this.palm(objects, q.x, q.y, 76, (i + 1) * 7 + u!);
       }
+      this.playerFlag(objects, p.id, p.color, i);
       const waiting = waitingWorkforce(p);
       const ref: EntityRef = { key: p.id, area: 'island', playerId: p.id };
       this.waitingPeople(objects, waiting.workers, waiting.nobles, false, ref);
@@ -299,6 +319,8 @@ export class WorldRenderer {
     });
     this.syncWorkers(snapshot);
     this.syncResidents(snapshot);
+    this.animateShips();
+    this.animateFlags();
     this.positionCamera();
   }
   private land(
@@ -558,7 +580,7 @@ export class WorldRenderer {
     group.addChild(objects);
     this.playerObjects.set('central', objects);
     for (const [area, id, name] of [
-      ['market', 'market', 'Budynki i targ'],
+      ['market', 'market', 'Budynki'],
       ['magistrate', 'magistrate', 'Magistrat i szlachta'],
       ['plantations', 'corn', 'Plantacje'],
       ['supplies', 'treasury', 'Wspólne zapasy'],
@@ -575,6 +597,7 @@ export class WorldRenderer {
         area,
       );
     }
+    this.tradingSign(objects, s);
     this.waitingPeople(objects, s.magistrate, s.magistrateNobles, true, {
       key: 'magistrate',
       area: 'magistrate',
@@ -641,38 +664,7 @@ export class WorldRenderer {
       [-65, -245, 7],
     ])
       this.palm(objects, x!, y!, 110, phase!);
-    s.ships.forEach((ship, i) => {
-      const x = 360 + i * 152,
-        y = 440 - i * 65,
-        w = 144 + i * 7;
-      const names: Record<string, string> = {
-        corn: 'kukurydza',
-        indigo: 'indygo',
-        sugar: 'cukier',
-        coffee: 'kawa',
-        tobacco: 'tytoń',
-      };
-      const boat = this.landmark(
-        objects,
-        'ship',
-        `${ship.count}/${ship.capacity} · ${ship.good ? names[ship.good] : 'pusty'}`,
-        x,
-        y,
-        w,
-        'port',
-        `ship:${i}`,
-      );
-      this.wind.push({ sprite: boat, baseY: y, phase: i * 2, kind: 'ship' });
-      if (ship.good) {
-        const cargo = new Graphics();
-        for (let n = 0; n < Math.min(ship.count, 8); n++)
-          cargo
-            .roundRect(-16 + (n % 4) * 8, -27 - Math.floor(n / 4) * 8, 7, 7, 1)
-            .fill(GOOD_COLOR[ship.good] ?? 0xc5a77c)
-            .stroke({ color: 0xffedcf, width: 0.5 });
-        boat.addChild(cargo);
-      }
-    });
+    s.ships.forEach((_, i) => this.ship(objects, i));
     if (s.corsair) {
       const boat = this.landmark(
         objects,
@@ -688,6 +680,247 @@ export class WorldRenderer {
     group.addChild(
       this.label('WSPÓLNA WYSPA · RYNEK, PORT I DODATKI', 0, 505, 13, 0xc3ece3),
     );
+  }
+  private tradingSign(parent: Container, s: SceneSnapshot) {
+    const p = CENTRAL_PLACES.trade;
+    const root = new Container();
+    root.position.set(p.x, p.y);
+    root.zIndex = p.y;
+    const wood = new Graphics()
+      .ellipse(0, 4, 57, 12)
+      .fill({ color: 0x345334, alpha: 0.2 })
+      .roundRect(-44, -57, 9, 62, 2)
+      .fill(0x745031)
+      .roundRect(35, -57, 9, 62, 2)
+      .fill(0x745031)
+      .roundRect(-76, -112, 152, 62, 6)
+      .fill(0x805630)
+      .roundRect(-72, -108, 144, 54, 4)
+      .fill(0xb6844d)
+      .stroke({ color: 0xe0b978, width: 2 });
+    for (const y of [-91, -73])
+      wood
+        .moveTo(-70, y)
+        .lineTo(70, y)
+        .stroke({ color: 0x81552f, width: 1, alpha: 0.45 });
+    for (const x of [-63, 63])
+      for (const y of [-100, -62]) wood.circle(x, y, 2).fill(0x63472b);
+    root.addChild(wood, this.label('TARGOWISKO', 0, -97, 16, 0xffefc3));
+    const occupied = s.trade.filter(Boolean).length;
+    root.addChild(
+      this.label(
+        occupied + ' / ' + s.trade.length + ' zajęte',
+        0,
+        -77,
+        12,
+        0xffe4ac,
+      ),
+    );
+    const crates = new Graphics();
+    s.trade.forEach((good, i) => {
+      const x = -45 + i * 30;
+      crates
+        .roundRect(x - 11, -28, 22, 20, 3)
+        .fill(good ? (GOOD_COLOR[good] ?? 0xc6a57a) : 0x9c8854)
+        .stroke({ color: good ? 0xf5dfac : 0xd3c48a, width: 1.5 });
+      if (!good)
+        crates
+          .moveTo(x - 6, -23)
+          .lineTo(x + 6, -13)
+          .stroke({ color: 0xcdbb83, width: 1 });
+    });
+    root.addChild(crates);
+    if (s.legalTargets.includes('trade'))
+      root.addChild(
+        new Graphics()
+          .ellipse(0, 5, 70, 15)
+          .stroke({ color: 0xffdd88, width: 2.5 }),
+      );
+    this.interactive(
+      root,
+      { key: 'trade', area: 'trade' },
+      new Rectangle(-78, -114, 156, 125),
+    );
+    parent.addChild(root);
+  }
+  private playerFlag(
+    parent: Container,
+    id: string,
+    color: string,
+    index: number,
+  ) {
+    const root = new Container();
+    root.position.set(PLAYER_FLAG.x, PLAYER_FLAG.y);
+    root.zIndex = PLAYER_FLAG.y;
+    const mast = new Graphics()
+      .ellipse(0, 4, 22, 7)
+      .fill({ color: 0x284935, alpha: 0.2 })
+      .poly([-12, 0, 0, -7, 12, 0, 0, 7])
+      .fill(0xc7bb8a)
+      .stroke({ color: 0xe0d5a8, width: 1 })
+      .roundRect(-3, -130, 6, 131, 2)
+      .fill(0x795536)
+      .moveTo(-1, -127)
+      .lineTo(-1, -1)
+      .stroke({ color: 0xdfc18c, width: 1.5 })
+      .circle(0, -133, 5)
+      .fill(0xf0cc75)
+      .stroke({ color: 0x966933, width: 1 });
+    const cloth = new Graphics();
+    root.addChild(mast, cloth);
+    this.flags.push({
+      cloth,
+      color: parseInt(color.slice(1), 16),
+      phase: index * 1.7,
+    });
+    this.interactive(
+      root,
+      { key: id, area: 'island', playerId: id },
+      new Rectangle(-14, -139, 108, 151),
+    );
+    parent.addChild(root);
+  }
+  private animateFlags() {
+    for (const flag of this.flags) {
+      const wave = this.motion
+        ? Math.sin(this.elapsed * 2.3 + flag.phase) * 5
+        : 0;
+      flag.cloth
+        .clear()
+        .moveTo(3, -126)
+        .bezierCurveTo(28, -133 + wave, 52, -116 - wave, 86, -126 + wave)
+        .lineTo(79, -104 + wave)
+        .lineTo(86, -82 + wave)
+        .bezierCurveTo(54, -73 - wave, 27, -89 + wave, 3, -82)
+        .closePath()
+        .fill(flag.color)
+        .stroke({ color: 0xfff1c5, alpha: 0.75, width: 1.5 })
+        .moveTo(29, -126)
+        .bezierCurveTo(25, -111, 32, -96, 28, -83)
+        .stroke({ color: 0xffffff, alpha: 0.17, width: 6 });
+    }
+  }
+  private ship(parent: Container, index: number) {
+    const x = 360 + index * 152,
+      y = 440 - index * 65,
+      size = 144 + index * 7;
+    const boat = new Container();
+    boat.zIndex = y;
+    const wake = new Graphics();
+    wake.eventMode = 'none';
+    wake.zIndex = y - 1;
+    const cargo = new Graphics();
+    boat.addChild(this.sprite('ship', size, size), cargo);
+    this.interactive(
+      boat,
+      { key: 'ship:' + index, area: 'port', shipIndex: index },
+      new Rectangle(-size / 2, -size * 0.9, size, size),
+    );
+    const caption = new Container();
+    caption.position.set(x, y + 25);
+    caption.zIndex = 10000 + y;
+    const label = this.label('', 0, 0, 13, 0xffebbd);
+    caption.addChild(
+      new Graphics()
+        .roundRect(-70, -4, 140, 42, 12)
+        .fill({ color: 0x154b4f, alpha: 0.94 })
+        .stroke({ color: 0xd8c88f, width: 0.8, alpha: 0.5 }),
+      label,
+    );
+    this.interactive(
+      caption,
+      { key: 'ship:' + index, area: 'port', shipIndex: index },
+      new Rectangle(-70, -4, 140, 42),
+    );
+    parent.addChild(wake, boat, caption);
+    this.shipViews.set(index, { boat, cargo, wake, label, x, y, cargoKey: '' });
+  }
+  private animateShips() {
+    if (!this.snapshot) return;
+    const names: Record<string, string> = {
+      corn: 'kukurydza',
+      indigo: 'indygo',
+      sugar: 'cukier',
+      tobacco: 'tytoń',
+      coffee: 'kawa',
+    };
+    for (const [i, view] of this.shipViews) {
+      const ship = this.snapshot.ships[i]!;
+      const voyage = this.voyages.get(i);
+      const frame = voyageFrame(voyage, this.elapsed);
+      const moving = frame.stage !== 'docked';
+      const bob = this.motion
+        ? bobAt(this.elapsed, i * 2)
+        : { y: 0, rotation: 0 };
+      view.boat.position.set(
+        view.x + frame.progress * 560,
+        view.y + frame.progress * 270 + bob.y,
+      );
+      view.boat.rotation = bob.rotation;
+      view.boat.alpha = frame.alpha;
+      view.boat.visible = frame.alpha > 0.001;
+      view.boat.zIndex = view.boat.y;
+      const good = moving ? (frame.cargo ? voyage!.good : null) : ship.good;
+      const count = moving ? (frame.cargo ? voyage!.capacity : 0) : ship.count;
+      const cargoKey = good + ':' + count;
+      if (cargoKey !== view.cargoKey) {
+        view.cargo.clear();
+        if (good)
+          for (let n = 0; n < Math.min(count, 8); n++)
+            view.cargo
+              .roundRect(
+                -16 + (n % 4) * 8,
+                -27 - Math.floor(n / 4) * 8,
+                7,
+                7,
+                1,
+              )
+              .fill(GOOD_COLOR[good] ?? 0xc5a77c)
+              .stroke({ color: 0xffedcf, width: 0.5 });
+        view.cargoKey = cargoKey;
+      }
+      const status =
+        frame.stage === 'departing'
+          ? 'Wypływa'
+          : frame.stage === 'away'
+            ? 'W rejsie'
+            : frame.stage === 'returning'
+              ? 'Wraca pusty'
+              : ship.good
+                ? names[ship.good]
+                : 'Pusty';
+      view.label.text =
+        ship.count +
+        '/' +
+        ship.capacity +
+        ' · Statek ' +
+        (i + 1) +
+        '\n' +
+        status;
+      view.wake.clear();
+      if (moving && frame.alpha > 0) {
+        const x = view.boat.x,
+          y = view.boat.y + 3;
+        const direction = frame.stage === 'returning' ? 1 : -1;
+        view.wake
+          .moveTo(x - 26, y)
+          .quadraticCurveTo(
+            x + direction * 60,
+            y + 12,
+            x + direction * 100,
+            y + direction * 40,
+          )
+          .moveTo(x + 22, y - 4)
+          .quadraticCurveTo(
+            x + direction * 70,
+            y + 4,
+            x + direction * 113,
+            y + direction * 28,
+          )
+          .stroke({ color: 0xd0f5e8, width: 3, alpha: frame.alpha * 0.43 });
+        view.wake.zIndex = view.boat.y - 1;
+      }
+    }
   }
   private workforceBadge(
     parent: Container,
@@ -914,6 +1147,7 @@ export class WorldRenderer {
   }
   setMotion(enabled: boolean) {
     this.motion = enabled;
+    if (!enabled) this.voyages.clear();
     if (!enabled)
       for (const w of this.walkers.values()) {
         w.sprite.position.set(w.to.x, w.to.y);
@@ -1011,6 +1245,8 @@ export class WorldRenderer {
         item.sprite.rotation = this.motion ? bobAt(t, item.phase).rotation : 0;
       }
     }
+    this.animateShips();
+    this.animateFlags();
     for (const w of this.idlers) {
       w.sprite.rotation =
         w.lean + (this.motion ? Math.sin(t * 0.8 + w.phase) * 0.015 : 0);

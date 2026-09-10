@@ -5,6 +5,7 @@ import type { GameState } from '../../../state/GameState';
 import type { GameEvent, PlayerSetup } from '../../game/GameRunner';
 import { describeAction } from '../../game/actionLabels';
 import { BUILDING_DESCRIPTIONS } from '../../game/buildingDescriptions';
+import { GameValue, ValueText } from './GameValue';
 import { AmbientAudio } from './AmbientAudio';
 import { RoleDeck } from './RoleDeck';
 import { WorldDialog } from './WorldDialog';
@@ -57,7 +58,8 @@ const PHASES: Record<string, string> = {
   gameOver: 'Koniec gry',
 };
 const AREAS: Record<Area, string> = {
-  market: 'Budynki i targ',
+  market: 'Budynki',
+  trade: 'Targowisko',
   plantations: 'Plantacje',
   port: 'Port San Juan',
   festival: 'Festyn w San Juan',
@@ -136,6 +138,12 @@ export function WorldGame({
   const catalog = [
     ...new Map(state.supply.availableBuildings.map((b) => [b.id, b])).values(),
   ].sort((a, b) => a.cost - b.cost);
+  const catalogGroups = [...new Set(catalog.map((b) => b.cost))].map(
+    (cost) => ({
+      cost,
+      buildings: catalog.filter((b) => b.cost === cost),
+    }),
+  );
   const nearby = selected
     ? actionsForTarget(unique, selected).filter(
         (a) => selected.key !== 'market' || a.type !== 'BUILD',
@@ -240,13 +248,14 @@ export function WorldGame({
         disabled={waiting || !runner.isCurrentPlayerHuman()}
         onClick={() => act(actionKey(a))}
       >
-        {label(a)}
+        <ValueText text={label(a)} />
         <span aria-hidden="true">›</span>
       </button>
     ));
   }
   const tabs: Area[] = [
     'market',
+    'trade',
     'plantations',
     'port',
     'magistrate',
@@ -334,8 +343,12 @@ export function WorldGame({
               </small>
             </span>
             <span className="pr-player-values">
-              <b>{p.coins} D</b>
-              <small>{p.vp} PZ</small>
+              <b>
+                <GameValue value={p.coins} />
+              </b>
+              <small>
+                <GameValue value={p.vp} kind="star" />
+              </small>
               {p.pending + p.pendingNobles + p.held + p.heldNobles > 0 && (
                 <small
                   className="pr-player-workers"
@@ -401,7 +414,9 @@ export function WorldGame({
             ) : feed ? (
               <>
                 <b>{feed.playerName}</b>
-                <span>{feed.actionText}</span>
+                <span>
+                  <ValueText text={feed.actionText} />
+                </span>
               </>
             ) : (
               <>
@@ -465,11 +480,16 @@ export function WorldGame({
                     ? 'Koszt bazowy'
                     : 'Cena dla ' + current.name}
                   <strong>
-                    {ownedBuilding ? building.cost : price(building)} D
+                    <GameValue
+                      value={ownedBuilding ? building.cost : price(building)}
+                    />
                   </strong>
                 </span>
                 <span>
-                  Punkty<strong>{building.victoryPoints} PZ</strong>
+                  Punkty
+                  <strong>
+                    <GameValue value={building.victoryPoints} kind="star" />
+                  </strong>
                 </span>
                 <span>
                   Wielkość<strong>{building.tileSize} pola</strong>
@@ -478,7 +498,9 @@ export function WorldGame({
                   Załoga<strong>{building.workerCapacity}</strong>
                 </span>
               </div>
-              <p className="pr-intro">{BUILDING_DESCRIPTIONS[building.id]}</p>
+              <p className="pr-intro">
+                <ValueText text={BUILDING_DESCRIPTIONS[building.id] || ''} />
+              </p>
             </>
           )}
           {selectedObject && !building && (
@@ -499,10 +521,16 @@ export function WorldGame({
             <>
               <div className="pr-stat-grid">
                 <span>
-                  Dublony<strong>{selectedPlayer.coins} D</strong>
+                  Dublony
+                  <strong>
+                    <GameValue value={selectedPlayer.coins} />
+                  </strong>
                 </span>
                 <span>
-                  Żetony punktów<strong>{selectedPlayer.vp} PZ</strong>
+                  Żetony punktów
+                  <strong>
+                    <GameValue value={selectedPlayer.vp} kind="star" />
+                  </strong>
                 </span>
                 <span>
                   Plantacje<strong>{selectedPlayer.ruralUsed}/12</strong>
@@ -545,48 +573,99 @@ export function WorldGame({
               </div>
             </>
           )}
-          {selected?.area === 'market' && !building && (
-            <>
-              <h3>Targowisko</h3>
-              <div className="pr-trade">
-                {Array.from({ length: 4 }, (_, i) => (
-                  <span key={i}>
-                    {scene.trade[i] ? (
+          {selected?.area === 'trade' && (
+            <div className="pr-trading-house">
+              <div className="pr-trade-heading">
+                <span className="pr-wood-sign" aria-hidden="true">
+                  TARGOWISKO
+                </span>
+                <p>
+                  <strong>
+                    {scene.trade.filter(Boolean).length} / {scene.trade.length}
+                  </strong>{' '}
+                  zajętych miejsc
+                </p>
+              </div>
+              <div
+                className="pr-trade"
+                aria-label="Towary na targowisku"
+                aria-live="polite"
+              >
+                {scene.trade.map((good, i) => (
+                  <span key={i} className={good ? 'is-occupied' : ''}>
+                    <small>Miejsce {i + 1}</small>
+                    {good ? (
                       <>
-                        <Art id={scene.trade[i]!} />
-                        {GOOD_NAMES[scene.trade[i]!]}
+                        <Art id={good} /> <strong>{GOOD_NAMES[good]}</strong>
                       </>
                     ) : (
-                      'Wolne'
+                      <>
+                        <span className="pr-empty-crate" aria-hidden="true">
+                          ◇
+                        </span>
+                        <strong>Wolne</strong>
+                      </>
                     )}
                   </span>
                 ))}
               </div>
-              <h3>
-                Budynki do kupienia <small>{catalog.length} rodzajów</small>
-              </h3>
-              <div className="pr-catalog">
-                {catalog.map((b) => (
-                  <button
-                    key={b.id}
-                    onClick={() =>
-                      choose({
-                        key: 'market:' + b.id,
-                        area: 'market',
-                        buildingId: b.id,
-                      })
-                    }
+              <p className="pr-muted">
+                Pełne targowisko opróżnia się po zakończeniu fazy Kupca.
+              </p>
+            </div>
+          )}
+          {selected?.area === 'market' && !building && (
+            <>
+              <p className="pr-catalog-intro">
+                Budynki według ceny bazowej · {catalog.length} rodzajów
+                {scene.phase === 'builder' && (
+                  <span>
+                    Ceny ofert uwzględniają zniżki gracza {current.name}.
+                  </span>
+                )}
+              </p>
+              <div className="pr-price-groups">
+                {catalogGroups.map(({ cost, buildings }) => (
+                  <section
+                    className="pr-price-group"
+                    key={cost}
+                    aria-label={'Cena bazowa w dublonach: ' + cost}
                   >
-                    <Art id={b.id} />
-                    <span>
-                      {b.displayName}
-                      <small>
-                        {b.victoryPoints} PZ · dostępne{' '}
-                        {buildingCounts.get(b.id)}
-                      </small>
-                    </span>
-                    <b>{price(b)} D</b>
-                  </button>
+                    <h3 className="pr-price-heading">
+                      <GameValue value={cost} />
+                      <small>CENA BAZOWA</small>
+                    </h3>
+                    <div className="pr-offers">
+                      {buildings.map((b) => (
+                        <button
+                          className="pr-offer"
+                          key={b.id}
+                          onClick={() =>
+                            choose({
+                              key: 'market:' + b.id,
+                              area: 'market',
+                              buildingId: b.id,
+                            })
+                          }
+                        >
+                          <Art id={b.id} />
+                          <span className="pr-offer-info">
+                            <strong>{b.displayName}</strong>
+                            <span className="pr-offer-facts">
+                              <GameValue value={b.victoryPoints} kind="star" />
+                              <small>
+                                Dostępne: {buildingCounts.get(b.id)}
+                              </small>
+                            </span>
+                            <span className="pr-offer-price">
+                              {price(b) < b.cost && <small>Po zniżce</small>}
+                              <GameValue value={price(b)} />
+                            </span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
                 ))}
               </div>
             </>
@@ -689,7 +768,8 @@ export function WorldGame({
             <div className="pr-supplies">
               {' '}
               <p>
-                Bank: {scene.bank} D · Pula punktów: {scene.vpPool} PZ
+                Bank: <GameValue value={scene.bank} /> · Pula punktów:{' '}
+                <GameValue value={scene.vpPool} kind="star" />
               </p>
               <p>
                 Robotnicy: {scene.workersPool} w puli · {scene.magistrate} w
@@ -803,7 +883,7 @@ export function WorldGame({
               {[...runner.log].reverse().map((entry, i) => (
                 <p key={i}>
                   <strong>{entry.playerName}: </strong>
-                  {entry.actionText}
+                  <ValueText text={entry.actionText} />
                 </p>
               ))}
               {!runner.log.length && <p>Brak akcji.</p>}

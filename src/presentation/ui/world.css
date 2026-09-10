@@ -1423,3 +1423,246 @@
     grid-column: span 2;
   }
 }
+
+/* Currency, price rows and the trading house. */
+.pr-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+.pr-value svg {
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}
+.pr-value > span {
+  font: inherit;
+  color: inherit;
+}
+.pr-player-values .pr-value {
+  justify-content: flex-end;
+}
+.pr-catalog-intro {
+  margin: 0 0 22px;
+  font-size: 13px;
+  color: #5c715a;
+}
+.pr-catalog-intro > span {
+  display: block;
+  margin-top: 7px;
+  color: #8f6728;
+}
+.pr-price-groups {
+  display: grid;
+  gap: 18px;
+}
+.pr-price-group {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #dfd1ab;
+}
+.pr-price-group:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.pr-price-heading {
+  align-self: start;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  margin: 0;
+  padding-top: 16px;
+}
+.pr-price-heading .pr-value {
+  font-size: 26px;
+  color: #8c6528;
+}
+.pr-price-heading small {
+  font-size: 8px;
+  font-weight: normal;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+  color: #7c8265;
+}
+.pr-offers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+.pr-offer {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 12px 8px;
+  border: 1px solid #d8c9a1;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #fff9e8, #eee3c5);
+  color: #365246;
+  text-align: left;
+}
+.pr-offer .pr-art {
+  width: 66px;
+  height: 76px;
+  flex-shrink: 0;
+}
+.pr-offer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+.pr-offer-info > strong {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.pr-offer-facts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+.pr-offer-facts small {
+  font-size: 10px;
+  color: #7c8165;
+}
+.pr-offer-price {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #976e29;
+  font-size: 14px;
+  font-weight: bold;
+}
+.pr-offer-price small {
+  color: #557652;
+  font-size: 9px;
+  font-weight: normal;
+}
+.pr-trade-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+.pr-trade-heading p {
+  color: #668065;
+  font-size: 14px;
+}
+.pr-trade-heading p strong {
+  font-size: 23px;
+  color: #385c4d;
+  margin-right: 6px;
+}
+.pr-wood-sign {
+  padding: 14px 24px;
+  border: 3px solid #805530;
+  border-radius: 7px;
+  background: repeating-linear-gradient(
+    0deg,
+    #b78651 0,
+    #b78651 15px,
+    #aa7948 16px,
+    #c19560 17px
+  );
+  box-shadow:
+    0 4px 0 #6e4b2c,
+    inset 0 0 0 2px #ddba7b;
+  color: #fff0c6;
+  text-shadow: 0 2px #694723;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 1.4px;
+}
+.pr-dialog .pr-trading-house .pr-trade {
+  max-width: none;
+  gap: 14px;
+}
+.pr-trading-house .pr-trade > span {
+  min-height: 164px;
+  gap: 7px;
+  padding: 10px;
+  background: #f1e8ca;
+  border-radius: 13px;
+}
+.pr-trading-house .pr-trade > .is-occupied {
+  border-style: solid;
+  border-color: #d3b574;
+  background: #f8edcb;
+}
+.pr-trading-house .pr-trade small {
+  font-size: 10px;
+  font-weight: normal;
+  color: #8a866a;
+}
+.pr-trading-house .pr-trade strong {
+  font-size: 13px;
+  color: #4b6752;
+}
+.pr-trading-house .pr-art {
+  width: 83px;
+  height: 83px;
+}
+.pr-empty-crate {
+  display: grid;
+  place-items: center;
+  width: 83px;
+  height: 83px;
+  font-size: 40px;
+  color: #c6bca0;
+}
+@media (max-width: 900px) {
+  .pr-offers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .pr-price-group {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+  .pr-price-heading {
+    display: flex;
+    gap: 12px;
+    padding: 0;
+  }
+  .pr-price-heading .pr-value {
+    font-size: 23px;
+  }
+  .pr-offers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pr-offer {
+    padding: 10px 12px;
+    gap: 14px;
+  }
+  .pr-offer-info > strong {
+    font-size: 14px;
+  }
+  .pr-trade-heading {
+    gap: 10px;
+  }
+  .pr-dialog .pr-trading-house .pr-trade {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .pr-trading-house .pr-trade > span {
+    min-height: 148px;
+  }
+}
+
+.pr-trading-house .pr-art {
+  clip-path: inset(0 0 8% 0);
+}

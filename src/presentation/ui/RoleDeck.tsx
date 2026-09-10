@@ -6,6 +6,7 @@ import { ROLE_META, ROLE_DESCRIPTIONS } from '../../components/RoleCardsBar';
 import { spriteStyle, idleSpriteStyle } from '../assets/registry';
 import { actionKey } from '../interaction/actionBridge';
 import { roleChoice } from '../interaction/roleChoices';
+import { GameValue, ValueText } from './GameValue';
 import { WorldDialog } from './WorldDialog';
 
 const ART: Record<RoleType, string> = {
@@ -77,15 +78,19 @@ export function RoleDeck({
                   <span aria-hidden="true">{meta.icon}</span> {meta.label}
                 </span>
                 <span className="pr-role-status">
-                  {active
-                    ? 'AKTYWNA POSTAĆ'
-                    : owner
-                      ? owner.name
-                      : captured
-                        ? 'Wykup za 3 D'
-                        : choice && !waiting
-                          ? 'Wybierz postać'
-                          : 'Dostępna'}
+                  {active ? (
+                    'AKTYWNA POSTAĆ'
+                  ) : owner ? (
+                    owner.name
+                  ) : captured ? (
+                    <>
+                      Wykup za <GameValue value={3} />
+                    </>
+                  ) : choice && !waiting ? (
+                    'Wybierz postać'
+                  ) : (
+                    'Dostępna'
+                  )}
                 </span>
                 {active && card.type === RoleType.Mayor && (
                   <span
@@ -118,7 +123,7 @@ export function RoleDeck({
                 )}
                 {card.doubloonsOnCard > 0 && (
                   <span className="pr-role-coins">
-                    +{card.doubloonsOnCard} D
+                    +<GameValue value={card.doubloonsOnCard} />
                   </span>
                 )}
               </button>
@@ -149,9 +154,13 @@ export function RoleDeck({
             />
             <div>
               <h3>Akcja</h3>
-              <p className="pr-intro">{ROLE_DESCRIPTIONS[info].action}</p>
+              <p className="pr-intro">
+                <ValueText text={ROLE_DESCRIPTIONS[info].action} />
+              </p>
               <h3>Przywilej wybierającego</h3>
-              <p className="pr-intro">{ROLE_DESCRIPTIONS[info].privilege}</p>
+              <p className="pr-intro">
+                <ValueText text={ROLE_DESCRIPTIONS[info].privilege} />
+              </p>
             </div>
           </div>
         </WorldDialog>

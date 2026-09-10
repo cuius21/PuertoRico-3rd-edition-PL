@@ -56,3 +56,15 @@ Pliki src/assets/audio ważą łącznie 3,3 MB. Oryginały audio nie były zmien
 ## Wiatr i łąka — 10 września 2026
 
 Dodana trzecia cicha pętla: summer meadow with wind autorstwa Garuda1982 (Freesound, CC0 1.0). Źródło i sposób przygotowania zapisano w src/assets/audio/README.md. Traffic i birds pozostają głównym tłem; meadow gra z niższą głośnością. Wszystkie trzy warstwy łagodnie cichną przy wejściu dzwonów i wracają po ich zakończeniu. Wspólne wyciszenie, ukrycie karty i wyjście z gry obejmują też nowe nagranie. Łączny rozmiar czterech plików audio: około 4,9 MB.
+
+## Targowisko, rejsy i flagi — 10 września 2026
+
+Targowisko ma własną drewnianą tabliczkę w San Juan, licznik zajętych miejsc i cztery skrzynki odpowiadające aktualnym towarom. Kliknięcie tabliczki lub przycisku Targowisko otwiera osobny popup; sprzedaż i dodatkowe akcje handlowe są przypisane do tego miejsca. Katalog Budynki ma oddzielne rzędy według ceny bazowej od 1 do 10 dublonów, z kolumnami ofert; podczas Budowniczego oferty pokazują cenę po zniżkach. Ikony monet i gwiazd mają tekstowe etykiety dla czytników ekranu.
+
+Każda wyspa gracza ma maszt z falującą flagą w kolorze właściciela. Flaga otwiera podgląd jego wyspy. Tabliczka i flagi są rysowane wektorowo w Pixi, bez dodatkowych dużych plików graficznych.
+
+ShipVoyages przechowuje wyłącznie historię wizualnych przejść statków i działa na zegarze renderera. Pełny statek płynie poza port przez 4,5 s, pozostawiając ślad na wodzie i znikając w oddali. Powrót bez ładunku następuje po rozładunku potwierdzonym stanem silnika, po fazie Kapitana. Kolejny załadunek ma pierwszeństwo przed starszą animacją. Etykieta przy nabrzeżu oraz popup zawsze pokazują aktualne dane gry. Wyłączenie animacji usuwa aktywne rejsy; żaden rejs nie jest zapisywany w stanie gry.
+
+Adapter kopiuje również ostatni publiczny załadunek z lokalnego actionLog, aby pokazać przypadek napełnienia i opróżnienia statku w jednej akcji. Przejścia pełny/pusty działają także bez tej wskazówki. Wczytanie gry nie odtwarza historycznych rejsów.
+
+Walidacja obejmuje rzeczywiste akcje silnika: pełny i częściowy załadunek, natychmiastowy rozładunek, oczekiwanie na koniec fazy, powrót, kolejne ruchy podczas rejsu, wyłączone animacje i osobne targowisko. Sprawdzono katalog z dodatkami, zniżki i zakup, flagi pięciu graczy oraz układ mobilny. Silnik, boty, zapis i backend pozostają bez zmian.

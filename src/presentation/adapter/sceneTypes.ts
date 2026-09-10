@@ -1,5 +1,6 @@
 export type Area =
   | 'market'
+  | 'trade'
   | 'plantations'
   | 'port'
   | 'festival'
@@ -52,6 +53,7 @@ export interface SceneSnapshot {
   players: PlayerScene[];
   ships: { capacity: number; good: string | null; count: number }[];
   trade: (string | null)[];
+  lastShipLoad: { sequence: number; shipIndex: number; good: string } | null;
   bank: number;
   vpPool: number;
   workersPool: number;

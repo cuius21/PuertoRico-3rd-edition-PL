@@ -37,7 +37,7 @@ export function targetsForAction(action: Action): string[] {
     a.type === 'BUY_PLANTATION_FROM_DECK' ||
     a.type === 'SELL_PLANTATION'
   )
-    return ['market'];
+    return ['trade'];
   if (a.type === 'LOAD_SHIP')
     return [
       'port',
@@ -55,7 +55,9 @@ export function actionsForTarget(
   return actions.filter(
     (a) =>
       targetsForAction(a).includes(target.key) ||
-      (['market', 'plantations', 'port', 'corsair'].includes(target.key) &&
+      (['market', 'trade', 'plantations', 'port', 'corsair'].includes(
+        target.key,
+      ) &&
         targetsForAction(a).includes(target.area)),
   );
 }

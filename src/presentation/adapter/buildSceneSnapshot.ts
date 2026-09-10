@@ -1,4 +1,5 @@
 import type { GameState } from '../../../state/GameState';
+import { LoadShipAction } from '../../../actions/LoadShipAction';
 import type { Action } from '../../../actions/Action';
 import type { SceneSnapshot, SceneObject } from './sceneTypes';
 import { urbanLayout } from '../iso/projection';
@@ -42,7 +43,16 @@ export function buildSceneSnapshot(
   state: GameState,
   actions: readonly Action[],
 ): SceneSnapshot {
+  const last = state.actionLog.at(-1);
   return {
+    lastShipLoad:
+      last instanceof LoadShipAction && last.target.kind === 'ship'
+        ? {
+            sequence: state.actionLog.length,
+            shipIndex: last.target.shipIndex,
+            good: last.good,
+          }
+        : null,
     round: state.roundNumber + 1,
     phase: state.getCurrentPhase().type,
     currentId: state.getCurrentPlayer().id,
