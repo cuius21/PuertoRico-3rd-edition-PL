@@ -78,3 +78,7 @@ Stały, okrągły przycisk „Akcje” w prawym dolnym rogu zastępuje karty w n
 renderer/weather.ts definiuje niezależny od RNG i stanu gry, czterominutowy cykl słońca, zachmurzenia, deszczu i krótkiej burzy. Zmiany mieszają się przez osiem sekund. WeatherLayer rysuje przesuwające się chmury, przyciemnienie, ukośne krople i kręgi deszczu; burza ma jeden łagodny błysk trwający 1,4 sekundy. Warstwa nie przechwytuje kliknięć, a wiatr zwiększa kołysanie palm. Wszystko używa dotychczasowego zegara renderera do 30 FPS. Wyłączenie „Animacji” usuwa efekty pogody, a ukrycie karty pauzuje jej zegar. Pogoda nie zmienia produkcji, handlu, żeglugi ani decyzji botów.
 
 Kontrola: TypeScript i 443 testy w 41 plikach, w tym ciągłość pogody na granicach cyklu, wyłączenie efektów, brak użycia RNG i pojedynczy szeroki błysk. Scenariusze przeglądarkowe obejmują ceny, modal ról, wybór i podświetlenie, zachmurzenie/deszcz/burzę, klikanie obiektów przez pogodę oraz układ mobilny. Lokalny sterownik czasu do kontroli pogody pozostaje wyłącznie w work/ui-weather i nie trafia do publikacji.
+
+## Podgląd plantacji — poprawka kursora
+
+Niedostępne przyciski używają zwykłego kursora, bez wskaźnika oczekiwania. Poprzednia ogólna reguła button:disabled nadpisywała styl plantacji, przez co kafelki wyglądały jak ciągłe ładowanie. Podgląd zachowuje czytelne grafiki, wyjaśnia dostępność podczas akcji Plantatora i wskazuje turę innego gracza. Dostępność ruchów nadal wynika wyłącznie z legalnych akcji silnika.

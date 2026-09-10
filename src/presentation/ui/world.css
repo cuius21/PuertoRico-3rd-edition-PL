@@ -24,7 +24,7 @@
 }
 .pr-world button:disabled {
   opacity: 0.45;
-  cursor: wait;
+  cursor: default;
 }
 .pr-header {
   display: flex;
@@ -1254,8 +1254,8 @@
   font-size: 11px;
   color: #697657;
 }
-.pr-crop-choice:disabled {
-  opacity: 0.55;
+.pr-world .pr-crop-choice:disabled {
+  opacity: 0.72;
   cursor: default;
   filter: saturate(0.55);
 }

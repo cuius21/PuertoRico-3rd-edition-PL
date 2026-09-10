@@ -671,26 +671,36 @@ export function WorldGame({
             </>
           )}
           {selected?.area === 'plantations' && (
-            <div className="pr-crop-choices" aria-label="Wybór plantacji">
-              {crops.map((tile) => (
-                <button
-                  key={tile.key}
-                  disabled={!canAct || !tile.action}
-                  className="pr-crop-choice"
-                  onClick={() => tile.action && act(actionKey(tile.action))}
-                  aria-label={tile.name + ' · ' + tile.detail}
-                >
-                  <Art id={tile.sprite} large />
-                  <strong>{tile.name}</strong>
-                  <small>{tile.detail}</small>
-                  {!tile.action && (
-                    <span className="pr-crop-unavailable">
-                      Niedostępne w tej turze
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
+            <>
+              {scene.phase !== 'settler' && (
+                <p className="pr-intro">
+                  Podgląd plantacji. Wybór jest dostępny podczas akcji
+                  Plantatora.
+                </p>
+              )}
+              <div className="pr-crop-choices" aria-label="Wybór plantacji">
+                {crops.map((tile) => (
+                  <button
+                    key={tile.key}
+                    disabled={!canAct || !tile.action}
+                    className="pr-crop-choice"
+                    onClick={() => tile.action && act(actionKey(tile.action))}
+                    aria-label={tile.name + ' · ' + tile.detail}
+                  >
+                    <Art id={tile.sprite} large />
+                    <strong>{tile.name}</strong>
+                    <small>{tile.detail}</small>
+                    {(!canAct || !tile.action) && (
+                      <span className="pr-crop-unavailable">
+                        {canAct
+                          ? 'Niedostępne w tej turze'
+                          : 'Tura gracza: ' + current.name}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
           {selected?.area === 'port' && (
             <>
