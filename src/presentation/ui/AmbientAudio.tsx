@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useId } from 'react';
 import traffic from '../../assets/audio/traffic.mp3';
 import birds from '../../assets/audio/birds.mp3';
 import church from '../../assets/audio/church.mp3';
+import meadow from '../../assets/audio/meadow.mp3';
 import { IslandSoundscape, type SoundState } from '../audio/soundscape';
 
 const KEY = 'puerto-ui-audio';
@@ -34,7 +35,7 @@ export function AmbientAudio() {
   useEffect(() => {
     const audio = new IslandSoundscape(
       host.current!,
-      { traffic, birds, church },
+      { traffic, birds, meadow, church },
       setSound,
     );
     controller.current = audio;
@@ -122,7 +123,7 @@ export function AmbientAudio() {
           <small aria-live="polite">
             {sound.church
               ? 'W oddali słychać dzwony.'
-              : 'Szum wyspy i śpiew ptaków. Czasem dzwony.'}
+              : 'Gwar wyspy, ptaki i wiatr na łące. Czasem dzwony.'}
           </small>
         </div>
       </details>

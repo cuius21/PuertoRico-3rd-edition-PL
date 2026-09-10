@@ -15,7 +15,17 @@ export function churchMoment(seconds: number, duration = CHURCH_DURATION) {
 export type AudioStatus =
   'off' | 'starting' | 'playing' | 'blocked' | 'paused' | 'error';
 export type SoundState = { status: AudioStatus; church: boolean };
-export type SoundUrls = { traffic: string; birds: string; church: string };
+export type SoundUrls = {
+  traffic: string;
+  birds: string;
+  meadow: string;
+  church: string;
+};
+const AMBIENCE = [
+  { name: 'traffic', volume: 0.65, withBells: 0.48 },
+  { name: 'birds', volume: 0.9, withBells: 0.68 },
+  { name: 'meadow', volume: 0.32, withBells: 0.24 },
+] as const;
 
 export class IslandSoundscape {
   private context: AudioContext | null = null;
@@ -24,6 +34,8 @@ export class IslandSoundscape {
     media: HTMLAudioElement;
     source: MediaElementAudioSourceNode;
     gain: GainNode;
+    volume: number;
+    withBells: number;
   }[] = [];
   private churchGain: GainNode | null = null;
   private churchBuffer: AudioBuffer | null = null;
@@ -67,7 +79,7 @@ export class IslandSoundscape {
     this.master = this.context.createGain();
     this.master.gain.value = 0;
     this.master.connect(this.context.destination);
-    for (const name of ['traffic', 'birds'] as const) {
+    for (const { name, volume, withBells } of AMBIENCE) {
       const media = new Audio(this.urls[name]);
       media.preload = 'none';
       media.loop = true;
@@ -75,9 +87,9 @@ export class IslandSoundscape {
       this.host.appendChild(media);
       const source = this.context.createMediaElementSource(media);
       const gain = this.context.createGain();
-      gain.gain.value = name === 'traffic' ? 0.65 : 0.9;
+      gain.gain.value = volume;
       source.connect(gain).connect(this.master);
-      this.ambience.push({ media, source, gain });
+      this.ambience.push({ media, source, gain, volume, withBells });
     }
     this.churchGain = this.context.createGain();
     this.churchGain.gain.value = 0.65;
@@ -166,8 +178,8 @@ export class IslandSoundscape {
       source.start(0, moment.offset);
       this.churchSource = source;
       this.episode = moment.episode;
-      this.gain(this.ambience[0]!.gain, 0.48, 0.7);
-      this.gain(this.ambience[1]!.gain, 0.68, 0.7);
+      for (const track of this.ambience)
+        this.gain(track.gain, track.withBells, 0.7);
       this.report('playing', true);
     } else if (!moment && this.churchSource) this.stopChurch();
   }
@@ -177,10 +189,7 @@ export class IslandSoundscape {
       this.churchSource.disconnect();
       this.churchSource = null;
     }
-    if (this.ambience.length) {
-      this.gain(this.ambience[0]!.gain, 0.65, 0.7);
-      this.gain(this.ambience[1]!.gain, 0.9, 0.7);
-    }
+    for (const track of this.ambience) this.gain(track.gain, track.volume, 0.7);
     this.report(this.state.status, false);
   }
   private pause(status: AudioStatus) {

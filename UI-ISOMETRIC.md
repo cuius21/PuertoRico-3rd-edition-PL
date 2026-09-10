@@ -52,3 +52,7 @@ Warstwa prezentacji odtwarza ciche pętle traffic i birds z dostarczonego katalo
 Przycisk Dźwięk wycisza odgłosy; strzałka obok otwiera suwak głośności. Domyślnie 22%, ustawienia przechowywane lokalnie. Jeśli przeglądarka wymaga gestu, przycisk pokazuje Włącz dźwięk. Ukryta karta pauzuje nagrania i czas harmonogramu; wyjście do menu zwalnia odtwarzacze, połączenia audio i zegar. Brak dzwonów przy problemie sieciowym nie przerywa dwóch głównych nagrań ani gry.
 
 Pliki src/assets/audio ważą łącznie 3,3 MB. Oryginały audio nie były zmieniane. Testy sprawdzają rzadkie dzwony, głośność, pauzę i wznowienie, obsługę blokady autoplay, wyjście podczas startu oraz zwolnienie zasobów.
+
+## Wiatr i łąka — 10 września 2026
+
+Dodana trzecia cicha pętla: summer meadow with wind autorstwa Garuda1982 (Freesound, CC0 1.0). Źródło i sposób przygotowania zapisano w src/assets/audio/README.md. Traffic i birds pozostają głównym tłem; meadow gra z niższą głośnością. Wszystkie trzy warstwy łagodnie cichną przy wejściu dzwonów i wracają po ich zakończeniu. Wspólne wyciszenie, ukrycie karty i wyjście z gry obejmują też nowe nagranie. Łączny rozmiar czterech plików audio: około 4,9 MB.

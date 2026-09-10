@@ -88,6 +88,7 @@ const host = { appendChild: vi.fn() } as unknown as HTMLElement;
 const urls = {
   traffic: 'traffic.mp3',
   birds: 'birds.mp3',
+  meadow: 'meadow.mp3',
   church: 'church.mp3',
 };
 let sound: IslandSoundscape | null = null;
@@ -134,20 +135,30 @@ describe('island soundscape', () => {
       rng.mockRestore();
     }
   });
-  it('streams both main loops quietly, plays each bell episode once, and preserves time across hidden tabs', async () => {
+  it('streams traffic and birds with a quieter meadow loop, plays each bell episode once, and preserves time across hidden tabs', async () => {
     const states: SoundState[] = [];
     sound = new IslandSoundscape(host, urls, (s) => states.push(s));
     sound.setEnabled(true);
     await flush();
-    expect(media.map((m) => m.src)).toEqual(['traffic.mp3', 'birds.mp3']);
+    expect(media.map((m) => m.src)).toEqual([
+      'traffic.mp3',
+      'birds.mp3',
+      'meadow.mp3',
+    ]);
     expect(media.every((m) => m.loop && !m.paused)).toBe(true);
     const ctx = contexts[0]!;
     expect(ctx.gains[0]!.gain.value).toBe(0.22);
+    expect(ctx.gains.slice(1, 4).map((g) => g.gain.value)).toEqual([
+      0.65, 0.9, 0.32,
+    ]);
     expect(ctx.sources).toHaveLength(0);
     ctx.currentTime = 90;
     await vi.advanceTimersByTimeAsync(250);
     expect(ctx.sources).toHaveLength(1);
     expect(ctx.sources[0]!.start).toHaveBeenCalledWith(0, 0);
+    expect(ctx.gains.slice(1, 4).map((g) => g.gain.value)).toEqual([
+      0.48, 0.68, 0.24,
+    ]);
     ctx.currentTime = 95;
     await vi.advanceTimersByTimeAsync(500);
     expect(ctx.sources).toHaveLength(1);
@@ -163,6 +174,9 @@ describe('island soundscape', () => {
     ctx.currentTime = 2040;
     await vi.advanceTimersByTimeAsync(250);
     expect(ctx.sources[1]!.stop).toHaveBeenCalled();
+    expect(ctx.gains.slice(1, 4).map((g) => g.gain.value)).toEqual([
+      0.65, 0.9, 0.32,
+    ]);
     expect(states.at(-1)).toEqual({ status: 'playing', church: false });
     sound.setVolume(0);
     expect(ctx.gains[0]!.gain.value).toBe(0);
