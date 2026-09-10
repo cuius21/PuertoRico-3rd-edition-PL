@@ -19,7 +19,13 @@ export function actionKey(action: Action): string {
 export function targetsForAction(action: Action): string[] {
   const a = action as unknown as Shape;
   if (a.type === 'BUILD') return ['market', `market:${a.buildingId}`];
-  if (a.type === 'TAKE_PLANTATION') return ['plantations'];
+  if (a.type === 'TAKE_PLANTATION')
+    return [
+      'plantations',
+      a.choice?.kind === 'quarry'
+        ? 'plantations:quarry'
+        : 'plantations:revealed:' + a.choice?.index,
+    ];
   if (a.type === 'PLACE_WORKER')
     return [
       a.target?.kind === 'building'

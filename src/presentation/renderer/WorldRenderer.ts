@@ -15,7 +15,22 @@ import {
   MARKET_URL,
   WALKERS_URL,
 } from '../assets/registry';
-import { parcel, islandCenters, type Point } from '../iso/projection';
+import {
+  parcel,
+  islandCenters,
+  TILE_W,
+  TILE_H,
+  type Point,
+} from '../iso/projection';
+import {
+  PLAYER_OUTLINE,
+  CENTRAL_OUTLINE,
+  CENTRAL_PLACES,
+  CENTRAL_PATHS,
+  CENTRAL_WALKS,
+  PLAYER_WALKS,
+} from '../iso/layout';
+import { walkAt, swayAt, bobAt } from './ambient';
 import type {
   EntityRef,
   SceneSnapshot,
@@ -54,6 +69,11 @@ export class WorldRenderer {
   private textures = new Map<string, Texture>();
   private wind: WindItem[] = [];
   private walkers = new Map<string, Walker>();
+  private residents = new Map<
+    string,
+    { sprite: Sprite; route: Point[]; phase: number; kind: 'worker' | 'noble' }
+  >();
+  private highlights = new Map<string, Graphics[]>();
   private snapshot: SceneSnapshot | null = null;
   private camera = { x: 0, y: 0, zoom: 1 };
   private focusId = 'central';
@@ -64,6 +84,7 @@ export class WorldRenderer {
   private dragged = false;
   private pointers = new Map<number, Point>();
   private pointerDistance = 0;
+  private pointerOrigin: Point | null = null;
   private observer: ResizeObserver | null = null;
   private removers: (() => void)[] = [];
   private disposed = false;
@@ -165,7 +186,9 @@ export class WorldRenderer {
     this.renderSignature = signature;
     this.snapshot = snapshot;
     for (const w of this.walkers.values()) w.sprite.removeFromParent();
+    for (const w of this.residents.values()) w.sprite.removeFromParent();
     this.playerObjects.clear();
+    this.highlights.clear();
     for (const child of this.terrain.removeChildren())
       child.destroy({ children: true });
     this.wind = [];
@@ -173,14 +196,23 @@ export class WorldRenderer {
     this.central(snapshot);
     snapshot.players.forEach((p, i) => {
       const center = centers[i]!;
-      const group = this.land(center, p.name, p.color, p.current);
+      const group = this.land(center, p.name, p.color, p.current, false, p.id);
       const ground = new Graphics();
       for (let v = 0; v < 3; v++)
         for (let u = 0; u < 9; u++) {
           if (u === 4) continue;
           const q = parcel(u, v);
           ground
-            .poly([q.x, q.y - 16, q.x + 32, q.y, q.x, q.y + 16, q.x - 32, q.y])
+            .poly([
+              q.x,
+              q.y - TILE_H * 0.45,
+              q.x + TILE_W * 0.45,
+              q.y,
+              q.x,
+              q.y + TILE_H * 0.45,
+              q.x - TILE_W * 0.45,
+              q.y,
+            ])
             .fill({ color: u < 4 ? 0x6b9952 : 0xc8c296, alpha: 0.65 })
             .stroke({
               color: u < 4 ? 0xd5dd99 : 0xf0e3b7,
@@ -218,30 +250,28 @@ export class WorldRenderer {
       const mark = this.label(
         `${p.ruralUsed}/12 pól · ${p.urbanUsed}/12 miejsc miasta`,
         0,
-        164,
+        290,
         11,
         0xd3f0e8,
       );
       group.addChild(mark);
     });
     this.syncWorkers(snapshot);
+    this.syncResidents(snapshot);
     this.positionCamera();
   }
-  private land(center: Point, name: string, color: string, current: boolean) {
+  private land(
+    center: Point,
+    name: string,
+    color: string,
+    current: boolean,
+    central = false,
+    playerId?: string,
+  ) {
     const group = new Container();
     group.position.set(center.x, center.y);
     this.terrain.addChild(group);
-    const corners = [
-      [-1.6, -0.3],
-      [-0.4, -1.4],
-      [9.2, -1.4],
-      [10.6, -0.1],
-      [10.6, 3.5],
-      [9.4, 4.8],
-      [-0.4, 4.8],
-      [-1.6, 3.4],
-    ];
-    const outline = corners.map(([u, v]) => parcel(u!, v!));
+    const outline = central ? CENTRAL_OUTLINE : PLAYER_OUTLINE;
     const polygon = (scale: number, dy: number) =>
       outline.flatMap((p) => [p.x * scale, p.y * scale + dy]);
     const g = new Graphics();
@@ -254,17 +284,23 @@ export class WorldRenderer {
       .fill(0x72a75a)
       .stroke({ color: 0x94bc6c, width: 2 });
     g.poly(polygon(0.79, -5)).fill({ color: 0x84ad5d, alpha: 0.7 });
-    // The path exists only in the scene; it never determines legal moves.
-    const start = parcel(-0.6, 3.5),
-      end = parcel(9.6, 3.5),
-      cross = parcel(4.1, -0.8),
-      middle = parcel(4.1, 3.5);
-    g.moveTo(start.x, start.y)
-      .lineTo(end.x, end.y)
-      .stroke({ color: 0xb0b978, width: 16 });
-    g.moveTo(cross.x, cross.y)
-      .lineTo(middle.x, middle.y)
-      .stroke({ color: 0xb0b978, width: 14 });
+    // Paths and residents are purely decorative.
+    const paths = central
+      ? CENTRAL_PATHS
+      : [
+          [parcel(-0.6, 3.5), parcel(9.6, 3.5)],
+          [parcel(4.1, -0.8), parcel(4.1, 3.5)],
+        ];
+    for (const path of paths) {
+      g.moveTo(path[0]!.x, path[0]!.y);
+      for (const p of path.slice(1)) g.lineTo(p.x, p.y);
+      g.stroke({
+        color: 0xc6c18b,
+        width: central ? 25 : 22,
+        cap: 'round',
+        join: 'round',
+      });
+    }
     if (current)
       g.poly(polygon(1.01, -1)).stroke({
         color: 0xffd484,
@@ -273,13 +309,22 @@ export class WorldRenderer {
       });
     group.addChild(g);
     const title = new Container();
-    title.position.set(0, -203);
+    title.position.set(0, central ? -408 : -340);
     const titleBg = new Graphics()
-      .roundRect(-125, -19, 250, 38, 19)
+      .roundRect(central ? -190 : -125, -19, central ? 380 : 250, 38, 19)
       .fill({ color: 0x133f43, alpha: 0.95 })
       .stroke({ color: parseInt(color.slice(1), 16), width: 1.5, alpha: 0.8 });
     title.addChild(titleBg, this.label(name, 0, -9, 16, 0xfff1cf));
     group.addChild(title);
+    const ref: EntityRef = playerId
+      ? { key: playerId, area: 'island', playerId }
+      : { key: 'central', area: 'supplies' };
+    this.interactive(
+      title,
+      ref,
+      new Rectangle(central ? -190 : -125, -19, central ? 380 : 250, 38),
+    );
+    this.interactive(g, ref, new Polygon(polygon(1, 0)));
     return group;
   }
   private object(parent: Container, o: SceneObject, legal: boolean) {
@@ -340,11 +385,18 @@ export class WorldRenderer {
     size: number,
     phase: number,
   ) {
+    const root = new Container();
+    root.position.set(x, y);
+    root.zIndex = y;
     const sprite = this.sprite('palm', size * 0.74, size);
-    sprite.position.set(x, y);
-    sprite.zIndex = y;
-    parent.addChild(sprite);
-    this.wind.push({ sprite, baseY: y, phase, kind: 'tree' });
+    root.addChild(sprite);
+    parent.addChild(root);
+    this.interactive(
+      root,
+      { key: 'scenery:palm:' + phase + ':' + x + ':' + y, area: 'scenery' },
+      new Rectangle(-size * 0.37, -size * 0.92, size * 0.74, size),
+    );
+    this.wind.push({ sprite, baseY: 0, phase, kind: 'tree' });
   }
   private label(
     text: string,
@@ -379,11 +431,25 @@ export class WorldRenderer {
     container.on('pointertap', () => {
       if (!this.dragged && !this.disposed) this.onPick(ref);
     });
+    const glow = new Graphics();
+    if (hit instanceof Rectangle)
+      glow.roundRect(hit.x - 4, hit.y - 3, hit.width + 8, hit.height + 6, 12);
+    else glow.poly(hit.points);
+    glow
+      .fill({ color: 0xffda70, alpha: 0.09 })
+      .stroke({ color: 0xffdf82, width: 2, alpha: 0.85 });
+    glow.eventMode = 'none';
+    glow.visible = this.selected === ref.key;
+    container.addChildAt(glow, 0);
+    const group = this.highlights.get(ref.key) ?? [];
+    group.push(glow);
+    this.highlights.set(ref.key, group);
     container.on('pointerover', () => {
-      container.alpha = 0.85;
+      for (const g of this.highlights.get(ref.key) ?? []) g.visible = true;
     });
     container.on('pointerout', () => {
-      container.alpha = 1;
+      for (const g of this.highlights.get(ref.key) ?? [])
+        g.visible = this.selected === ref.key;
     });
   }
   private landmark(
@@ -408,16 +474,13 @@ export class WorldRenderer {
       );
     group.addChild(this.sprite(id, w, w));
     const caption = new Container();
-    caption.position.set(
-      x + (id === 'market' ? 75 : id === 'magistrate' ? 34 : 0),
-      y + 20,
-    );
+    caption.position.set(x, y + 24);
     caption.zIndex = 10000 + y;
-    const text = this.label(name, 0, 0, 11, 0xffebbd);
+    const text = this.label(name, 0, 0, 16, 0xffebbd);
     const captionWidth = text.width + 18;
     caption.addChild(
       new Graphics()
-        .roundRect(-captionWidth / 2, -4, captionWidth, 23, 11)
+        .roundRect(-captionWidth / 2, -4, captionWidth, 29, 13)
         .fill({ color: 0x154b4f, alpha: 0.94 })
         .stroke({ color: 0xd8c88f, width: 0.8, alpha: 0.45 }),
       text,
@@ -425,7 +488,7 @@ export class WorldRenderer {
     this.interactive(
       caption,
       { key, area },
-      new Rectangle(-captionWidth / 2, -4, captionWidth, 23),
+      new Rectangle(-captionWidth / 2, -4, captionWidth, 29),
     );
     parent.addChild(caption);
     this.interactive(
@@ -439,64 +502,81 @@ export class WorldRenderer {
   private central(s: SceneSnapshot) {
     const group = this.land(
       { x: 0, y: 0 },
-      'SAN JUAN · RYNEK',
-      '#9ce1d2',
+      'SAN JUAN · SERCE ARCHIPELAGU',
+      '#f2d18c',
       false,
+      true,
     );
-    this.dock(group, 150, 155);
+    this.dock(group, 385, 245);
     const objects = new Container();
     objects.sortableChildren = true;
     group.addChild(objects);
-    this.landmark(objects, 'market', 'Budynki i targ', 68, -16, 170, 'market');
-    this.landmark(
-      objects,
-      'magistrate',
-      'Magistrat',
-      -90,
-      -74,
-      115,
-      'magistrate',
-    );
-    this.landmark(objects, 'corn', 'Plantacje', -140, -27, 78, 'plantations');
+    this.playerObjects.set('central', objects);
+    for (const [area, id, name] of [
+      ['market', 'market', 'Budynki i targ'],
+      ['magistrate', 'magistrate', 'Magistrat i szlachta'],
+      ['plantations', 'corn', 'Plantacje'],
+      ['supplies', 'treasury', 'Wspólne zapasy'],
+      ['port', 'lighthouse', 'Port San Juan'],
+    ] as const) {
+      const p = CENTRAL_PLACES[area];
+      this.landmark(
+        objects,
+        id,
+        area === 'magistrate' && !s.nobles ? 'Magistrat' : name,
+        p.x,
+        p.y,
+        p.size,
+        area,
+      );
+    }
+    const f = CENTRAL_PLACES.festival;
     if (s.festival)
       this.landmark(
         objects,
         'festival',
         'Festyn w San Juan',
-        22,
-        54,
-        100,
+        f.x,
+        f.y,
+        f.size,
         'festival',
       );
-    else this.palm(objects, 22, 54, 83, 1);
-    if (s.nobles) {
-      const noble = this.sprite('noble', 36, 48);
-      noble.position.set(-144, -65);
-      noble.zIndex = 0;
-      objects.addChild(noble);
-    }
+    else this.palm(objects, f.x, f.y, 115, 1);
     if (s.newBuildings) {
-      const sign = this.label('NOWE BUDYNKI', 67, -132, 10, 0xffdf8e);
+      const sign = new Container();
+      sign.position.set(220, -210);
+      sign.addChild(this.label('Z DODATKOWYMI BUDYNKAMI', 0, 0, 10, 0xffe8b6));
+      this.interactive(
+        sign,
+        { key: 'market', area: 'market' },
+        new Rectangle(-110, -3, 220, 20),
+      );
       objects.addChild(sign);
     }
-    for (const [u, v, k] of [
-      [-0.8, 0.5, 2],
-      [-0.8, 2.2, 3],
-      [2.4, 4.1, 4],
-      [8.8, -0.5, 5],
-      [9.7, 2.6, 6],
-    ]) {
-      const q = parcel(u!, v!);
-      this.palm(objects, q.x, q.y, 80, k!);
-    }
+    for (const [x, y, phase] of [
+      [-440, -30, 2],
+      [-390, 115, 3],
+      [-125, 275, 4],
+      [335, -125, 5],
+      [530, 10, 6],
+      [-65, -245, 7],
+    ])
+      this.palm(objects, x!, y!, 110, phase!);
     s.ships.forEach((ship, i) => {
-      const x = 122 + i * 115,
-        y = 219 - i * 35,
-        w = 112 + i * 6;
+      const x = 360 + i * 152,
+        y = 440 - i * 65,
+        w = 144 + i * 7;
+      const names: Record<string, string> = {
+        corn: 'kukurydza',
+        indigo: 'indygo',
+        sugar: 'cukier',
+        coffee: 'kawa',
+        tobacco: 'tytoń',
+      };
       const boat = this.landmark(
         objects,
         'ship',
-        `${ship.count}/${ship.capacity} · ${ship.good ? (ship.good === 'corn' ? 'kukurydza' : ship.good === 'indigo' ? 'indygo' : ship.good === 'sugar' ? 'cukier' : ship.good === 'coffee' ? 'kawa' : 'tytoń') : 'pusty'}`,
+        `${ship.count}/${ship.capacity} · ${ship.good ? names[ship.good] : 'pusty'}`,
         x,
         y,
         w,
@@ -519,21 +599,15 @@ export class WorldRenderer {
         objects,
         'corsair',
         'Korsarz',
-        -315,
-        97,
-        127,
+        -570,
+        290,
+        155,
         'corsair',
       );
-      this.wind.push({ sprite: boat, baseY: 97, phase: 5, kind: 'ship' });
+      this.wind.push({ sprite: boat, baseY: 290, phase: 5, kind: 'ship' });
     }
     group.addChild(
-      this.label(
-        'Wspólna wyspa · kliknij miejsce, aby zobaczyć szczegóły',
-        0,
-        315,
-        12,
-        0xc3ece3,
-      ),
+      this.label('WSPÓLNA WYSPA · RYNEK, PORT I DODATKI', 0, 505, 13, 0xc3ece3),
     );
   }
   private dock(parent: Container, x: number, y: number) {
@@ -555,6 +629,11 @@ export class WorldRenderer {
       g.roundRect(px! - 3, py! - 13, 6, 17, 2).fill(0x4c3a2d);
       g.ellipse(px!, py! - 13, 4, 2).fill(0xc4a272);
     }
+    this.interactive(
+      g,
+      { key: 'port', area: 'port' },
+      new Rectangle(-56, -31, 172, 104),
+    );
     parent.addChild(g);
   }
   private syncWorkers(s: SceneSnapshot) {
@@ -588,6 +667,17 @@ export class WorldRenderer {
             this.motion ? from.x : target.x,
             this.motion ? from.y : target.y,
           );
+          sprite.eventMode = 'static';
+          sprite.cursor = 'pointer';
+          sprite.on('pointertap', () => {
+            if (!this.dragged) this.onPick(o.target);
+          });
+          sprite.on('pointerover', () => {
+            sprite.tint = 0xffd277;
+          });
+          sprite.on('pointerout', () => {
+            sprite.tint = 0xffffff;
+          });
           this.playerObjects.get(p.id)!.addChild(sprite);
           this.walkers.set(key, {
             kind: n < o.workers ? 'worker' : 'noble',
@@ -605,6 +695,41 @@ export class WorldRenderer {
       if (!active.has(key)) {
         w.sprite.destroy();
         this.walkers.delete(key);
+      }
+  }
+  private syncResidents(s: SceneSnapshot) {
+    const active = new Set<string>();
+    const add = (island: string, routes: Point[][], noble: boolean) => {
+      routes.forEach((route, i) => {
+        const key = island + ':resident:' + i;
+        active.add(key);
+        let w = this.residents.get(key);
+        if (!w) {
+          const kind = noble && i === 2 ? 'noble' : 'worker';
+          const sprite = this.sprite(kind + '0', 33, 44);
+          w = { sprite, route, phase: i * 7.5, kind };
+          sprite.eventMode = 'static';
+          sprite.cursor = 'pointer';
+          sprite.on('pointertap', () => {
+            if (!this.dragged) this.onPick({ key: 'scenery', area: 'scenery' });
+          });
+          sprite.on('pointerover', () => {
+            sprite.tint = 0xffd277;
+          });
+          sprite.on('pointerout', () => {
+            sprite.tint = 0xffffff;
+          });
+          this.residents.set(key, w);
+        }
+        this.playerObjects.get(island)!.addChild(w.sprite);
+      });
+    };
+    add('central', CENTRAL_WALKS, s.nobles);
+    for (const p of s.players) add(p.id, PLAYER_WALKS, false);
+    for (const [key, w] of this.residents)
+      if (!active.has(key)) {
+        w.sprite.destroy();
+        this.residents.delete(key);
       }
   }
   setMotion(enabled: boolean) {
@@ -625,14 +750,14 @@ export class WorldRenderer {
     this.manuallyMoved = false;
     let center: Point = { x: 0, y: 0 },
       zoom = Math.min(
-        this.app.screen.width / 820,
-        this.app.screen.height / 590,
+        this.app.screen.width / (id === 'central' ? 1580 : 1120),
+        this.app.screen.height / (id === 'central' ? 1080 : 740),
         1.5,
       );
     if (id === 'all' && this.snapshot) {
       zoom = Math.min(
-        this.app.screen.width / 2600,
-        this.app.screen.height / 1750,
+        this.app.screen.width / 4350,
+        this.app.screen.height / 3200,
       );
     } else if (id !== 'central' && this.snapshot) {
       const i = this.snapshot.players.findIndex((p) => p.id === id);
@@ -640,7 +765,7 @@ export class WorldRenderer {
     }
     this.destination = {
       x: center.x,
-      y: center.y + 30,
+      y: center.y + (id === 'central' ? 40 : 0),
       zoom: Math.max(0.12, zoom),
     };
     if (instant) this.camera = { ...this.destination };
@@ -685,31 +810,36 @@ export class WorldRenderer {
     this.waves.clear();
     const width = this.app.screen.width,
       height = this.app.screen.height;
-    for (let row = 0; row < 12; row++)
-      for (let col = 0; col < 9; col++) {
-        const x = col * 170 + (row % 2) * 60 + ((t * 3) % 170) - 120,
-          y = row * 75 + Math.sin(t * 0.55 + col + row) * 3;
+    for (let row = 0; row < Math.ceil(height / 75) + 1; row++)
+      for (let col = 0; col < Math.ceil(width / 170) + 2; col++) {
+        const x = col * 170 + (row % 2) * 60 + ((t * 11) % 170) - 120,
+          y = row * 75 + Math.sin(t * 1.1 + col + row) * 6;
         this.waves
           .moveTo(x, y)
           .quadraticCurveTo(x + 20, y + 4, x + 44, y)
           .stroke({
             color: 0xa1e2d7,
-            width: 1,
-            alpha: 0.06 + Math.sin(row + col) * 0.025,
+            width: 1.6,
+            alpha: 0.16 + Math.sin(row + col) * 0.045,
           });
       }
     for (const item of this.wind) {
       if (item.kind === 'tree')
-        item.sprite.rotation = this.motion
-          ? Math.sin(t * 0.85 + item.phase) * 0.022 + Math.sin(t * 0.24) * 0.009
-          : 0;
+        item.sprite.rotation = this.motion ? swayAt(t, item.phase) : 0;
       else {
-        item.sprite.y =
-          item.baseY + (this.motion ? Math.sin(t * 0.75 + item.phase) * 2 : 0);
-        item.sprite.rotation = this.motion
-          ? Math.sin(t * 0.6 + item.phase) * 0.007
-          : 0;
+        item.sprite.y = item.baseY + (this.motion ? bobAt(t, item.phase).y : 0);
+        item.sprite.rotation = this.motion ? bobAt(t, item.phase).rotation : 0;
       }
+    }
+    for (const w of this.residents.values()) {
+      const p = walkAt(w.route, t + w.phase);
+      w.sprite.position.set(p.x, p.y);
+      w.sprite.scale.x = Math.abs(w.sprite.scale.x) * p.facing;
+      w.sprite.texture = this.textures.get(
+        w.kind + (this.motion ? Math.floor(t * 8 + w.phase) % 4 : 0),
+      )!;
+      w.sprite.rotation = this.motion ? Math.sin(t * 14 + w.phase) * 0.035 : 0;
+      w.sprite.zIndex = p.y;
     }
     for (const w of this.walkers.values()) {
       const sprite = w.sprite;
@@ -749,10 +879,10 @@ export class WorldRenderer {
       const x = (island.x - this.camera.x) * this.camera.zoom + width / 2,
         y = (island.y - this.camera.y) * this.camera.zoom + height / 2;
       island.visible =
-        x > -600 * this.camera.zoom &&
-        x < width + 600 * this.camera.zoom &&
-        y > -450 * this.camera.zoom &&
-        y < height + 450 * this.camera.zoom;
+        x > -850 * this.camera.zoom &&
+        x < width + 850 * this.camera.zoom &&
+        y > -650 * this.camera.zoom &&
+        y < height + 650 * this.camera.zoom;
     }
   }
   private bindInput() {
@@ -781,7 +911,8 @@ export class WorldRenderer {
     );
     on('pointerdown', (e) => {
       this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      this.dragged = false;
+      this.dragged = this.pointers.size > 1;
+      this.pointerOrigin = { x: e.clientX, y: e.clientY };
       this.pointerDistance = 0;
       canvas.setPointerCapture(e.pointerId);
     });
@@ -805,7 +936,12 @@ export class WorldRenderer {
       }
       const dx = e.clientX - prev.x,
         dy = e.clientY - prev.y;
-      if (Math.abs(dx) + Math.abs(dy) > 2 || this.dragged) {
+      const origin = this.pointerOrigin ?? prev;
+      // Count the whole gesture, including slow movement across many small events.
+      if (
+        Math.hypot(e.clientX - origin.x, e.clientY - origin.y) > 5 ||
+        this.dragged
+      ) {
         this.dragged = true;
         this.manuallyMoved = true;
         this.camera.x -= dx / this.camera.zoom;

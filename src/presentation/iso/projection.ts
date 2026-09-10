@@ -2,8 +2,8 @@ export interface Point {
   x: number;
   y: number;
 }
-export const TILE_W = 72;
-export const TILE_H = 36;
+export const TILE_W = 112;
+export const TILE_H = 56;
 export function project(u: number, v: number): Point {
   return { x: ((u - v) * TILE_W) / 2, y: ((u + v) * TILE_H) / 2 };
 }
@@ -23,8 +23,8 @@ export function islandCenters(count: number): Point[] {
         ? [210, 330, 30, 150]
         : [180, 252, 324, 36, 108];
   return angles.map((a) => ({
-    x: Math.cos((a * Math.PI) / 180) * 880,
-    y: Math.sin((a * Math.PI) / 180) * 580,
+    x: Math.cos((a * Math.PI) / 180) * 1530,
+    y: Math.sin((a * Math.PI) / 180) * 1060,
   }));
 }
 export function urbanLayout(

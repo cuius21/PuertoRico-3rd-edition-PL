@@ -6,7 +6,7 @@ interface Props {
   state: GameState;
 }
 
-const ROLE_META: Record<
+export const ROLE_META: Record<
   RoleType,
   { label: string; color: string; icon: string }
 > = {
@@ -20,7 +20,7 @@ const ROLE_META: Record<
   [RoleType.Corsair]: { label: 'Korsarz', color: '#263238', icon: '🏴‍☠️' },
 };
 
-const ROLE_DESCRIPTIONS: Record<
+export const ROLE_DESCRIPTIONS: Record<
   RoleType,
   { privilege: string; action: string }
 > = {

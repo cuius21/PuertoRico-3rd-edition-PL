@@ -109,71 +109,6 @@
   z-index: 3;
   margin-bottom: 12px;
 }
-.pr-world .role-cards-wrapper {
-  margin: 0;
-}
-.pr-world .role-cards-bar {
-  display: flex;
-  gap: 7px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  overflow-x: auto;
-  justify-content: stretch;
-}
-.pr-world .role-card {
-  flex: 1;
-  min-width: 98px;
-  max-width: none;
-  background: #164f55;
-  border: 1px solid #ffffff1f;
-  border-top: 2px solid var(--role-color);
-  border-radius: 8px;
-  box-shadow: none;
-  min-height: 58px;
-  padding: 7px 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: #f9ebc7;
-  flex-direction: row;
-  position: relative;
-}
-.pr-world .role-card__icon {
-  font-size: 20px;
-}
-.pr-world .role-card__label {
-  font-size: 12px;
-  color: inherit;
-}
-.pr-world .role-card__owner {
-  font-size: 9px;
-  position: absolute;
-  bottom: 2px;
-  right: 6px;
-  color: #a0cfc6;
-}
-.pr-world .role-card--taken {
-  opacity: 0.45;
-}
-.pr-world .role-card__doubloons {
-  font-size: 10px;
-  position: static;
-  background: #e9c476;
-  color: #553a13;
-  padding: 1px 4px;
-}
-.pr-world .role-desc-panel {
-  position: absolute;
-  top: 65px;
-  left: 0;
-  right: 0;
-  background: #fff6df;
-  color: #193e40;
-  box-shadow: 0 12px 40px #04283166;
-  z-index: 8;
-}
 .pr-players {
   display: flex;
   gap: 10px;
@@ -903,4 +838,373 @@
 .pr-world * {
   scrollbar-width: thin;
   scrollbar-color: #779c83 transparent;
+}
+
+/* Full-width world and cards */
+.pr-layout {
+  display: block;
+}
+.pr-explore {
+  position: relative;
+  top: auto;
+}
+.pr-map {
+  min-height: 560px;
+  height: calc(100dvh - 360px);
+  max-height: 1000px;
+}
+.pr-deck {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 3px 8px;
+}
+.pr-role {
+  flex: 1;
+  min-width: 120px;
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid #c6bf95;
+  border-top: 3px solid var(--role-color);
+  background: linear-gradient(#fcf5df, #dfdfbb);
+  box-shadow:
+    0 4px 0 #0c39485c,
+    inset 0 0 0 3px #fff4cd66;
+}
+.pr-role.is-taken {
+  background: linear-gradient(#8dafa1, #799788);
+}
+.pr-role.is-active {
+  background: linear-gradient(#fff4c9, #f0ce77);
+  border-color: #ffdb7b;
+  box-shadow:
+    0 0 0 2px #f8d779,
+    0 0 24px #ffd66838,
+    0 4px 0 #604f2a;
+}
+.pr-role.is-playable:hover {
+  border-color: #ffe29d;
+  box-shadow:
+    0 0 0 2px #ffe29d,
+    0 0 20px #ffd66838;
+}
+.pr-role-pick {
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 3px;
+  width: 100%;
+  padding: 6px 5px 10px;
+  background: transparent;
+  color: #244b45;
+  border: 0;
+  min-height: 122px;
+}
+.pr-role-art {
+  display: block;
+  width: 80px;
+  height: 72px;
+  background-repeat: no-repeat;
+}
+.pr-role-name {
+  white-space: nowrap;
+  font-weight: bold;
+  font-size: 13px;
+}
+.pr-role-name > span {
+  font-size: 12px;
+}
+.pr-role-status {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.3px;
+  color: #59735a;
+  min-height: 12px;
+}
+.pr-role.is-active .pr-role-status {
+  color: #8b5d1b;
+  font-weight: bold;
+}
+.pr-role-coins {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  border-radius: 12px;
+  padding: 4px 6px;
+  font-size: 10px;
+  color: #634919;
+  background: #f5cf71;
+  border: 1px solid #d2ae59;
+}
+.pr-role-help {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  width: 23px;
+  height: 23px;
+  padding: 0;
+  border-radius: 50% !important;
+  border: 1px solid #657e6052;
+  background: #fcf7e0c9;
+  color: #57765e;
+  font-size: 12px !important;
+}
+.pr-world button:hover:not(:disabled) {
+  box-shadow: 0 0 0 2px #efd182a6;
+}
+.pr-commandbar {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-top: 14px;
+  padding: 14px 20px;
+}
+.pr-commandbar h2 {
+  margin: 4px 0 0;
+  font-size: 21px;
+  white-space: nowrap;
+}
+.pr-command-content {
+  flex: 1;
+  min-width: 0;
+}
+.pr-commandbar .pr-actions {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  max-height: 156px;
+}
+.pr-commandbar .pr-intro {
+  margin: 0;
+}
+
+/* The browser provides focus trapping, Escape and an inert background. */
+.pr-dialog {
+  width: min(1000px, calc(100vw - 36px));
+  max-height: min(88dvh, 1000px);
+  padding: 0;
+  margin: auto;
+  border: 1px solid #dccc9b;
+  border-radius: 19px;
+  background: #fbf3de;
+  color: var(--ink);
+  box-shadow: 0 30px 100px #022b3e80;
+  overflow: hidden;
+}
+.pr-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+.pr-dialog::backdrop {
+  background: #072e3fa8;
+  backdrop-filter: blur(5px);
+}
+.pr-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid #d8c9a1;
+  background: linear-gradient(110deg, #eee0b9, #faf2db);
+}
+.pr-dialog-header h2 {
+  font-size: 29px;
+  margin: 5px 0 0;
+}
+.pr-dialog-header > button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d7c79e;
+  background: #faf3de;
+  color: #496658;
+  font-size: 25px;
+  flex-shrink: 0;
+}
+.pr-dialog-body {
+  overflow: auto;
+  padding: 22px 28px;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.pr-dialog-footer {
+  padding: 14px 28px;
+  border-top: 1px solid #dfd2b2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: #f0e6cc;
+}
+.pr-dialog-footer button {
+  padding: 10px 17px;
+  background: #266b61;
+  border: 1px solid #1b5a50;
+  color: #fff1ce;
+  font-size: 12px;
+}
+.pr-dialog-footer button:first-child:not(:last-child) {
+  margin-right: auto;
+  background: #f9f0d7;
+  color: #476553;
+  border-color: #cdbc91;
+}
+.pr-dialog .pr-catalog {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  max-height: none;
+  overflow: visible;
+  gap: 10px;
+}
+.pr-dialog .pr-catalog > button {
+  min-height: 84px;
+  padding: 10px;
+  border-color: #d8c9a1;
+}
+.pr-dialog .pr-catalog .pr-art {
+  width: 64px;
+  height: 64px;
+}
+.pr-dialog .pr-catalog b {
+  display: block;
+}
+.pr-dialog .pr-catalog .is-active,
+.pr-harbour .is-active {
+  border-color: #c39438;
+  box-shadow: inset 0 0 0 1px #d5b253;
+  background: #eee1b9;
+}
+.pr-dialog .pr-stat-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+.pr-dialog .pr-intro {
+  font-size: 14px;
+  line-height: 1.75;
+}
+.pr-dialog .pr-feature-art {
+  float: left;
+  width: 235px;
+  margin: 0 24px 15px 0;
+}
+.pr-dialog .pr-feature-art .pr-art--large {
+  width: 220px;
+  height: 220px;
+}
+.pr-dialog .pr-nearby {
+  clear: both;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+.pr-dialog .pr-nearby h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+}
+.pr-dialog .pr-harbour {
+  grid-template-columns: repeat(3, 1fr);
+}
+.pr-dialog .pr-harbour button {
+  padding: 15px;
+  flex-wrap: wrap;
+}
+.pr-dialog .pr-harbour .pr-art {
+  width: 90px;
+  height: 90px;
+}
+.pr-dialog .pr-trade {
+  max-width: 540px;
+}
+.pr-dialog .pr-trade > span {
+  font-size: 11px;
+}
+.pr-dialog h3 {
+  font-size: 15px;
+}
+.pr-dialog .pr-muted {
+  clear: both;
+}
+.pr-role-description {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+.pr-supplies {
+  font-size: 15px;
+  line-height: 1.9;
+}
+.pr-supplies .pr-goods {
+  margin-top: 20px;
+  padding: 18px;
+  background: #eee6c9;
+  border-radius: 12px;
+}
+.pr-supplies .pr-goods .pr-art {
+  width: 74px;
+  height: 74px;
+}
+
+@media (max-width: 760px) {
+  .pr-map {
+    height: 60dvh;
+    min-height: 420px;
+  }
+  .pr-map-nav {
+    flex-wrap: wrap;
+  }
+  .pr-role {
+    min-width: 116px;
+  }
+  .pr-role-pick {
+    min-height: 118px;
+  }
+  .pr-deck {
+    gap: 8px;
+  }
+  .pr-commandbar {
+    display: block;
+    padding: 15px;
+  }
+  .pr-commandbar h2 {
+    margin-bottom: 10px;
+  }
+  .pr-commandbar .pr-actions {
+    grid-template-columns: 1fr;
+    max-height: 235px;
+  }
+  .pr-dialog {
+    width: calc(100vw - 20px);
+    max-height: 91dvh;
+    border-radius: 13px;
+  }
+  .pr-dialog-header {
+    padding: 18px;
+  }
+  .pr-dialog-header h2 {
+    font-size: 24px;
+  }
+  .pr-dialog-body {
+    padding: 18px;
+  }
+  .pr-dialog-footer {
+    padding: 12px 18px;
+  }
+  .pr-dialog .pr-catalog {
+    grid-template-columns: 1fr;
+  }
+  .pr-dialog .pr-harbour {
+    grid-template-columns: 1fr;
+  }
+  .pr-dialog .pr-stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pr-dialog .pr-feature-art {
+    float: none;
+    width: auto;
+    margin: 0;
+  }
+  .pr-role-description {
+    display: block;
+  }
+  .pr-role-description > .pr-art {
+    display: block;
+    margin: 0 auto;
+  }
+  .pr-supplies .pr-goods .pr-art {
+    width: 40px;
+    height: 40px;
+  }
 }

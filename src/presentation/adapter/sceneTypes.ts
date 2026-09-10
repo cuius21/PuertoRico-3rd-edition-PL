@@ -5,6 +5,8 @@ export type Area =
   | 'festival'
   | 'magistrate'
   | 'corsair'
+  | 'supplies'
+  | 'scenery'
   | 'island';
 export interface EntityRef {
   key: string;

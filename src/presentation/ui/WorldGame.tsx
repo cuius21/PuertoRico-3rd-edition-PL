@@ -5,7 +5,8 @@ import type { GameState } from '../../../state/GameState';
 import type { GameEvent, PlayerSetup } from '../../game/GameRunner';
 import { describeAction } from '../../game/actionLabels';
 import { BUILDING_DESCRIPTIONS } from '../../game/buildingDescriptions';
-import { RoleCardsBar } from '../../components/RoleCardsBar';
+import { RoleDeck } from './RoleDeck';
+import { WorldDialog } from './WorldDialog';
 import { FestivalBoardPanel } from '../../components/FestivalBoardPanel';
 import { WorldViewport } from './WorldViewport';
 import { buildSceneSnapshot, GOOD_NAMES } from '../adapter/buildSceneSnapshot';
@@ -58,6 +59,8 @@ const AREAS: Record<Area, string> = {
   magistrate: 'Magistrat',
   corsair: 'Korsarz',
   island: 'Wyspa gracza',
+  supplies: 'Wspólne zapasy',
+  scenery: 'Życie na wyspach',
 };
 const GOODS = ['corn', 'indigo', 'sugar', 'tobacco', 'coffee'];
 function Art({ id, large = false }: { id: string; large?: boolean }) {
@@ -128,7 +131,11 @@ export function WorldGame({
   const catalog = [
     ...new Map(state.supply.availableBuildings.map((b) => [b.id, b])).values(),
   ].sort((a, b) => a.cost - b.cost);
-  const nearby = selected ? actionsForTarget(unique, selected) : [];
+  const nearby = selected
+    ? actionsForTarget(unique, selected).filter(
+        (a) => selected.key !== 'market' || a.type !== 'BUILD',
+      )
+    : [];
   const current = state.getCurrentPlayer();
   const price = (b: (typeof catalog)[number]) =>
     scene.phase === 'builder' ? calcBuildCost(state, current, b) : b.cost;
@@ -159,6 +166,7 @@ export function WorldGame({
       return;
     }
     setStale('');
+    setSelected(null);
     onAction(live);
   }
   function label(action: Action) {
@@ -207,7 +215,7 @@ export function WorldGame({
         className={
           'pr-action' + (a.type.includes('PASS') ? ' pr-action--pass' : '')
         }
-        disabled={waiting}
+        disabled={waiting || !runner.isCurrentPlayerHuman()}
         onClick={() => act(actionKey(a))}
       >
         {label(a)}
@@ -220,6 +228,7 @@ export function WorldGame({
     'plantations',
     'port',
     'magistrate',
+    'supplies',
     ...(scene.festival ? ['festival' as const] : []),
     ...(scene.corsair ? ['corsair' as const] : []),
   ];
@@ -254,7 +263,7 @@ export function WorldGame({
             }}
             title="Fale, wiatr i ruch mieszkańców"
           >
-            {motion ? '≈ Animacje' : '≈ Spokój'}
+            {motion ? '≈ Animacje: wł.' : '≈ Animacje: wył.'}
           </button>
           {onSave && (
             <button onClick={onSave}>
@@ -271,7 +280,12 @@ export function WorldGame({
         </div>
       )}
       <div className="pr-role-strip">
-        <RoleCardsBar state={state} />
+        <RoleDeck
+          state={state}
+          actions={unique}
+          waiting={waiting || !runner.isCurrentPlayerHuman()}
+          onChoose={act}
+        />
       </div>
       <nav className="pr-players" aria-label="Wyspy graczy">
         {scene.players.map((p, i) => (
@@ -318,7 +332,7 @@ export function WorldGame({
             <button
               onClick={() => {
                 go(homeId);
-                choose({ key: homeId, area: 'island', playerId: homeId });
+                setSelected(null);
               }}
             >
               Moja wyspa
@@ -348,7 +362,7 @@ export function WorldGame({
             ) : (
               <>
                 <b>Witaj na wyspach</b>
-                <span>Kliknij miejsce na mapie lub wybierz ruch w panelu.</span>
+                <span>Kliknij obiekt na wyspie, aby otworzyć jego okno.</span>
               </>
             )}
           </div>
@@ -367,313 +381,372 @@ export function WorldGame({
             ))}
           </nav>
         </section>
-        <aside className="pr-sidebar">
-          <section className="pr-moves">
-            <div className="pr-eyebrow">
-              {waiting ? 'RUCH PRZECIWNIKA' : 'DOSTĘPNE RUCHY'}
-            </div>
-            <h2>
-              {waiting
-                ? current.name + ' myśli…'
-                : PHASES[scene.phase] || scene.phase}
-            </h2>
-            {stale && <p role="status">{stale}</p>}
-            <div className="pr-actions">{actionButtons(unique)}</div>
-            {!unique.length && !waiting && (
-              <p className="pr-muted">Oczekiwanie na kolejną fazę.</p>
-            )}
-          </section>
-          <section className="pr-inspector">
-            <div className="pr-section-title">
-              <div>
-                <span className="pr-eyebrow">ODKRYWAJ WYSPY</span>
-                <h2>
-                  {building?.displayName ||
-                    selectedObject?.name ||
-                    selectedPlayer?.name ||
-                    (selected ? AREAS[selected.area] : 'San Juan')}
-                </h2>
+      </div>
+
+      {selected && (
+        <WorldDialog
+          title={
+            building?.displayName ||
+            selectedObject?.name ||
+            selectedPlayer?.name ||
+            AREAS[selected.area]
+          }
+          onClose={() => setSelected(null)}
+          onBack={
+            building && !ownedBuilding
+              ? () => choose({ key: 'market', area: 'market' })
+              : selectedObject && selectedPlayer
+                ? () =>
+                    choose({
+                      key: selectedPlayer.id,
+                      area: 'island',
+                      playerId: selectedPlayer.id,
+                    })
+                : undefined
+          }
+        >
+          {stale && (
+            <p role="status" className="pr-error">
+              {stale}
+            </p>
+          )}
+          {building && (
+            <>
+              <div className="pr-feature-art">
+                <Art id={building.id} large />
               </div>
-              {selected && (
-                <button
-                  aria-label="Zamknij szczegóły"
-                  onClick={() => setSelected(null)}
-                >
-                  ×
-                </button>
-              )}
+              <div className="pr-stat-grid">
+                <span>
+                  {ownedBuilding || scene.phase !== 'builder'
+                    ? 'Koszt bazowy'
+                    : 'Cena dla ' + current.name}
+                  <strong>
+                    {ownedBuilding ? building.cost : price(building)} D
+                  </strong>
+                </span>
+                <span>
+                  Punkty<strong>{building.victoryPoints} PZ</strong>
+                </span>
+                <span>
+                  Wielkość<strong>{building.tileSize} pola</strong>
+                </span>
+                <span>
+                  Załoga<strong>{building.workerCapacity}</strong>
+                </span>
+              </div>
+              <p className="pr-intro">{BUILDING_DESCRIPTIONS[building.id]}</p>
+            </>
+          )}
+          {selectedObject && !building && (
+            <div className="pr-feature-art">
+              <Art id={selectedObject.sprite} large />
             </div>
-            {!selected && (
-              <>
-                <p className="pr-intro">
-                  Serce archipelagu. Odwiedź targ, rozbuduj miasto i wypraw
-                  swoje towary w morze.
-                </p>
-                <div className="pr-feature-art">
-                  <Art id="market" large />
-                </div>
-                <div className="pr-stat-grid">
-                  <span>
-                    Bank<strong>{scene.bank} D</strong>
-                  </span>
-                  <span>
-                    Pula punktów<strong>{scene.vpPool} PZ</strong>
-                  </span>
-                </div>
-              </>
-            )}
-            {building && (
-              <>
-                <div className="pr-feature-art">
-                  <Art id={building.id} large />
-                </div>
-                <div className="pr-stat-grid">
-                  <span>
-                    {ownedBuilding || scene.phase !== 'builder'
-                      ? 'Koszt bazowy'
-                      : 'Cena dla ' + current.name}
-                    <strong>
-                      {ownedBuilding ? building.cost : price(building)} D
-                    </strong>
-                  </span>
-                  <span>
-                    Punkty<strong>{building.victoryPoints} PZ</strong>
-                  </span>
-                  <span>
-                    Wielkość<strong>{building.tileSize} pola</strong>
-                  </span>
-                  <span>
-                    Załoga<strong>{building.workerCapacity}</strong>
-                  </span>
-                </div>
-                <p className="pr-intro">{BUILDING_DESCRIPTIONS[building.id]}</p>
-              </>
-            )}
-            {selectedObject && (
-              <p className="pr-intro">
-                Obsada: {selectedObject.workers} robotników
+          )}
+          {selectedObject && (
+            <p className="pr-intro">
+              Obsada: {selectedObject.workers} robotników
+              {scene.nobles
+                ? ' + ' + selectedObject.nobles + ' szlachciców'
+                : ''}{' '}
+              / {selectedObject.capacity} miejsc.
+            </p>
+          )}
+          {selectedPlayer && !selectedObject && (
+            <>
+              <div className="pr-stat-grid">
+                <span>
+                  Dublony<strong>{selectedPlayer.coins} D</strong>
+                </span>
+                <span>
+                  Żetony punktów<strong>{selectedPlayer.vp} PZ</strong>
+                </span>
+                <span>
+                  Plantacje<strong>{selectedPlayer.ruralUsed}/12</strong>
+                </span>
+                <span>
+                  Miasto<strong>{selectedPlayer.urbanUsed}/12</strong>
+                </span>
+              </div>
+              <p className="pr-muted">
+                Do rozstawienia: {selectedPlayer.pending} robotników
                 {scene.nobles
-                  ? ' + ' + selectedObject.nobles + ' szlachciców'
-                  : ''}{' '}
-                / {selectedObject.capacity} miejsc.
+                  ? ' i ' + selectedPlayer.pendingNobles + ' szlachciców'
+                  : ''}
+                . W rezerwie: {selectedPlayer.held}
+                {scene.nobles
+                  ? ' + ' + selectedPlayer.heldNobles + ' szlachciców'
+                  : ''}
+                .
               </p>
-            )}
-            {selectedPlayer && !selectedObject && (
-              <>
-                <div className="pr-stat-grid">
-                  <span>
-                    Dublony<strong>{selectedPlayer.coins} D</strong>
+              <div className="pr-goods">
+                {GOODS.map((g) => (
+                  <span key={g} title={GOOD_NAMES[g]}>
+                    <Art id={g} />
+                    {selectedPlayer.goods[g] || 0}
                   </span>
-                  <span>
-                    Żetony punktów<strong>{selectedPlayer.vp} PZ</strong>
-                  </span>
-                  <span>
-                    Plantacje<strong>{selectedPlayer.ruralUsed}/12</strong>
-                  </span>
-                  <span>
-                    Miasto<strong>{selectedPlayer.urbanUsed}/12</strong>
-                  </span>
-                </div>
-                <p className="pr-muted">
-                  Do rozstawienia: {selectedPlayer.pending} robotników
-                  {scene.nobles
-                    ? ' i ' + selectedPlayer.pendingNobles + ' szlachciców'
-                    : ''}
-                  . W rezerwie: {selectedPlayer.held}
-                  {scene.nobles
-                    ? ' + ' + selectedPlayer.heldNobles + ' szlachciców'
-                    : ''}
-                  .
-                </p>
-                <div className="pr-goods">
-                  {GOODS.map((g) => (
-                    <span key={g} title={GOOD_NAMES[g]}>
-                      <Art id={g} />
-                      {selectedPlayer.goods[g] || 0}
-                    </span>
-                  ))}
-                </div>
-                <div className="pr-catalog">
-                  {selectedPlayer.objects.map((o) => (
-                    <button key={o.key} onClick={() => choose(o.target)}>
-                      <Art id={o.sprite} />
-                      <span>
-                        {o.name}
-                        <small>
-                          {o.workers + o.nobles}/{o.capacity} miejsc
-                        </small>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-            {selected?.area === 'market' && !building && (
-              <>
-                <h3>Targowisko</h3>
-                <div className="pr-trade">
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <span key={i}>
-                      {scene.trade[i] ? (
-                        <>
-                          <Art id={scene.trade[i]!} />
-                          {GOOD_NAMES[scene.trade[i]!]}
-                        </>
-                      ) : (
-                        'Wolne'
-                      )}
-                    </span>
-                  ))}
-                </div>
-                <h3>
-                  Budynki do kupienia <small>{catalog.length} rodzajów</small>
-                </h3>
-                <div className="pr-catalog">
-                  {catalog.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() =>
-                        choose({
-                          key: 'market:' + b.id,
-                          area: 'market',
-                          buildingId: b.id,
-                        })
-                      }
-                    >
-                      <Art id={b.id} />
-                      <span>
-                        {b.displayName}
-                        <small>
-                          {b.victoryPoints} PZ · dostępne{' '}
-                          {buildingCounts.get(b.id)}
-                        </small>
-                      </span>
-                      <b>{price(b)} D</b>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-            {selected?.area === 'plantations' && (
-              <>
-                <p className="pr-muted">
-                  Odkryte plantacje oraz wspólna pula kamieniołomów.
-                </p>
-                <div className="pr-catalog">
-                  {state.supply.revealedPlantations.map((p, i) => (
-                    <div key={i}>
-                      <Art id={p.type} />
-                      <span>
-                        {GOOD_NAMES[p.type]}
-                        <small>Plantacja {i + 1}</small>
-                      </span>
-                    </div>
-                  ))}
-                  <div>
-                    <Art id="quarry" />
+                ))}
+              </div>
+              <div className="pr-catalog">
+                {selectedPlayer.objects.map((o) => (
+                  <button key={o.key} onClick={() => choose(o.target)}>
+                    <Art id={o.sprite} />
                     <span>
-                      Kamieniołomy
-                      <small>{state.supply.quarryStack.length} w puli</small>
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
-            {selected?.area === 'port' && (
-              <div className="pr-harbour">
-                {scene.ships.map((s, i) => (
-                  <button
-                    className={selected.key === 'ship:' + i ? 'is-active' : ''}
-                    key={i}
-                    onClick={() =>
-                      choose({ key: 'ship:' + i, area: 'port', shipIndex: i })
-                    }
-                  >
-                    <Art id="ship" />
-                    <span>
-                      <strong>Statek {i + 1}</strong>
+                      {o.name}
                       <small>
-                        {s.good ? GOOD_NAMES[s.good] : 'Pusta ładownia'}
+                        {o.workers + o.nobles}/{o.capacity} miejsc
                       </small>
-                      <progress value={s.count} max={s.capacity} />
                     </span>
-                    <b>
-                      {s.count}/{s.capacity}
-                    </b>
                   </button>
                 ))}
               </div>
-            )}
-            {selected?.area === 'magistrate' && (
-              <>
-                <div className="pr-feature-art">
-                  <Art id="magistrate" large />
-                </div>
-                <div className="pr-stat-grid">
-                  <span>
-                    W magistracie<strong>{scene.magistrate}</strong>
+            </>
+          )}
+          {selected?.area === 'market' && !building && (
+            <>
+              <h3>Targowisko</h3>
+              <div className="pr-trade">
+                {Array.from({ length: 4 }, (_, i) => (
+                  <span key={i}>
+                    {scene.trade[i] ? (
+                      <>
+                        <Art id={scene.trade[i]!} />
+                        {GOOD_NAMES[scene.trade[i]!]}
+                      </>
+                    ) : (
+                      'Wolne'
+                    )}
                   </span>
-                  <span>
-                    Robotnicy w puli<strong>{scene.workersPool}</strong>
-                  </span>
-                  {scene.nobles && (
-                    <>
-                      <span>
-                        Szlachta w magistracie
-                        <strong>{scene.magistrateNobles}</strong>
-                      </span>
-                      <span>
-                        Szlachta w puli<strong>{scene.noblesPool}</strong>
-                      </span>
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-            {selected?.area === 'festival' && state.festivalBoard && (
-              <FestivalBoardPanel
-                board={state.festivalBoard}
-                players={state.players}
-              />
-            )}
-            {selected?.area === 'corsair' && (
-              <>
-                <div className="pr-feature-art">
-                  <Art id="corsair" large />
-                </div>
-                <p className="pr-intro">
-                  Wybierz postać Korsarza, aby wykonać piractwo, grabież, najazd
-                  lub pojmanie. Dostępne akcje pojawią się poniżej.
-                </p>
-              </>
-            )}
-            {!!nearby.length && (
-              <div className="pr-nearby">
-                <h3>Ruchy w tym miejscu</h3>
-                {actionButtons(nearby)}
+                ))}
               </div>
-            )}
-          </section>
-          <details className="pr-reserves">
-            <summary>Wspólne zapasy</summary>
-            <p>
-              Bank: {scene.bank} D · Pula punktów: {scene.vpPool} PZ
-            </p>
-            <p>
-              Robotnicy: {scene.workersPool} w puli · {scene.magistrate} w
-              magistracie
-            </p>
-            <div className="pr-goods">
-              {[...state.supply.goodsPool].map(([g, n]) => (
-                <span key={g} title={GOOD_NAMES[g]}>
-                  <Art id={g} />
-                  {n}
-                </span>
+              <h3>
+                Budynki do kupienia <small>{catalog.length} rodzajów</small>
+              </h3>
+              <div className="pr-catalog">
+                {catalog.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() =>
+                      choose({
+                        key: 'market:' + b.id,
+                        area: 'market',
+                        buildingId: b.id,
+                      })
+                    }
+                  >
+                    <Art id={b.id} />
+                    <span>
+                      {b.displayName}
+                      <small>
+                        {b.victoryPoints} PZ · dostępne{' '}
+                        {buildingCounts.get(b.id)}
+                      </small>
+                    </span>
+                    <b>{price(b)} D</b>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {selected?.area === 'plantations' && (
+            <>
+              <p className="pr-muted">
+                Odkryte plantacje oraz wspólna pula kamieniołomów.
+              </p>
+              <div className="pr-catalog">
+                {state.supply.revealedPlantations.map((p, i) => (
+                  <button
+                    key={i}
+                    onClick={() =>
+                      choose({
+                        key: 'plantations:revealed:' + i,
+                        area: 'plantations',
+                        slotIndex: i,
+                      })
+                    }
+                    className={
+                      selected?.key === 'plantations:revealed:' + i
+                        ? 'is-active'
+                        : ''
+                    }
+                  >
+                    <Art id={p.type} />
+                    <span>
+                      {GOOD_NAMES[p.type]}
+                      <small>Plantacja {i + 1}</small>
+                    </span>
+                  </button>
+                ))}
+                <button
+                  onClick={() =>
+                    choose({ key: 'plantations:quarry', area: 'plantations' })
+                  }
+                  className={
+                    selected?.key === 'plantations:quarry' ? 'is-active' : ''
+                  }
+                >
+                  <Art id="quarry" />
+                  <span>
+                    Kamieniołomy
+                    <small>{state.supply.quarryStack.length} w puli</small>
+                  </span>
+                </button>
+              </div>
+            </>
+          )}
+          {selected?.area === 'port' && (
+            <div className="pr-harbour">
+              {scene.ships.map((s, i) => (
+                <button
+                  className={selected.key === 'ship:' + i ? 'is-active' : ''}
+                  key={i}
+                  onClick={() =>
+                    choose({ key: 'ship:' + i, area: 'port', shipIndex: i })
+                  }
+                >
+                  <Art id="ship" />
+                  <span>
+                    <strong>Statek {i + 1}</strong>
+                    <small>
+                      {s.good ? GOOD_NAMES[s.good] : 'Pusta ładownia'}
+                    </small>
+                    <progress value={s.count} max={s.capacity} />
+                  </span>
+                  <b>
+                    {s.count}/{s.capacity}
+                  </b>
+                </button>
               ))}
             </div>
-          </details>
-        </aside>
-      </div>
+          )}
+          {selected?.area === 'magistrate' && (
+            <>
+              <div className="pr-feature-art">
+                <Art id="magistrate" large />
+              </div>
+              <div className="pr-stat-grid">
+                <span>
+                  W magistracie<strong>{scene.magistrate}</strong>
+                </span>
+                <span>
+                  Robotnicy w puli<strong>{scene.workersPool}</strong>
+                </span>
+                {scene.nobles && (
+                  <>
+                    <span>
+                      Szlachta w magistracie
+                      <strong>{scene.magistrateNobles}</strong>
+                    </span>
+                    <span>
+                      Szlachta w puli<strong>{scene.noblesPool}</strong>
+                    </span>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+          {selected?.area === 'festival' && state.festivalBoard && (
+            <FestivalBoardPanel
+              board={state.festivalBoard}
+              players={state.players}
+            />
+          )}
+          {selected?.area === 'corsair' && (
+            <>
+              <div className="pr-feature-art">
+                <Art id="corsair" large />
+              </div>
+              <p className="pr-intro">
+                Wybierz postać Korsarza, aby wykonać piractwo, grabież, najazd
+                lub pojmanie. Dostępne akcje pojawią się poniżej.
+              </p>
+            </>
+          )}
+          {!!nearby.length && (
+            <div className="pr-nearby">
+              <h3>Ruchy w tym miejscu</h3>
+              {actionButtons(nearby)}
+            </div>
+          )}
+
+          {selected.area === 'supplies' && (
+            <div className="pr-supplies">
+              {' '}
+              <p>
+                Bank: {scene.bank} D · Pula punktów: {scene.vpPool} PZ
+              </p>
+              <p>
+                Robotnicy: {scene.workersPool} w puli · {scene.magistrate} w
+                magistracie
+              </p>
+              <div className="pr-goods">
+                {[...state.supply.goodsPool].map(([g, n]) => (
+                  <span key={g} title={GOOD_NAMES[g]}>
+                    <Art id={g} />
+                    {n}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {selected.area === 'scenery' && (
+            <div className="pr-role-description">
+              <Art id="palm" large />
+              <div>
+                <h3>Wiatr, fale i mieszkańcy</h3>
+                <p className="pr-intro">
+                  Palmy kołyszą się na wietrze, statki tańczą na falach, a
+                  mieszkańcy spacerują drogami pomiędzy zabudowaniami.
+                </p>
+                <p className="pr-intro">
+                  Spacerowicze to ozdoba wyspy. Liczbę przydzielonych robotników
+                  pokazują znaczniki przy budynkach i plantacjach. Animacje
+                  możesz wyłączyć przyciskiem „Animacje” u góry ekranu.
+                </p>
+              </div>
+            </div>
+          )}
+          {!nearby.length && selected.area !== 'scenery' && (
+            <p className="pr-muted">
+              Dostępne ruchy zależą od aktualnej postaci i gracza, którego trwa
+              tura.
+            </p>
+          )}
+        </WorldDialog>
+      )}
+      <section className="pr-moves pr-commandbar" aria-label="Dostępne ruchy">
+        <div>
+          <span className="pr-eyebrow">
+            {waiting ? 'RUCH PRZECIWNIKA' : 'TWOJA TURA'}
+          </span>
+          <h2>
+            {waiting
+              ? current.name + ' myśli…'
+              : PHASES[scene.phase] || scene.phase}
+          </h2>
+        </div>
+        <div className="pr-command-content">
+          {stale && !selected && <p role="status">{stale}</p>}
+          {scene.phase === 'roleSelection' ? (
+            <p className="pr-intro">
+              Wybierz jedną z kart postaci nad mapą. Przycisk ? otwiera opis jej
+              akcji i przywileju.
+            </p>
+          ) : (
+            <div className="pr-actions">
+              {scene.phase === 'builder' && (
+                <button className="pr-action" onClick={() => area('market')}>
+                  Otwórz budynki w San Juan <span>›</span>
+                </button>
+              )}
+              {actionButtons(
+                unique.filter(
+                  (a) => a.type !== 'SELECT_ROLE' && a.type !== 'BUILD',
+                ),
+              )}
+            </div>
+          )}
+        </div>
+      </section>
       {showLog && (
         <div className="log-modal-overlay" onClick={() => setShowLog(false)}>
           <section
