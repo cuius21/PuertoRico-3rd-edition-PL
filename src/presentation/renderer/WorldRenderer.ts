@@ -440,7 +440,11 @@ export class WorldRenderer {
       .stroke({ color: 0xffdf82, width: 2, alpha: 0.85 });
     glow.eventMode = 'none';
     glow.visible = this.selected === ref.key;
-    container.addChildAt(glow, 0);
+    if (container instanceof Graphics) {
+      // Graphics are leaf views in Pixi; the hover layer is their sibling.
+      glow.position.copyFrom(container.position);
+      container.parent!.addChild(glow);
+    } else container.addChildAt(glow, 0);
     const group = this.highlights.get(ref.key) ?? [];
     group.push(glow);
     this.highlights.set(ref.key, group);
@@ -629,12 +633,12 @@ export class WorldRenderer {
       g.roundRect(px! - 3, py! - 13, 6, 17, 2).fill(0x4c3a2d);
       g.ellipse(px!, py! - 13, 4, 2).fill(0xc4a272);
     }
+    parent.addChild(g);
     this.interactive(
       g,
       { key: 'port', area: 'port' },
       new Rectangle(-56, -31, 172, 104),
     );
-    parent.addChild(g);
   }
   private syncWorkers(s: SceneSnapshot) {
     const active = new Set<string>();
