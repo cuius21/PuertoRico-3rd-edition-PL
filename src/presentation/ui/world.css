@@ -1938,3 +1938,212 @@
     font-size: 15px;
   }
 }
+
+/* Readable, paced action playback above the map. */
+.pr-observer {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  z-index: 4;
+  width: min(610px, calc(100% - 120px));
+  border: 1px solid #e5ce8e;
+  border-left: 4px solid var(--observer-color);
+  border-radius: 15px;
+  background: linear-gradient(120deg, #fff6ddf7, #ece3c5f5);
+  color: #2b5148;
+  box-shadow: 0 10px 35px #062e4655;
+  overflow: hidden;
+}
+.pr-observer-story {
+  display: flex;
+  gap: 12px;
+  padding: 16px 18px 10px;
+}
+.pr-observer-art {
+  display: block;
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  background-repeat: no-repeat;
+  align-self: center;
+}
+.pr-observer-copy {
+  min-width: 0;
+  flex: 1;
+}
+.pr-observer-kicker {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.pr-observer-kicker > b {
+  color: #2f5d4b;
+}
+.pr-observer-kicker > span {
+  border: 1px solid #d8b260;
+  border-radius: 20px;
+  background: #f8dda0;
+  color: #6a512c;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: bold;
+  box-shadow: 0 0 12px #ffd77b55;
+}
+.pr-observer-kicker > small {
+  margin-left: auto;
+  font-size: 10px;
+  color: #708066;
+}
+.pr-world .pr-observer h3 {
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 17px;
+  line-height: 1.3;
+  margin: 7px 0 4px;
+  color: #244c43;
+}
+.pr-observer-copy p {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 4px 0;
+  color: #68745a;
+}
+.pr-observer-changes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.pr-observer-changes > span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #ddcca0;
+  border-radius: 7px;
+  padding: 2px 5px;
+  background: #fff9e4;
+  font-size: 12px;
+}
+.pr-observer-changes i {
+  display: inline-block;
+  width: 24px;
+  height: 26px;
+  background-repeat: no-repeat;
+}
+.pr-observer-changes small {
+  font-size: 9px;
+}
+.pr-observer-changes .pr-value {
+  font-size: 12px;
+}
+.pr-observer-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid #d8cba870;
+}
+.pr-observer-controls button,
+.pr-observer-controls select {
+  border: 1px solid #b7b998;
+  background: #fff8e4;
+  color: #406452;
+  padding: 6px 9px;
+  font: inherit;
+  font-size: 11px;
+  border-radius: 7px;
+}
+.pr-observer-controls button[aria-pressed='true'] {
+  background: #29665c;
+  color: #fff0c7;
+  border-color: #24594e;
+}
+.pr-observer-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 10px;
+}
+.pr-observer-controls select {
+  max-width: 108px;
+}
+.pr-observer-idle {
+  padding: 9px 13px 0;
+  font-size: 11px;
+}
+.pr-observer-held {
+  display: block;
+  padding: 0 12px 8px;
+  font-size: 10px;
+}
+.pr-observer-progress {
+  height: 3px;
+  background: #c5c5a2;
+}
+.pr-observer-progress > span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #bd943f;
+  transform-origin: left;
+  animation: pr-playback-progress linear forwards;
+}
+@keyframes pr-playback-progress {
+  from {
+    transform: scaleX(var(--progress-from, 0));
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.pr-map.has-playback .pr-zoom {
+  bottom: 18px;
+}
+@media (max-width: 760px) {
+  .pr-observer {
+    left: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+  }
+  .pr-observer-story {
+    padding: 12px 12px 8px;
+    gap: 8px;
+  }
+  .pr-observer-art {
+    width: 46px;
+    height: 52px;
+  }
+  .pr-world .pr-observer h3 {
+    font-size: 14px;
+  }
+  .pr-observer-copy p {
+    font-size: 11px;
+  }
+  .pr-observer-controls {
+    gap: 5px;
+    padding: 8px;
+  }
+  .pr-observer-controls button,
+  .pr-observer-controls select {
+    padding: 6px;
+    font-size: 10px;
+  }
+  .pr-observer-controls label {
+    font-size: 0;
+    gap: 0;
+  }
+  .pr-observer-controls select {
+    max-width: 91px;
+  }
+  .pr-map.has-playback .pr-zoom {
+    bottom: auto;
+    top: 54px;
+    right: 12px;
+  }
+  .pr-observer-changes small {
+    display: none;
+  }
+}

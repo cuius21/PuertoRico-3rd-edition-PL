@@ -82,3 +82,20 @@ Kontrola: TypeScript i 443 testy w 41 plikach, w tym ciągłość pogody na gran
 ## Podgląd plantacji — poprawka kursora
 
 Niedostępne przyciski używają zwykłego kursora, bez wskaźnika oczekiwania. Poprzednia ogólna reguła button:disabled nadpisywała styl plantacji, przez co kafelki wyglądały jak ciągłe ładowanie. Podgląd zachowuje czytelne grafiki, wyjaśnia dostępność podczas akcji Plantatora i wskazuje turę innego gracza. Dostępność ruchów nadal wynika wyłącznie z legalnych akcji silnika.
+
+## Pokaz ruchów przeciwników — 10 września 2026
+
+Lokalne partie (w tym Pages) mają kolejkę prezentacji każdego wykonanego ruchu. Kamera zbliża się do wyspy lub konkretnego obiektu, żółte podświetlenie wskazuje zmianę, a panel pokazuje gracza, postać, opis i rzeczywisty bilans monet, punktów, towarów oraz pracowników. Produkcja i rozdanie pracowników przechodzą osobno przez wszystkie wyspy. Przydzielany pracownik idzie do wskazanego miejsca; budowa ma wyróżniony budynek i efekt powstawania. Towary przemieszczają się z wyspy do portu, a załadunek i wypłynięcie pełnego statku mają osobne etapy.
+
+- playback/actionBeats.ts kopiuje publiczny widok przed akcją i porównuje go z wynikiem poprawnie wykonanej akcji silnika. Buduje samodzielne etapy; wyspy, które dopiero będą pokazywane, zachowują wcześniejszy widok. Załadunek zachowuje jego faktyczną ilość również przy natychmiastowym rozładunku lub późniejszym odrzuceniu nadwyżek.
+- playback/PlaybackQueue.ts zarządza czasem, pauzą i kolejnością. Dalej kończy tylko bieżący etap pokazu. Nie wywołuje akcji gry.
+- playback/useActionPlayback.ts obsługuje zegar widocznej karty i zapamiętuje tempo oraz śledzenie kamery. Pierwszy pokaz czeka na przygotowanie renderera. Brak WebGL nadal pozwala korzystać z panelu i przycisków.
+- renderer/ActionVisuals.ts pokazuje znaczniki, efekty budowy i transport zasobów. Przy przydziale pracownika renderer prowadzi istniejącą figurkę w tempie pokazu. Pełny statek pozostaje przy nabrzeżu do końca pokazu załadunku.
+- ui/ActionPlaybackPanel.tsx udostępnia Pauzę/Wznów, Dalej, tempo Analityczne/Spokojne/Szybkie i przełącznik automatycznej kamery. Otwarcie szczegółów wstrzymuje pokaz do zamknięcia okna; wyłączenie Animacji zachowuje opisy i statyczne podświetlenia.
+- GameScreen łączy kolejkę z useGameRunner. W tym hooku dodano jedynie obserwację przed/po legalnej akcji oraz blokadę kolejnego ruchu podczas pokazu lub pauzy. Wybór akcji przez bota, budżety obliczeń, reguły, zapis i backend nie zostały zmienione. Ekran końca gry czeka na pokaz ostatniego ruchu.
+
+Domyślne tempo to około 3–4 sekundy na etap, 1,8 sekundy na pas i 5 sekund na wypłynięcie. Szybkie działa 2× szybciej, Analityczne trwa około 1,54× dłużej. Pauza zatrzymuje też animacje związane z wykonanym ruchem; ręczne oglądanie wysp i opisów pozostaje dostępne.
+
+Walidacja: TypeScript i 456 testów w 42 plikach. Nowe testy obejmują budowę i jej koszt, osobną produkcję wszystkich wysp, nowych i ponownie rozmieszczanych pracowników, dokładny cel przydziału, załadunek przed odpłynięciem, pauzę, szczegóły, ukrytą kartę, wolne ładowanie mapy i tempo. Pełna deterministyczna partia z pokazem daje identyczny stan końcowy oraz liczbę wywołań RNG jak partia bez niego. Ze 139 poprzednio kontrolowanych plików zmieniony został wyłącznie useGameRunner w zakresie sterowania prezentacją; pozostałe 138 pozostaje identyczne.
+
+To podstawa późniejszego samouczka: etapy mają gracza, rolę, obiekty, opis i bilans. Obecny pokaz opisuje wykonane ruchy; dydaktyczne dymki, cele lekcji i ćwiczenia pozostają na osobny etap. Protokół LAN i zdalny harmonogram nie były rozszerzane.

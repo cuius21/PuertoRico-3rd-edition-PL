@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useActionPlayback } from '../presentation/playback/useActionPlayback';
 import { useGameRunner } from '../hooks/useGameRunner';
 import type { PlayerSetup } from '../game/GameRunner';
 import type { ExpansionConfig } from './SetupScreen';
@@ -18,6 +19,7 @@ export function GameScreen({
   savedState,
   onReturnToMenu,
 }: Props) {
+  const playback = useActionPlayback();
   const {
     runner,
     state,
@@ -27,14 +29,14 @@ export function GameScreen({
     actionFeed,
     botError,
     retryBot,
-  } = useGameRunner(setups, savedState, expansions);
+  } = useGameRunner(setups, savedState, expansions, playback);
   const [saveFlash, setSaveFlash] = useState(false);
   function save() {
     serializeGame(state, runner.playerSetups);
     setSaveFlash(true);
     setTimeout(() => setSaveFlash(false), 1800);
   }
-  if (state.gameOver)
+  if (state.gameOver && !playback.state.beat)
     return (
       <GameOverScreen
         state={state}
@@ -44,6 +46,7 @@ export function GameScreen({
     );
   return (
     <WorldGame
+      playback={playback}
       state={state}
       runner={runner}
       onAction={applyHumanAction}

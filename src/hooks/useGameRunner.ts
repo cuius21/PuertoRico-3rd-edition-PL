@@ -18,7 +18,15 @@ export interface ActionFeedItem {
   isBot: boolean;
 }
 
-export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, expansions?: ExpansionConfig) {
+export interface GamePresentation {
+  blocked: boolean;
+  observe: (action: Action, state: GameState, event: ActionFeedItem) => (state: GameState) => void;
+}
+
+export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, expansions?: ExpansionConfig, presentation?: GamePresentation) {
+  const presentationRef = useRef(presentation);
+  presentationRef.current = presentation;
+  const presentationBlocked = presentation?.blocked ?? false;
   const runnerRef = useRef<GameRunner | null>(null);
   if (runnerRef.current === null) {
     runnerRef.current = new GameRunner(setups, savedState, expansions ?? { festival: false, corsair: false, newBuildings: false, nobleBuildings: false });
@@ -49,7 +57,7 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
 
   // Auto-execute bot turns
   useEffect(() => {
-    if (runner.isGameOver() || runner.isCurrentPlayerHuman()) return;
+    if (runner.isGameOver() || runner.isCurrentPlayerHuman() || presentationBlocked) return;
     let cancelled = false;
     const isMayorPhase = runner.state.getCurrentPhase().type === 'mayor';
     const delay = isMayorPhase ? BOT_DELAY_MAYOR_MS : BOT_DELAY_MS;
@@ -69,9 +77,11 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
         if (cancelled) return;
         if (!action) throw new Error('No bot action available');
         const label = describeAction(action, runner.state);
-        if (!runner.applyAction(action, label)) throw new Error('Invalid bot action');
-        setBotError(null);
         const entry: ActionFeedItem = { playerName: setup.name, actionText: label, isBot: true };
+        const present = presentationRef.current?.observe(action, runner.state, entry);
+        if (!runner.applyAction(action, label)) throw new Error('Invalid bot action');
+        present?.(runner.state);
+        setBotError(null);
         showFeed(entry, isMayorPhase ? BOT_DELAY_MAYOR_MS : ACTION_FEED_MS);
         setRoundLog(prev => [entry, ...prev]);
         forceUpdate();
@@ -87,7 +97,7 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
       clearTimeout(timer);
       workerRef.current?.cancel();
     };
-  }, [runner, tick, showFeed, forceUpdate]);
+  }, [runner, tick, showFeed, forceUpdate, presentationBlocked]);
 
   useEffect(() => () => {
     if (feedTimerRef.current) clearTimeout(feedTimerRef.current);
@@ -108,11 +118,14 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
   });
 
   const applyHumanAction = useCallback((action: Action) => {
+    if (presentationRef.current?.blocked) return;
     const setup = runner.getCurrentSetup();
     const label = describeAction(action, runner.state);
+    const entry: ActionFeedItem = { playerName: setup.name, actionText: label, isBot: false };
+    const present = presentationRef.current?.observe(action, runner.state, entry);
     const ok = runner.applyAction(action, label);
     if (ok) {
-      const entry: ActionFeedItem = { playerName: setup.name, actionText: label, isBot: false };
+      present?.(runner.state);
       showFeed(entry, HUMAN_FEED_MS);
       setRoundLog(prev => [entry, ...prev]);
       forceUpdate();

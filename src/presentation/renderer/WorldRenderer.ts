@@ -36,6 +36,8 @@ import { idleFormation, waitingWorkforce } from '../iso/workforce';
 import { walkAt, swayAt, bobAt } from './ambient';
 import { ShipVoyages, voyageFrame } from './shipVoyages';
 import { WeatherLayer } from './WeatherLayer';
+import { ActionVisuals, cuePoint } from './ActionVisuals';
+import type { PlaybackQueue } from '../playback/PlaybackQueue';
 import type { WeatherKind } from './weather';
 import { TRADE_PRICES } from '../adapter/tradePrices';
 import type {
@@ -74,6 +76,9 @@ export class WorldRenderer {
   private playerObjects = new Map<string, Container>();
   private waves = new Graphics();
   private weather = new WeatherLayer();
+  private playback: PlaybackQueue | null = null;
+  private actionVisuals = new ActionVisuals((name) => this.textures.get(name));
+  private actionFocusStamp = '';
   private weatherKind: WeatherKind = 'clear';
   private textures = new Map<string, Texture>();
   private wind: WindItem[] = [];
@@ -213,7 +218,7 @@ export class WorldRenderer {
           );
         }
     }
-    this.world.addChild(this.terrain);
+    this.world.addChild(this.terrain, this.actionVisuals.view);
     this.app.stage.addChild(this.waves, this.world, this.weather.view);
     this.bindInput();
     this.observer = new ResizeObserver(() => {
@@ -229,10 +234,19 @@ export class WorldRenderer {
   }
   update(snapshot: SceneSnapshot) {
     if (this.disposed || !this.textures.size) return;
-    const signature = JSON.stringify([snapshot, this.selected]);
+    const signature = JSON.stringify([
+      snapshot,
+      this.selected,
+      this.playback?.getSnapshot().beat?.id,
+    ]);
     if (signature === this.renderSignature) return;
     this.renderSignature = signature;
-    this.voyages.update(snapshot, this.elapsed, this.motion);
+    const presenting = this.playback?.getSnapshot().beat;
+    // Keep the vessel at the pier while the observed cargo is being loaded.
+    if (!(
+      presenting?.kind === 'shipping' && presenting.focus.startsWith('ship:')
+    ))
+      this.voyages.update(snapshot, this.elapsed, this.motion);
     this.snapshot = snapshot;
     for (const w of this.walkers.values()) w.sprite.removeFromParent();
     for (const w of this.residents.values()) w.sprite.removeFromParent();
@@ -1177,6 +1191,9 @@ export class WorldRenderer {
         this.residents.delete(key);
       }
   }
+  setPlayback(playback: PlaybackQueue | null) {
+    this.playback = playback;
+  }
   setMotion(enabled: boolean) {
     this.motion = enabled;
     if (!enabled) this.voyages.clear();
@@ -1247,9 +1264,46 @@ export class WorldRenderer {
   }
   private animate(dt: number) {
     if (this.disposed) return;
-    this.elapsed += this.motion && !document.hidden ? dt : 0;
+    const actionFrame = this.playback?.frame();
+    const playbackPaused = actionFrame?.paused || actionFrame?.inspecting;
+    this.elapsed += this.motion && !document.hidden && !playbackPaused ? dt : 0;
     const t = this.elapsed;
-    const factor = this.motion ? Math.min(1, dt * 7) : 1;
+    const actionBeat = actionFrame?.beat ?? null;
+    const stamp = actionBeat ? actionBeat.id + ':' + actionFrame!.follow : '';
+    if (stamp !== this.actionFocusStamp) {
+      const hadAction = !!this.actionFocusStamp;
+      this.actionFocusStamp = stamp;
+      if (actionBeat && actionFrame?.follow) {
+        const key = ['build', 'worker', 'plantation'].includes(actionBeat.kind)
+          ? actionBeat.to
+          : actionBeat.focus;
+        const point = cuePoint(actionBeat.scene, key);
+        const close = key !== actionBeat.actorId;
+        this.manuallyMoved = true;
+        this.destination = {
+          x: point.x,
+          y: point.y + 65,
+          zoom: Math.min(
+            this.app.screen.width / (close ? 640 : 950),
+            this.app.screen.height / (close ? 680 : 850),
+            1.45,
+          ),
+        };
+      } else if (
+        !actionBeat &&
+        hadAction &&
+        actionFrame?.follow &&
+        this.snapshot
+      ) {
+        this.focus(this.snapshot.currentId);
+      }
+    }
+    this.actionVisuals.render(
+      actionBeat,
+      actionFrame?.progress ?? 0,
+      this.motion,
+    );
+    const factor = this.motion ? Math.min(1, dt * (actionBeat ? 4 : 7)) : 1;
     for (const k of ['x', 'y', 'zoom'] as const)
       this.camera[k] += (this.destination[k] - this.camera[k]) * factor;
     this.positionCamera();
@@ -1304,8 +1358,45 @@ export class WorldRenderer {
       w.sprite.rotation = this.motion ? Math.sin(t * 14 + w.phase) * 0.035 : 0;
       w.sprite.zIndex = p.y;
     }
-    for (const w of this.walkers.values()) {
+    for (const [workerKey, w] of this.walkers) {
       const sprite = w.sprite;
+      const observedObject =
+        actionBeat?.kind === 'worker'
+          ? actionBeat.scene.players
+              .find((p) => p.id === actionBeat.actorId)
+              ?.objects.find((o) => o.key === actionBeat.to)
+          : undefined;
+      const observedSlot = observedObject
+        ? actionBeat!.token === 'noble0'
+          ? observedObject.workers + observedObject.nobles - 1
+          : observedObject.workers - 1
+        : -1;
+      if (
+        observedObject &&
+        workerKey === actionBeat!.to + ':' + observedSlot &&
+        this.motion
+      ) {
+        const progress = Math.max(
+          0,
+          Math.min(1, ((actionFrame?.progress ?? 0) - 0.12) / 0.65),
+        );
+        const bend = w.route[0] ?? w.to;
+        const start = progress < 0.5 ? w.from : bend;
+        const end = progress < 0.5 ? bend : w.to;
+        const local = progress < 0.5 ? progress * 2 : (progress - 0.5) * 2;
+        sprite.position.set(
+          start.x + (end.x - start.x) * local,
+          start.y + (end.y - start.y) * local,
+        );
+        sprite.scale.x = Math.abs(sprite.scale.x) * (end.x < start.x ? -1 : 1);
+        sprite.texture = this.textures.get(
+          w.kind + (progress < 1 ? Math.floor(t * 8 + w.phase) % 4 : 0),
+        )!;
+        sprite.rotation = progress < 1 ? Math.sin(t * 14 + w.phase) * 0.035 : 0;
+        sprite.zIndex = sprite.y;
+        w.segment = progress >= 1 ? w.route.length : progress >= 0.5 ? 1 : 0;
+        continue;
+      }
       if (!this.motion) {
         sprite.position.set(w.to.x, w.to.y);
         sprite.texture = this.textures.get(w.kind + '0')!;
@@ -1321,7 +1412,7 @@ export class WorldRenderer {
         const dx = next.x - sprite.x,
           dy = next.y - sprite.y,
           dist = Math.hypot(dx, dy),
-          step = dt * 85;
+          step = (playbackPaused ? 0 : dt) * 85;
         if (dist < step) {
           sprite.position.set(next.x, next.y);
           w.segment++;

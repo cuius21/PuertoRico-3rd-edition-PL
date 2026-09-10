@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { WorldRenderer } from '../renderer/WorldRenderer';
 import { WEATHER_NAMES, type WeatherKind } from '../renderer/weather';
+import type { ActionPlayback } from '../playback/useActionPlayback';
+import { ActionPlaybackPanel } from './ActionPlaybackPanel';
 import type { EntityRef, SceneSnapshot } from '../adapter/sceneTypes';
 
 interface Props {
+  playback?: ActionPlayback | undefined;
   scene: SceneSnapshot;
   onPick: (ref: EntityRef) => void;
   motion: boolean;
@@ -20,6 +23,7 @@ export function WorldViewport(props: Props) {
   const [status, setStatus] = useState('Ładowanie archipelagu…');
   useEffect(() => {
     let active = true;
+    latest.current.playback?.controller.setReady(false);
     const world = new WorldRenderer(
       (ref) => latest.current.onPick(ref),
       (kind) => {
@@ -32,14 +36,17 @@ export function WorldViewport(props: Props) {
       .then(() => {
         if (!active) return;
         world.setMotion(latest.current.motion);
+        world.setPlayback(latest.current.playback?.controller ?? null);
         world.update(latest.current.scene);
         world.select(latest.current.selected);
         world.guide(latest.current.guide);
         world.focus(latest.current.focus.id, true);
+        latest.current.playback?.controller.setReady(true);
         setStatus('');
       })
       .catch((error) => {
         if (active) {
+          latest.current.playback?.controller.setReady(true);
           console.error('Nie udało się uruchomić mapy', error);
           setStatus(
             'Mapa niedostępna. Nadal możesz grać przy użyciu panelu ruchów i przeglądać wyspy poniżej.',
@@ -52,6 +59,16 @@ export function WorldViewport(props: Props) {
       world.destroy();
     };
   }, []);
+  useEffect(() => {
+    if (props.playback?.state.beat && props.playback.state.follow)
+      host.current?.parentElement?.scrollIntoView({
+        block: 'center',
+        behavior: props.motion ? 'smooth' : 'auto',
+      });
+  }, [props.playback?.state.beat?.id]);
+  useEffect(() => {
+    renderer.current?.setPlayback(props.playback?.controller ?? null);
+  }, [props.playback?.controller]);
   useEffect(() => {
     renderer.current?.update(props.scene);
   }, [props.scene]);
@@ -68,7 +85,10 @@ export function WorldViewport(props: Props) {
     renderer.current?.focus(props.focus.id);
   }, [props.focus]);
   return (
-    <div className="pr-map" data-weather={weather}>
+    <div
+      className={'pr-map' + (props.playback ? ' has-playback' : '')}
+      data-weather={weather}
+    >
       <div ref={host} className="pr-canvas" />
       {status && (
         <div className="pr-map-status" role="status">
@@ -88,6 +108,7 @@ export function WorldViewport(props: Props) {
         </span>
         {WEATHER_NAMES[weather]}
       </div>
+      {props.playback && <ActionPlaybackPanel playback={props.playback} />}
       <div className="pr-zoom">
         <button
           aria-label="Oddal mapę"

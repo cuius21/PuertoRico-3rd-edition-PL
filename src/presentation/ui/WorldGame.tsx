@@ -26,6 +26,7 @@ import {
   plantationGuide,
 } from '../interaction/plantationChoices';
 import { spriteStyle } from '../assets/registry';
+import type { ActionPlayback } from '../playback/useActionPlayback';
 import './world.css';
 
 interface Runner {
@@ -35,6 +36,7 @@ interface Runner {
   log: GameEvent[];
 }
 interface Props {
+  playback?: ActionPlayback;
   state: GameState;
   runner: Runner;
   onAction: (action: Action) => void;
@@ -93,6 +95,7 @@ function readMotion() {
   }
 }
 export function WorldGame({
+  playback,
   state,
   runner,
   onAction,
@@ -118,7 +121,19 @@ export function WorldGame({
   // GameState is mutable: build on every React update, never memoize by object identity.
   const actions = runner.getValidActionsForCurrentPlayer();
   const unique = [...new Map(actions.map((a) => [actionKey(a), a])).values()];
-  const scene = buildSceneSnapshot(state, waiting ? [] : unique);
+  const liveScene = buildSceneSnapshot(state, waiting ? [] : unique);
+  const beat = playback?.state.beat;
+  const scene = beat?.scene ?? liveScene;
+  const observing = !!beat;
+  const playbackBlocked = observing || !!playback?.state.paused;
+  useEffect(() => {
+    playback?.controller.setInspecting(
+      observing && (!!selected || showActions || showLog),
+    );
+    return () => {
+      playback?.controller.setInspecting(false);
+    };
+  }, [playback?.controller, observing, selected, showActions, showLog]);
   const selectedPlayer = scene.players.find((p) => p.id === selected?.playerId);
   const selectedObject = selectedPlayer?.objects.find(
     (o) => o.key === selected?.key,
@@ -155,7 +170,13 @@ export function WorldGame({
       )
     : [];
   const current = state.getCurrentPlayer();
-  const canAct = !waiting && runner.isCurrentPlayerHuman();
+  const shownPlayer = scene.players.find(
+    (p) => p.id === (beat?.actorId ?? current.id),
+  );
+  const shownPending = shownPlayer
+    ? shownPlayer.pending + shownPlayer.pendingNobles
+    : current.pendingWorkers + current.pendingNobles;
+  const canAct = !waiting && !playbackBlocked && runner.isCurrentPlayerHuman();
   const guidePlantations = plantationGuide(scene.phase, unique, canAct);
   const guideTurn = guidePlantations
     ? 'settler:' + scene.round + ':' + current.id
@@ -191,7 +212,7 @@ export function WorldGame({
     go('central');
   }
   function act(key: string) {
-    if (waiting || !runner.isCurrentPlayerHuman()) return;
+    if (waiting || playbackBlocked || !runner.isCurrentPlayerHuman()) return;
     const live = resolveCurrentAction(
       key,
       runner.getValidActionsForCurrentPlayer(),
@@ -252,7 +273,7 @@ export function WorldGame({
         className={
           'pr-action' + (a.type.includes('PASS') ? ' pr-action--pass' : '')
         }
-        disabled={waiting || !runner.isCurrentPlayerHuman()}
+        disabled={!canAct}
         onClick={() => act(actionKey(a))}
       >
         <ValueText text={label(a)} />
@@ -284,8 +305,14 @@ export function WorldGame({
           <span>RUNDA {scene.round}</span>
           <strong>{PHASES[scene.phase] || scene.phase}</strong>
           <small>
-            {current.name}
-            {waiting ? ' · bot myśli…' : ' · tura'}
+            {beat?.actorName ?? current.name}
+            {observing
+              ? ' · pokaz ruchu'
+              : playback?.state.paused
+                ? ' · pauza'
+                : waiting
+                  ? ' · bot myśli…'
+                  : ' · tura'}
             {connection ? ' · ' + connection : ''}
           </small>
         </div>
@@ -391,6 +418,7 @@ export function WorldGame({
             </button>
           </div>
           <WorldViewport
+            playback={playback}
             scene={scene}
             onPick={choose}
             motion={motion}
@@ -828,17 +856,31 @@ export function WorldGame({
       <section className="pr-moves pr-commandbar" aria-label="Dostępne ruchy">
         <div>
           <span className="pr-eyebrow">
-            {waiting ? 'RUCH PRZECIWNIKA' : 'TWOJA TURA'}
+            {observing
+              ? 'OBSERWUJ RUCH'
+              : playback?.state.paused
+                ? 'PAUZA'
+                : waiting
+                  ? 'RUCH PRZECIWNIKA'
+                  : 'TWOJA TURA'}
           </span>
           <h2>
-            {waiting
-              ? current.name + ' myśli…'
-              : PHASES[scene.phase] || scene.phase}
+            {observing
+              ? beat.actorName + ' · ' + (PHASES[beat.role] || 'Akcja')
+              : waiting
+                ? current.name + ' myśli…'
+                : PHASES[scene.phase] || scene.phase}
           </h2>
         </div>
         <div className="pr-command-content">
           {stale && !selected && <p role="status">{stale}</p>}
-          {scene.phase === 'roleSelection' ? (
+          {playbackBlocked ? (
+            <p className="pr-intro">
+              {observing
+                ? 'Oglądasz wykonany ruch. Możesz zatrzymać pokaz albo przejść dalej.'
+                : 'Wznów pokaz, aby kontynuować grę.'}
+            </p>
+          ) : scene.phase === 'roleSelection' ? (
             <p className="pr-intro">
               Kliknij przycisk „Akcje” w prawym dolnym rogu, aby wybrać postać.
               Pytajnik na karcie pokazuje jej opis i przywilej.
@@ -930,19 +972,15 @@ export function WorldGame({
             />
           </svg>
           <strong>Akcje</strong>
-          {scene.phase === 'mayor' &&
-            current.pendingWorkers + current.pendingNobles > 0 && (
-              <span
-                className="pr-fab-workers"
-                aria-label={
-                  'Do przydzielenia: ' +
-                  (current.pendingWorkers + current.pendingNobles)
-                }
-              >
-                <span aria-hidden="true">👤</span>
-                {current.pendingWorkers + current.pendingNobles}
-              </span>
-            )}
+          {scene.phase === 'mayor' && shownPending > 0 && (
+            <span
+              className="pr-fab-workers"
+              aria-label={'Do przydzielenia: ' + shownPending}
+            >
+              <span aria-hidden="true">👤</span>
+              {shownPending}
+            </span>
+          )}
         </button>
       </div>
       {showActions && (
