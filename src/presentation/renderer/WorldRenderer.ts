@@ -117,7 +117,9 @@ export class WorldRenderer {
               x,
               y,
               Math.floor((sheet.width * (col + 1)) / 5) - x,
-              Math.floor((sheet.height * (row + 1)) / 3) - y,
+              Math.floor((sheet.height * (row + 1)) / 3) -
+                y -
+                (id === 'corsair' ? 26 : 0),
             ),
           }),
         );
@@ -405,7 +407,27 @@ export class WorldRenderer {
           .stroke({ color: 0xffd277, width: 3 }),
       );
     group.addChild(this.sprite(id, w, w));
-    group.addChild(this.label(name, 0, 14, 12));
+    const caption = new Container();
+    caption.position.set(
+      x + (id === 'market' ? 75 : id === 'magistrate' ? 34 : 0),
+      y + 20,
+    );
+    caption.zIndex = 10000 + y;
+    const text = this.label(name, 0, 0, 11, 0xffebbd);
+    const captionWidth = text.width + 18;
+    caption.addChild(
+      new Graphics()
+        .roundRect(-captionWidth / 2, -4, captionWidth, 23, 11)
+        .fill({ color: 0x154b4f, alpha: 0.94 })
+        .stroke({ color: 0xd8c88f, width: 0.8, alpha: 0.45 }),
+      text,
+    );
+    this.interactive(
+      caption,
+      { key, area },
+      new Rectangle(-captionWidth / 2, -4, captionWidth, 23),
+    );
+    parent.addChild(caption);
     this.interactive(
       group,
       { key, area },
@@ -421,6 +443,7 @@ export class WorldRenderer {
       '#9ce1d2',
       false,
     );
+    this.dock(group, 150, 155);
     const objects = new Container();
     objects.sortableChildren = true;
     group.addChild(objects);
@@ -466,7 +489,6 @@ export class WorldRenderer {
       const q = parcel(u!, v!);
       this.palm(objects, q.x, q.y, 80, k!);
     }
-    this.dock(group, 150, 155);
     s.ships.forEach((ship, i) => {
       const x = 122 + i * 115,
         y = 219 - i * 35,
