@@ -238,6 +238,88 @@ export const LESSONS: Lesson[] = [
     ],
   },
   {
+    id: 'workforce',
+    title: 'Skąd się biorą pracownicy?',
+    description: 'Magistrat, podział między graczy i uzupełnianie załogi.',
+    group: 'basics',
+    minutes: 4,
+    steps: [
+      read(
+        'Pula ogólna i magistrat',
+        'W podstawowej grze jest łącznie 55 robotników przy 3 graczach, 75 przy 4 i 95 przy 5. Na początku w magistracie czeka odpowiednio 3, 4 lub 5 — reszta jest w puli ogólnej. Ludzie w magistracie czekają na wybór Burmistrza. Sam początek nowej rundy nie daje nikomu robotników.',
+      ),
+      {
+        kind: 'inspect',
+        title: 'Policz ludzi w magistracie',
+        text: 'W tej przygotowanej sytuacji w magistracie jest 8 robotników. Otwórz budynek i sprawdź licznik. Gubernatorem jest Mateo, ale to ty za chwilę wybierzesz Burmistrza — podział zacznie się od ciebie.',
+        target: 'magistrate',
+        focus: 'central',
+        hint: 'Kliknij Magistrat na wyspie San Juan albo przycisk Magistrat pod mapą.',
+      },
+      {
+        ...read(
+          'Osiem osób, trzech graczy',
+          'Rozdaj po jednym kolejno: Ty → Inés → Mateo → Ty… Każdy dostanie po 2, a resztę 2 osób dostają pierwsi dwaj w tej kolejności. To podział 3, 3, 2. Wybierający Burmistrza bierze jeszcze 1 robotnika z puli ogólnej, jeśli jest dostępny — ten bonus nie zabiera nic z ósemki w magistracie.',
+        ),
+        flow: [
+          { title: 'Ty: 3 + 1 = 4 nowych', text: 'Trzech z magistratu oraz jeden za przywilej wybranej roli.' },
+          { title: 'Inés: 3 nowych', text: 'Dwóch z pełnych obiegów i jeden z reszty. Bez przywileju.' },
+          { title: 'Mateo: 2 nowych', text: 'Dwóch z pełnych obiegów. Bycie gubernatorem nie daje tu pierwszeństwa ani dodatkowego robotnika.' },
+        ],
+      },
+      {
+        kind: 'quiz',
+        title: 'Ile nowych osób otrzymasz?',
+        text: 'W magistracie jest 8 robotników, graczy jest 3, ty wybierasz Burmistrza. W puli ogólnej są dostępni robotnicy.',
+        answers: [
+          { text: '4 — trzech z magistratu i jeden z przywileju.', correct: true, explanation: 'Tak. Inés otrzyma 3, Mateo 2. Łącznie wyspy dostaną 9 nowych robotników: 8 z magistratu i 1 z puli.' },
+          { text: '3 — przywilej mieści się w ósemce z magistratu.', correct: false, explanation: 'Bonus jest dodatkowym robotnikiem z puli ogólnej. Nie pomniejsza przydziału innych graczy.' },
+          { text: '2 — najpierw bierze gubernator Mateo.', correct: false, explanation: 'Podział zaczyna wybierający Burmistrza. Gubernator wskazuje pierwszego wybierającego rolę w rundzie, a nie pierwszego w każdej fazie.' },
+        ],
+      },
+      role(
+        'Burmistrz',
+        'mayor',
+        'Wybierz Burmistrza i sprawdź obliczenia na planszy. Gra sama przeniesie ludzi z magistratu oraz przywilej do przydziału — nie trzeba odbierać ich pojedynczo.',
+      ),
+      {
+        kind: 'inspect',
+        title: 'Sprawdź przydział: 4, 3, 2',
+        text: 'Na tabliczkach zobaczysz: Ty 4, Inés 3, Mateo 2. Otwórz swoją wyspę i sprawdź „Do rozstawienia: 4 robotników”. W magistracie jest teraz 0 — cała ósemka została podzielona.',
+        target: HUMAN,
+        focus: HUMAN,
+        hint: 'Kliknij tabliczkę Ty albo swoją wyspę.',
+      },
+      read(
+        'Nowi pracownicy a licznik przydziału',
+        'Podczas Burmistrza możesz rozmieścić całą załogę od nowa. Gra zbiera do przydziału ludzi z twoich pól i budynków, z twojej rezerwy oraz nowych z tej fazy. Przykład: 3 dotychczasowych pracowników + 1 w rezerwie + 4 nowych = 8 do przydzielenia. Licznik nie oznacza więc, że dostałeś 8 nowych osób.',
+      ),
+      act(
+        'Zachowaj przydział w rezerwie',
+        'W tej lekcji ćwiczymy liczenie; na przygotowanej wyspie nie ma jeszcze miejsc pracy. Wybierz Pas — zachowasz swoich 4 robotników w rezerwie. Rozmieszczanie przećwiczysz w następnym rozdziale.',
+        'actions',
+        (a) => a.type === 'MAYOR_PASS',
+        'Kliknij Pasuj w dolnym panelu. Robotnicy zostaną na twojej wyspie.',
+      ),
+      watch,
+      read(
+        'Kiedy przychodzą następni?',
+        'Dopiero gdy wszyscy skończą fazę Burmistrza, gra uzupełnia magistrat z puli ogólnej. Liczy puste miejsca pracy w wybudowanych budynkach wszystkich graczy po przydziale. Nie liczy plantacji ani pustych działek. Bierze tyle osób, ile jest tych miejsc, jednak co najmniej tylu, ilu graczy — o ile wystarcza puli. Więcej nieobsadzonych miejsc w budynkach oznacza więc większy następny przydział.',
+      ),
+      {
+        kind: 'inspect',
+        title: 'Następny przydział czeka w magistracie',
+        text: 'Otwórz magistrat: czeka tam 3 robotników. Tutaj nie ma budynków, więc zadziałało minimum dla 3 graczy. Gdyby było 7 pustych miejsc pracy w budynkach, przybyłoby 7 osób; gdyby w puli zostały tylko 2, przybyłyby 2. Nowi czekają do następnego wyboru Burmistrza.',
+        target: 'magistrate',
+        focus: 'central',
+        hint: 'Magistrat → W magistracie: 3. To następny przydział, a nie twoja rezerwa.',
+      },
+      finish(
+        'Podziel liczbę robotników przez liczbę graczy i zaokrąglij w dół. Tyle dostaje każdy; pozostałych rozdaj po jednym od wybierającego Burmistrza. Jemu dodaj przywilej z puli. Wolne miejsca na twojej wyspie nie zmniejszają twojego udziału. Ten przykład dotyczy gry podstawowej; dodatek Szlachcic ma osobny przydział szlachty, a dodatkowe efekty opisują karty budynków.',
+      ),
+    ],
+  },
+  {
     id: 'workers',
     title: 'Burmistrz: ludzie do pracy',
     description: 'Obsadzenie plantacji i pozostawienie rezerwy.',
@@ -247,7 +329,7 @@ export const LESSONS: Lesson[] = [
       role(
         'Burmistrz',
         'mayor',
-        'Burmistrz rozdziela ludzi z magistratu. Wybierający dostaje dodatkowego pracownika. Przy tej roli możesz ponownie rozmieścić także dotychczasową załogę.',
+        'W tym ćwiczeniu w magistracie jest 3 robotników i grają 3 osoby. Każdy dostanie po 1, a ty jako wybierający jeszcze 1 z puli ogólnej. Będziesz mieć 2 do przydziału. Gra odbiera ich automatycznie; teraz wskaż miejsca pracy.',
       ),
       act(
         'Obsadź kukurydzę',

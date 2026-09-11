@@ -97,6 +97,33 @@ describe('tutorial through the real rules engine', () => {
       0,
     );
   });
+  it('teaches the eight-worker split from the selector and refills only after everyone finishes', () => {
+    const s = createScenario('workforce');
+    expect(s.getGovernor().name).toBe('Mateo');
+    expect(s.supply.workersInMagistrate).toBe(8);
+    const pool = s.supply.workersPool;
+    const mayor = s.getValidActions(HUMAN).find((a) => (a as any).role === 'mayor')!;
+    expect(s.apply(mayor).ok).toBe(true);
+    expect(s.players.map((p) => p.pendingWorkers)).toEqual([4, 3, 2]);
+    expect(s.supply.workersInMagistrate).toBe(0);
+    expect(s.supply.workersPool).toBe(pool - 1);
+    for (const index of [0, 1]) {
+      const pass = s.getValidActions(s.getCurrentPlayer().id).find((a) => a.type === 'MAYOR_PASS')!;
+      expect(s.apply(pass).ok).toBe(true);
+      expect(s.supply.workersInMagistrate).toBe(0);
+      expect(s.players[index]!.pendingWorkers).toBe(0);
+    }
+    const lastPass = s.getValidActions(s.getCurrentPlayer().id).find((a) => a.type === 'MAYOR_PASS')!;
+    expect(s.apply(lastPass).ok).toBe(true);
+    expect(s.supply.workersInMagistrate).toBe(3);
+    expect(s.supply.workersPool).toBe(pool - 4);
+    expect(s.players.map((p) => p.heldWorkers)).toEqual([4, 3, 2]);
+    expect(s.supply.workersPool + s.supply.workersInMagistrate +
+      s.players.reduce((n, p) => n + p.heldWorkers, 0)).toBe(55);
+    const finished = complete('workforce', true).state;
+    expect(finished.players.map((p) => p.heldWorkers)).toEqual([4, 3, 2]);
+    expect(finished.supply.workersInMagistrate).toBe(3);
+  });
   it('does not accept unrelated legal moves or advance before playback finishes', () => {
     const run = new LessonRun('plantation'),
       before = JSON.stringify(serializeGameState(run.state));

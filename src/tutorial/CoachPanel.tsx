@@ -42,9 +42,9 @@ export function coachAdvice(state: GameState) {
       },
       mayor: {
         title: 'Obsadź działający łańcuch',
-        text: 'Przydziel ludzi do plantacji i odpowiadających im zakładów. Licznik pokazuje, ilu jeszcze możesz rozmieścić.',
+        text: 'Ludzi z magistratu gra rozdała po jednym od wybierającego Burmistrza; jemu dodała przywilej z puli. Licznik obejmuje też twoich dotychczasowych pracowników i rezerwę. Teraz wskaż im miejsca pracy.',
         detail:
-          'W tej grze podczas Burmistrza rozmieszczasz załogę od nowa. Kukurydza nie potrzebuje zakładu. Niewykorzystani pracownicy pozostają w rezerwie na przyszły przydział.',
+          'Przykład podstawowego podziału: 8 ludzi i 3 graczy daje 3, 3, 2 od wybierającego; z jego dodatkowym robotnikiem jest 4, 3, 2. Po fazie magistrat dostanie tylu robotników, ile pustych miejsc pracy w budynkach wszystkich graczy, minimum liczbę graczy, w granicach puli. Plantacji nie liczymy. Niewykorzystani pracownicy zostają w twojej rezerwie.',
       },
       builder: {
         title: 'Kup budynek, który wykorzystasz',

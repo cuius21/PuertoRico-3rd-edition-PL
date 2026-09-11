@@ -110,7 +110,7 @@ Panel obserwacji ma drewniany wygląd i znajduje się pod tabliczkami graczy. Na
 
 ## Samouczek, opiekun i zapasy na nabrzeżu — 11 września 2026
 
-Przycisk „Naucz się grać” w menu otwiera 14 krótkich rozdziałów podstaw, samodzielną próbę oraz 4 wprowadzenia do dodatków. Każdy rozdział ma przygotowaną pozycję początkową; dalej wszystkie ruchy przechodzą przez zwykły GameRunner i legalne akcje silnika. Ćwiczenia uczą produkcji, przydziału pracowników, zakupów, handlu, żeglugi, utraty nadwyżek, rund i końcowego wyniku.
+Przycisk „Naucz się grać” w menu otwiera 15 krótkich rozdziałów podstaw, samodzielną próbę oraz 4 wprowadzenia do dodatków. Każdy rozdział ma przygotowaną pozycję początkową; dalej wszystkie ruchy przechodzą przez zwykły GameRunner i legalne akcje silnika. Ćwiczenia uczą produkcji, przydziału pracowników, zakupów, handlu, żeglugi, utraty nadwyżek, rund i końcowego wyniku.
 
 - src/tutorial/scenarios.ts przygotowuje pozycje szkoleniowe z normalnych elementów gry, uwzględniając zajęte zasoby.
 - lessons.ts opisuje cele, krótkie wyjaśnienia, wskazywane obiekty i warunki zaliczenia. LessonRun filtruje legalne ruchy w zadaniach prowadzonych, a samodzielna próba udostępnia wszystkie legalne ruchy. Dwoje przeciwników szkoleniowych wybiera jawne, proste akcje.
@@ -122,7 +122,7 @@ Każda wyspa ma powiększone nabrzeże i klikalny skład TOWARY. Pięć stałych
 
 Lekcje produkcji, sprzedaży, wysyłki i przechowywania zawierają obowiązkowe obejrzenie zapasu po wykonanej akcji. Renderer i wskazówki transportu współdzielą położenie składu. Logika zasad, modele botów, serializacja zwykłej gry i backend pozostają bez zmian.
 
-Testy przechodzą wszystkie 19 lekcji legalnymi ruchami, odtwarzając zapis po każdym kroku; sprawdzają faktyczne punkty, sprzedaż, odrzucenie, zakończenie gry i nagrody dodatków. Oddzielnie sprawdzane są niewłaściwe ruchy, pytania kontrolne, wymagane odwiedzenie obiektu i niezależność zapisu.
+Testy przechodzą wszystkie 20 lekcji legalnymi ruchami, odtwarzając zapis po każdym kroku; sprawdzają faktyczne punkty, sprzedaż, odrzucenie, zakończenie gry i nagrody dodatków. Oddzielnie sprawdzane są niewłaściwe ruchy, pytania kontrolne, wymagane odwiedzenie obiektu i niezależność zapisu.
 
  
 ## Żywe menu wyspy — 11 września 2026
@@ -150,3 +150,11 @@ Obserwator nie tworzy etapów po ludzkim SELECT_ROLE, PLACE_WORKER ani MAYOR_PAS
 Ruchy botów nadal mają pełną obserwację, także wybór roli i przydział pracowników. Pozostałe akcje człowieka, np. budowa i wysyłka, zachowują dotychczasową prezentację. Ręcznie włączona pauza nie jest kasowana przez tę zmianę. Przycisk zatrzymania pokazu ma tekst „Pauza”. Historia ruchów, logika, zasoby oraz decyzje botów pozostają bez zmian.
 
 Testy sprawdzają natychmiastową dostępność ruchów po Plantatorze, Burmistrzu i Zarządcy, trzy kolejne przydziały bez tykania zegara prezentacji, automatyczne przekazanie kolejki, Pas z rezerwą oraz zachowanie obserwacji rywala i innych własnych akcji.
+
+## Dopływ i podział pracowników — 11 września 2026
+
+Nowy rozdział „Skąd się biorą pracownicy?” poprzedza pierwszą lekcję rozmieszczania. Wyjaśnia pulę ogólną i startowy stan magistratu dla 3–5 graczy, podział po jednym od wybierającego Burmistrza, przywilej z osobnej puli, resztę dzielenia oraz ponowne rozmieszczanie dotychczasowej załogi. Przygotowana plansza ma 8 robotników w magistracie; gubernatorem jest Mateo, ale rolę wybiera człowiek. Pytanie kontrolne i rzeczywisty przydział pokazują wynik 4, 3, 2. Po trzech pasach robotnicy pozostają w rezerwach, a magistrat otrzymuje 3 kolejnych z ogólnej puli.
+
+Lekcja odróżnia bieżący podział od kolejnego uzupełnienia: po całej fazie liczą się puste miejsca pracy w budynkach wszystkich graczy, minimum liczba graczy, z ograniczeniem do dostępnej puli. Plantacje i puste działki są pomijane. Wyjaśniono, że początek rundy sam nie przynosi pracowników, a licznik przydziału sumuje nowych i dotychczasowych ludzi. Opiekun i rozwijana instrukcja w magistracie przypominają te zasady również podczas zwykłej gry.
+
+Istniejące identyfikatory i liczby kroków wcześniejszych lekcji nie zmieniły się. Test rozdziału odtwarza zapis po każdym kroku; dodatkowy test sprawdza podział niezależny od gubernatora, moment uzupełnienia, rezerwy oraz zachowanie całkowitej liczby 55 robotników. Silnik i boty nie są zmieniane.

@@ -10,6 +10,7 @@ export type ScenarioId =
   | 'welcome'
   | 'turns'
   | 'plantation'
+  | 'workforce'
   | 'workers'
   | 'production'
   | 'industry'
@@ -114,6 +115,12 @@ export function createScenario(id: ScenarioId): GameState {
   if (id === 'staffing') {
     human(state).heldWorkers = 1;
     state.supply.workersPool--;
+  }
+  if (id === 'workforce') {
+    state.supply.workersPool += state.supply.workersInMagistrate - 8;
+    state.supply.workersInMagistrate = 8;
+    state.governorIndex = 2;
+    state.roleCards.find((c) => c.type === RoleType.Settler)!.takenBy = 'player-2';
   }
   if (['trade', 'round'].includes(id)) goods(GoodType.Indigo, 2);
   if (id === 'shipping') goods(GoodType.Corn, 4);

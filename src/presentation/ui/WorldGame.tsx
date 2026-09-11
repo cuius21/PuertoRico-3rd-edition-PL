@@ -1011,6 +1011,28 @@ export function WorldGame({
                   </>
                 )}
               </div>
+              <details>
+                <summary>Dopływ i podział pracowników</summary>
+                <p className="pr-intro">
+                  Wybór Burmistrza rozdziela robotników z magistratu po jednym,
+                  zaczynając od wybierającego rolę. Wybierający dostaje dodatkowo
+                  1 robotnika z puli ogólnej, jeśli jest dostępny. Przykład gry
+                  podstawowej: 8 w magistracie i 3 graczy → 3, 3, 2, a po
+                  przywileju → 4, 3, 2.
+                </p>
+                <p className="pr-intro">
+                  Po całej fazie magistrat jest uzupełniany według liczby
+                  pustych miejsc pracy w budynkach wszystkich graczy, minimum
+                  do liczby graczy, w granicach dostępnej puli. Plantacji i
+                  pustych działek nie liczymy. Ci pracownicy czekają na kolejny
+                  wybór Burmistrza; nie trafiają od razu na wyspy.
+                </p>
+                <p className="pr-muted">
+                  Licznik do przydziału obejmuje nowych pracowników oraz twoją
+                  dotychczasową załogę z pól, budynków i rezerwy. W dodatkach
+                  uwzględnij także szlachtę i opisane na budynkach efekty.
+                </p>
+              </details>
             </>
           )}
           {selected?.area === 'festival' && state.festivalBoard && (
