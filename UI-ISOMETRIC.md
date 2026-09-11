@@ -142,3 +142,11 @@ Nowy drugi rozdział wyjaśnia gubernatora, jedną kartę na gracza w rundzie, w
 Rozdział „Zablokuj port rywalowi” stawia gracza przed wyborem: najpierw trzy kawy czy jedna kukurydza. Kukurydza zajmuje ostatni pusty statek, odbierając Inés możliwość załadunku cukru; kawę można wysłać w kolejnym własnym załadunku. Gracz ogląda zapas rywalki przed fazą i po odrzuceniu nadwyżki. Tabela porównuje obie legalne kolejności: kawa najpierw daje wynik 4:4, kukurydza najpierw 5:0 punktów zwycięstwa. Rywalka w drugim wariancie zachowuje 1 cukier, traci 3. Tekst wyjaśnia ograniczenia manewru: magazyny, prywatne Nabrzeże i kolejność innych graczy. Test obu wariantów sprawdza także, że zapas nie znika przed końcem fazy.
 
 Poprawiono opisy kart Burmistrza (rezerwa pracowników), Zarządcy (ograniczenia produkcji) i Kapitana (jedna sztuka do zachowania bez magazynu, statki opróżniane po całej fazie). Zmiany dotyczą treści i przygotowanych lekcji; silnik, akcje i boty nie są modyfikowane. Dotychczasowe rozdziały zachowują identyfikatory i liczbę kroków, więc istniejące zapisy nauki nadal wskazują właściwy etap.
+
+## Płynne własne decyzje — 11 września 2026
+
+Obserwator nie tworzy etapów po ludzkim SELECT_ROLE, PLACE_WORKER ani MAYOR_PASS. Wybór własnej roli natychmiast udostępnia legalne ruchy fazy, a przydział pracowników od razu aktualizuje licznik i obsadę na żywej planszy. Można przydzielać kolejnych ludzi bez odtwarzania osobnego pokazu. Zakończenie przydziału pozostaje decyzją silnika: ostatni pracownik przekazuje kolejkę automatycznie, Pas zachowuje pozostałych w rezerwie. Dotyczy to normalnej gry i samouczka; instrukcje lekcji nadal wyznaczają dostępne zadania.
+
+Ruchy botów nadal mają pełną obserwację, także wybór roli i przydział pracowników. Pozostałe akcje człowieka, np. budowa i wysyłka, zachowują dotychczasową prezentację. Ręcznie włączona pauza nie jest kasowana przez tę zmianę. Przycisk zatrzymania pokazu ma tekst „Pauza”. Historia ruchów, logika, zasoby oraz decyzje botów pozostają bez zmian.
+
+Testy sprawdzają natychmiastową dostępność ruchów po Plantatorze, Burmistrzu i Zarządcy, trzy kolejne przydziały bez tykania zegara prezentacji, automatyczne przekazanie kolejki, Pas z rezerwą oraz zachowanie obserwacji rywala i innych własnych akcji.

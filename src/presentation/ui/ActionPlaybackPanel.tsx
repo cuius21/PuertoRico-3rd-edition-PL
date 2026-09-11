@@ -104,12 +104,12 @@ export function ActionPlaybackPanel({
         <div className="pr-observer-idle">
           {state.paused
             ? 'Gra wstrzymana — możesz przejrzeć wyspy.'
-            : 'Obserwacja ruchów · kamera i opis każdej akcji'}
+            : 'Obserwacja ruchów · kamera i opisy'}
         </div>
       )}
       <div className="pr-observer-controls">
         <button onClick={controller.togglePause} aria-pressed={state.paused}>
-          {state.paused ? '▶ Wznów' : 'Ⅱ Pauza'}
+          {state.paused ? '▶ Wznów' : 'Pauza'}
         </button>
         <button
           onClick={controller.next}

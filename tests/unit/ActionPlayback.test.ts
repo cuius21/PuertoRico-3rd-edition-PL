@@ -26,12 +26,13 @@ import {
   deserializeGameState,
 } from '../../src/game/GameSerializer';
 import { GreedyBot } from '../../src/bots/GreedyBot';
+import { createScenario, human } from '../../src/tutorial/scenarios';
 
-function observe(s: ReturnType<typeof createGame>, a: Action) {
+function observe(s: ReturnType<typeof createGame>, a: Action, isBot = true) {
   const capture = captureAction(a, s, {
     playerName: s.getCurrentPlayer().name,
     actionText: describeAction(a, s),
-    isBot: true,
+    isBot,
   });
   applyOk(s, a);
   return buildActionBeats(capture, buildSceneSnapshot(s, []));
@@ -189,6 +190,69 @@ describe('presentation pacing', () => {
     );
     return queue;
   }
+  it.each([
+    [RoleType.Settler, 'TAKE_PLANTATION'],
+    [RoleType.Mayor, 'PLACE_WORKER'],
+    [RoleType.Craftsman, 'CRAFTSMAN_BONUS'],
+  ] as const)('makes a human %s choice immediately actionable', (role, nextType) => {
+    const s = createGame();
+    activatePlantation(s.players[0]!, PlantationType.Corn);
+    const q = new PlaybackQueue();
+    q.enqueue(observe(s, new SelectRoleAction(s.getCurrentPlayer().id, role), false));
+    expect(q.getSnapshot().beat).toBeNull();
+    expect(q.blocked).toBe(false);
+    expect(s.getCurrentPhase().type).toBe(role);
+    expect(s.getValidActions(s.getCurrentPlayer().id).some((a) => a.type === nextType)).toBe(true);
+  });
+  it('allows consecutive human worker placements and automatically hands over after the last one', () => {
+    const s = createScenario('staffing'), q = new PlaybackQueue();
+    const actorId = human(s).id;
+    q.enqueue(observe(s, new SelectRoleAction(actorId, RoleType.Mayor), false));
+    expect(human(s).pendingWorkers).toBe(3);
+    for (const remaining of [2, 1, 0]) {
+      const action = s.getValidActions(actorId).find((a) => a.type === 'PLACE_WORKER')!;
+      q.enqueue(observe(s, action, false));
+      expect(q.blocked).toBe(false);
+      expect(human(s).pendingWorkers).toBe(remaining);
+      expect(buildSceneSnapshot(s, []).players[0]!.pending).toBe(remaining);
+      if (remaining) expect(s.getCurrentPlayer().id).toBe(actorId);
+    }
+    expect(s.getCurrentPlayer().id).not.toBe(actorId);
+    expect(human(s).island.getPlantations().every((p) => p.isActive())).toBe(true);
+    expect(human(s).island.getBuildings()[0]!.isActive()).toBe(true);
+    const botAction = s.getValidActions(s.getCurrentPlayer().id)[0]!;
+    q.enqueue(observe(s, botAction));
+    expect(q.blocked).toBe(true);
+    expect(q.getSnapshot().beat!.actorId).not.toBe(actorId);
+  });
+  it('passes with unused human workers immediately and keeps them in reserve', () => {
+    const s = createScenario('workers'), q = new PlaybackQueue();
+    const actorId = human(s).id;
+    q.enqueue(observe(s, new SelectRoleAction(actorId, RoleType.Mayor), false));
+    const worker = s.getValidActions(actorId).find((a) => a.type === 'PLACE_WORKER')!;
+    q.enqueue(observe(s, worker, false));
+    expect(human(s).pendingWorkers).toBe(1);
+    expect(s.getValidActions(actorId).some((a) => a.type === 'PLACE_WORKER')).toBe(false);
+    const pass = s.getValidActions(actorId).find((a) => a.type === 'MAYOR_PASS')!;
+    q.enqueue(observe(s, pass, false));
+    expect(q.blocked).toBe(false);
+    expect(human(s).heldWorkers).toBe(1);
+    expect(human(s).pendingWorkers).toBe(0);
+    expect(s.getCurrentPlayer().id).not.toBe(actorId);
+  });
+  it('still presents other human actions and never clears an explicit pause', () => {
+    const s = createGame(), q = new PlaybackQueue();
+    s.players[0]!.doubloons = 10;
+    q.togglePause();
+    q.enqueue(observe(s, new SelectRoleAction(s.getCurrentPlayer().id, RoleType.Builder), false));
+    expect(q.getSnapshot().beat).toBeNull();
+    expect(q.blocked).toBe(true);
+    q.togglePause();
+    const build = s.getValidActions(s.getCurrentPlayer().id).find((a) => a.type === 'BUILD')!;
+    q.enqueue(observe(s, build, false));
+    expect(q.getSnapshot().beat!.kind).toBe('build');
+    expect(q.blocked).toBe(true);
+  });
   it('does not consume the first action while map assets are loading', () => {
     const q = setup();
     q.setReady(false);

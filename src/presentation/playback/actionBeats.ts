@@ -153,6 +153,14 @@ export function buildActionBeats(
   after: SceneSnapshot,
 ): Omit<ActionBeat, 'id'>[] {
   const { before, shape: a, event } = capture;
+  // Human setup choices stay interactive; the next rendered frame uses the live state.
+  if (
+    !event.isBot &&
+    (a.type === 'SELECT_ROLE' ||
+      a.type === 'PLACE_WORKER' ||
+      a.type === 'MAYOR_PASS')
+  )
+    return [];
   const actor = after.players.find((p) => p.id === a.playerId);
   if (!actor) return [];
   const role = a.type === 'SELECT_ROLE' ? a.role! : before.phase;
