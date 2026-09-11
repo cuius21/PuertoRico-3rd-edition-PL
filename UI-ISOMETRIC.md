@@ -110,7 +110,7 @@ Panel obserwacji ma drewniany wygląd i znajduje się pod tabliczkami graczy. Na
 
 ## Samouczek, opiekun i zapasy na nabrzeżu — 11 września 2026
 
-Przycisk „Naucz się grać” w menu otwiera 12 krótkich rozdziałów podstaw, samodzielną próbę oraz 4 wprowadzenia do dodatków. Każdy rozdział ma przygotowaną pozycję początkową; dalej wszystkie ruchy przechodzą przez zwykły GameRunner i legalne akcje silnika. Ćwiczenia uczą produkcji, przydziału pracowników, zakupów, handlu, żeglugi, utraty nadwyżek, rund i końcowego wyniku.
+Przycisk „Naucz się grać” w menu otwiera 14 krótkich rozdziałów podstaw, samodzielną próbę oraz 4 wprowadzenia do dodatków. Każdy rozdział ma przygotowaną pozycję początkową; dalej wszystkie ruchy przechodzą przez zwykły GameRunner i legalne akcje silnika. Ćwiczenia uczą produkcji, przydziału pracowników, zakupów, handlu, żeglugi, utraty nadwyżek, rund i końcowego wyniku.
 
 - src/tutorial/scenarios.ts przygotowuje pozycje szkoleniowe z normalnych elementów gry, uwzględniając zajęte zasoby.
 - lessons.ts opisuje cele, krótkie wyjaśnienia, wskazywane obiekty i warunki zaliczenia. LessonRun filtruje legalne ruchy w zadaniach prowadzonych, a samodzielna próba udostępnia wszystkie legalne ruchy. Dwoje przeciwników szkoleniowych wybiera jawne, proste akcje.
@@ -122,7 +122,7 @@ Każda wyspa ma powiększone nabrzeże i klikalny skład TOWARY. Pięć stałych
 
 Lekcje produkcji, sprzedaży, wysyłki i przechowywania zawierają obowiązkowe obejrzenie zapasu po wykonanej akcji. Renderer i wskazówki transportu współdzielą położenie składu. Logika zasad, modele botów, serializacja zwykłej gry i backend pozostają bez zmian.
 
-Testy przechodzą wszystkie 17 lekcji legalnymi ruchami, odtwarzając zapis po każdym kroku; sprawdzają faktyczne punkty, sprzedaż, odrzucenie, zakończenie gry i nagrody dodatków. Oddzielnie sprawdzane są niewłaściwe ruchy, pytania kontrolne, wymagane odwiedzenie obiektu i niezależność zapisu.
+Testy przechodzą wszystkie 19 lekcji legalnymi ruchami, odtwarzając zapis po każdym kroku; sprawdzają faktyczne punkty, sprzedaż, odrzucenie, zakończenie gry i nagrody dodatków. Oddzielnie sprawdzane są niewłaściwe ruchy, pytania kontrolne, wymagane odwiedzenie obiektu i niezależność zapisu.
 
  
 ## Żywe menu wyspy — 11 września 2026
@@ -132,3 +132,13 @@ Menu nowej gry i katalog samouczka korzystają ze wspólnej dekoracji MenuShell:
 Przyciski mają warstwy drewna lub pergaminu, uniesienie przy najechaniu, wciśnięcie przy aktywacji oraz widoczny fokus klawiatury. Główny przycisk delikatnie rozświetla się i ma rzadki połysk. Nazwy, trudności, opisy botów, rozszerzenia, wczytywanie i rozpoczęcie partii zachowują dotychczasową obsługę.
 
 Przełącznik „Tło: animowane / spokojne” zapisuje preferencję w osobnym kluczu puerto-menu-motion. Systemowe ograniczenie ruchu domyślnie wyłącza animacje; także wejście na kartę i zmiana ustawienia systemowego są obsłużone. Ruch można świadomie włączyć ponownie. Tryb spokojny zachowuje czytelne menu od pierwszej klatki. Efekty menu nie zmieniają ustawień ruchu na mapie ani logiki gry.
+
+## Doprecyzowanie zasad i blokada portu — 11 września 2026
+
+Opisy samouczka i opiekuna nazywają punkty zwycięstwa wprost; panel lekcji stale pokazuje legendę gwiazdek i skrótu PZ. Lekcja indygo używa nazw „Mała Farbiarnia” i „Farbiarnia”, zgodnych z katalogiem, oraz odróżnia zakład produkcji od składu towarów na nabrzeżu.
+
+Nowy drugi rozdział wyjaśnia gubernatora, jedną kartę na gracza w rundzie, wspólne akcje i wyłączny przywilej wybierającego. Złote G przy numerze gracza pokazuje gubernatora także na skróconych tabliczkach. Numerowany przykład przedstawia trzy kolejne wybory i kolejność wykonywania akcji; pytanie kontrolne sprawdza rozumienie przywileju. Dotychczasowa lekcja końca rundy pokazuje faktyczny wynik: runda 5, gubernator Mateo, reset kart i monety na niewybranych rolach.
+
+Rozdział „Zablokuj port rywalowi” stawia gracza przed wyborem: najpierw trzy kawy czy jedna kukurydza. Kukurydza zajmuje ostatni pusty statek, odbierając Inés możliwość załadunku cukru; kawę można wysłać w kolejnym własnym załadunku. Gracz ogląda zapas rywalki przed fazą i po odrzuceniu nadwyżki. Tabela porównuje obie legalne kolejności: kawa najpierw daje wynik 4:4, kukurydza najpierw 5:0 punktów zwycięstwa. Rywalka w drugim wariancie zachowuje 1 cukier, traci 3. Tekst wyjaśnia ograniczenia manewru: magazyny, prywatne Nabrzeże i kolejność innych graczy. Test obu wariantów sprawdza także, że zapas nie znika przed końcem fazy.
+
+Poprawiono opisy kart Burmistrza (rezerwa pracowników), Zarządcy (ograniczenia produkcji) i Kapitana (jedna sztuka do zachowania bez magazynu, statki opróżniane po całej fazie). Zmiany dotyczą treści i przygotowanych lekcji; silnik, akcje i boty nie są modyfikowane. Dotychczasowe rozdziały zachowują identyfikatory i liczbę kroków, więc istniejące zapisy nauki nadal wskazują właściwy etap.

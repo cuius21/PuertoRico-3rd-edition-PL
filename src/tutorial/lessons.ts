@@ -29,6 +29,8 @@ export interface LessonStep {
   focus?: string;
   accept?: (a: Action, s: GameState) => boolean;
   done?: (s: GameState, f: Facts) => boolean;
+  flow?: { title: string; text: string }[];
+  comparison?: { order: string; you: number; rival: number; result: string }[];
   answers?: { text: string; correct: boolean; explanation: string }[];
 }
 export interface Lesson {
@@ -112,18 +114,18 @@ const inspectStock = (text: string): LessonStep => ({
 });
 
 const endingRule =
-  'Gra kończy się po zakończeniu rundy, gdy zadziała warunek końca: pełne miasto, wyczerpana pula punktów albo warunek wyczerpania pracowników. Wynik to żetony punktów, punkty na budynkach i należne bonusy końcowe.';
+  'Gra kończy się po zakończeniu rundy, gdy zadziała warunek końca: pełne miasto, wyczerpana pula punktów zwycięstwa (★) albo warunek wyczerpania pracowników. Wynik to żetony punktów zwycięstwa (★), punkty zwycięstwa (★) na budynkach i należne bonusy końcowe.';
 export const LESSONS: Lesson[] = [
   {
     id: 'welcome',
     title: 'Poznaj wyspy i cel gry',
-    description: 'Mapa, monety, punkty i podgląd wyspy.',
+    description: 'Mapa, monety, punkty zwycięstwa (★) i podgląd wyspy.',
     group: 'basics',
     minutes: 1,
     steps: [
       read(
         'Witaj w San Juan!',
-        'Rozwijaj wyspę, produkuj towary i zdobywaj punkty zwycięstwa. Monety służą przede wszystkim do kupowania budynków. To ćwiczenia na przygotowanych planszach — każdy rozdział można powtórzyć.',
+        'Rozwijaj wyspę, produkuj towary i zdobywaj punkty zwycięstwa (PZ), oznaczone gwiazdką ★. Monety służą przede wszystkim do kupowania budynków. To ćwiczenia na przygotowanych planszach — każdy rozdział można powtórzyć.',
       ),
       {
         kind: 'inspect',
@@ -146,18 +148,67 @@ export const LESSONS: Lesson[] = [
             text: 'Najwięcej punktów zwycięstwa',
             correct: true,
             explanation:
-              'Tak. Pieniądze pomagają zbudować gospodarkę, ale nie zastępują punktów.',
+              'Tak. Pieniądze pomagają zbudować gospodarkę, ale nie zastępują punktów zwycięstwa (★).',
           },
           {
             text: 'Najwięcej monet',
             correct: false,
             explanation:
-              'Monety służą do rozwoju. Zwycięzcę wyznacza przede wszystkim suma punktów.',
+              'Monety służą do rozwoju. Zwycięzcę wyznacza przede wszystkim suma punktów zwycięstwa (★).',
           },
         ],
       },
       finish(
-        'Gwiazdki na tabliczce pokazują zebrane żetony punktów. Przy rozliczeniu dochodzą punkty na budynkach i bonusy aktywnych dużych budynków.',
+        'Gwiazdki na tabliczce pokazują zebrane żetony punktów zwycięstwa (★). Przy rozliczeniu dochodzą punkty zwycięstwa (★) na budynkach i bonusy aktywnych dużych budynków.',
+      ),
+    ],
+  },
+  {
+    id: 'turns',
+    title: 'Runda, role i gubernator',
+    description: 'Kto wybiera, kto wykonuje akcję i kto dostaje przywilej.',
+    group: 'basics',
+    minutes: 3,
+    steps: [
+      read(
+        'Gubernator rozpoczyna rundę',
+        'Gubernator to gracz ze złotą literą G przy numerze na tabliczce. Jako pierwszy w rundzie wybiera kartę postaci — sam gubernator nie jest osobną rolą ani botem. Potem wybierają następni gracze w kolejności tabliczek od góry do dołu; po ostatnim wracamy do pierwszego.',
+      ),
+      read(
+        'Twój wybór, wspólna akcja',
+        'Gdy wybierzesz rolę, uruchamiasz jej fazę dla wszystkich. Zaczynasz ty, potem pozostali gracze korzystają z tej samej akcji, ale podejmują własne decyzje: mogą np. wybrać inne plantacje lub budynki. Tylko wybierający (w opisach: selektor) ma przywilej tej roli. To nie znaczy, że skopiują twój konkretny ruch.',
+      ),
+      {
+        ...read(
+          'Przykład całej rundy: trzech graczy',
+          'Przykładowa kolejność: Ty → Inés → Mateo. Każda poniższa faza kończy się przed wyborem następnej roli. W rundzie każdy wybiera jedną kartę, lecz bierze udział także w akcjach wybranych przez rywali.',
+        ),
+        flow: [
+          { title: 'Ty: Plantator', text: 'Jesteś gubernatorem. Ty, Inés i Mateo dobieracie plantacje. Tylko ty masz przywilej wzięcia kamieniołomu.' },
+          { title: 'Inés: Budowniczy', text: 'Inés, Mateo i ty możecie kupić po budynku. Tylko Inés ma zniżkę roli: 1 monetę.' },
+          { title: 'Mateo: Kupiec', text: 'Mateo, ty i Inés możecie sprzedać po towarze, jeśli pozwala targ. Tylko Mateo ma premię roli: 1 monetę.' },
+        ],
+      },
+      read(
+        'Kiedy zmienia się runda?',
+        'Po akcji ostatniej wybranej roli runda się kończy. Przy 3 graczach są 3 wybory, przy 4 — 4, przy 5 — 5. Karty wracają do wspólnej puli; na niewybrane trafia po monecie z banku. Gubernator przechodzi do następnej osoby: w naszym przykładzie do Inés. Nową rundę rozpocznie więc Inés, potem wybiorą Mateo i ty.',
+      ),
+      read(
+        'Wybór roli a wykonanie ruchu',
+        'Rozegranie akcji rywala nie zużywa twojego wyboru roli. Wybrana karta jest zajęta do końca rundy; monety leżące na karcie bierze jej wybierający. Korzystasz z fazy tylko w granicach zasad i swoich zasobów. Zarządca produkuje automatycznie, a Kapitan może wymagać kilku kolejek załadunku. Wyjątki od wspólnej akcji to Poszukiwacz i Korsarz: działają tylko dla wybierającego.',
+      ),
+      {
+        kind: 'quiz',
+        title: 'Inés wybrała Budowniczego. Co robisz?',
+        text: 'Masz pieniądze i wolne miejsce w mieście. Nie masz innych zniżek.',
+        answers: [
+          { text: 'Mogę kupić budynek, ale bez jej zniżki roli.', correct: true, explanation: 'Tak. Akcja jest wspólna, a przywilej roli należy do Inés. Twój wybór roli w tej rundzie pozostaje osobną sprawą.' },
+          { text: 'Czekam — buduje tylko Inés.', correct: false, explanation: 'Budowniczy pozwala budować także pozostałym graczom. Każdy wybiera własny budynek.' },
+          { text: 'Kupuję z taką samą zniżką roli jak Inés.', correct: false, explanation: 'Zniżkę roli dostaje tylko jej wybierający. Własne aktywne budynki i kamieniołomy to osobne źródła zniżek.' },
+        ],
+      },
+      finish(
+        'Zapamiętaj rytm: wybór roli → wspólna akcja → wybór kolejnej osoby. Po jednym wyborze każdego gracza kończy się runda i zmienia gubernator. W dalszych rozdziałach wykonasz te akcje na planszy, a pod koniec obejrzysz prawdziwą zmianę rundy.',
       ),
     ],
   },
@@ -244,20 +295,20 @@ export const LESSONS: Lesson[] = [
         'Po produkcji i przywileju masz 2 kukurydze. Kliknij skład TOWARY przy swoim pomoście i sprawdź licznik. To twoje towary, a nie pula na wspólnej wyspie.',
       ),
       finish(
-        'Towary są teraz w twoim zapasie. Możesz później sprzedać je za monety albo wysłać statkiem za punkty. Większa produkcja wymaga dodatkowych obsadzonych pól i odpowiednich zakładów.',
+        'Towary są teraz w twoim zapasie. Możesz później sprzedać je za monety albo wysłać statkiem za punkty zwycięstwa (★). Większa produkcja wymaga dodatkowych obsadzonych pól i odpowiednich zakładów.',
       ),
     ],
   },
   {
     id: 'industry',
-    title: 'Budowniczy: zakład indygo',
+    title: 'Budowniczy: Mała Farbiarnia',
     description: 'Koszt, zniżka roli i zakup budynku.',
     group: 'basics',
     minutes: 2,
     steps: [
       read(
         'Indygo potrzebuje zakładu',
-        'Na twojej wyspie jest plantacja indygo. Aby produkować indygo, potrzebujesz obsadzonej plantacji oraz miejsca pracy w zakładzie indygo.',
+        'Na twojej wyspie jest plantacja indygo. Aby produkować indygo, potrzebujesz pracownika na plantacji i pracownika w farbiarni. Budynek na liście nazywa się „Mała Farbiarnia”; większy wariant to „Farbiarnia”. To zakład produkcji indygo. Skład TOWARY przy porcie przechowuje już wyprodukowane towary.',
       ),
       role(
         'Budowniczy',
@@ -265,15 +316,15 @@ export const LESSONS: Lesson[] = [
         'Budowniczy pozwala graczom kupić budynek. Wybierający ma zniżkę jednej monety; kamieniołomy i niektóre budynki mogą zmieniać cenę.',
       ),
       act(
-        'Kup mały zakład indygo',
-        'Otwórz budynki w San Juan. W grupie najtańszych budynków znajdź zakład indygo i zatwierdź zakup. Zobacz cenę po zniżce.',
+        'Kup Małą Farbiarnię',
+        'Otwórz budynki w San Juan. W grupie za 1 monetę znajdź „Małą Farbiarnię” i zatwierdź zakup. Zobacz cenę po zniżce roli.',
         'market:smallIndigoPlant',
         (a) => a.type === 'BUILD' && shape(a).buildingId === 'smallIndigoPlant',
-        'Budynki → mały zakład indygo → Zbuduj.',
+        'Budynki → Mała Farbiarnia → Zbuduj.',
       ),
       watch,
       finish(
-        'Budynek zajmuje miejsce w mieście. Sam zakup nie uruchamia produkcji: najpierw przydziel pracowników. Punkty wydrukowane na kupionym budynku doliczają się do wyniku końcowego.',
+        'Budynek zajmuje miejsce w mieście. Sam zakup nie uruchamia produkcji: najpierw przydziel pracowników. Punkty zwycięstwa (★) wydrukowane na kupionym budynku doliczają się do wyniku końcowego.',
       ),
     ],
   },
@@ -287,14 +338,14 @@ export const LESSONS: Lesson[] = [
       role(
         'Burmistrz',
         'mayor',
-        'Masz kukurydzę, indygo i mały zakład indygo. Rozmieść trzech robotników: po jednym w każdym z tych miejsc.',
+        'Masz kukurydzę, indygo i Małą Farbiarnię. Rozmieść trzech robotników: po jednym w każdym z tych miejsc.',
       ),
       act(
         'Obsadź trzy miejsca',
         'Kolejność jest dowolna. Klikaj własne pola i zakład albo korzystaj z dostępnych ruchów pod mapą.',
         HUMAN,
         place,
-        'Robotnik na kukurydzę, robotnik na indygo, robotnik do zakładu indygo.',
+        'Robotnik na kukurydzę, robotnik na indygo, robotnik do Małej Farbiarni.',
         workDone,
       ),
       watch,
@@ -323,7 +374,7 @@ export const LESSONS: Lesson[] = [
         text: 'Co musi działać jednocześnie?',
         answers: [
           {
-            text: 'Plantacja i zakład indygo',
+            text: 'Plantacja i farbiarnia',
             correct: true,
             explanation:
               'Tak — możliwości obu części ograniczają ilość produkcji.',
@@ -337,7 +388,7 @@ export const LESSONS: Lesson[] = [
         ],
       },
       finish(
-        'Masz działającą gospodarkę. Następna decyzja dotyczy przeznaczenia towarów: potrzebujesz pieniędzy na rozwój czy punktów?',
+        'Masz działającą gospodarkę. Następna decyzja dotyczy przeznaczenia towarów: potrzebujesz pieniędzy na rozwój czy punktów zwycięstwa (★)?',
       ),
     ],
   },
@@ -371,7 +422,7 @@ export const LESSONS: Lesson[] = [
   },
   {
     id: 'shipping',
-    title: 'Kapitan: zdobądź punkty',
+    title: 'Kapitan: zdobądź punkty zwycięstwa (★)',
     description: 'Ładowanie, pojemność i odpłynięcie statku.',
     group: 'basics',
     minutes: 2,
@@ -379,7 +430,7 @@ export const LESSONS: Lesson[] = [
       role(
         'Kapitan',
         'captain',
-        'Masz cztery kukurydze i pusty port. Za każdy wysłany towar otrzymasz żeton punktu. Wybierający Kapitana dostaje dodatkowy punkt przy pierwszym załadunku.',
+        'Masz cztery kukurydze i pusty port. Za każdy wysłany towar otrzymasz żeton punktu zwycięstwa (★). Wybierający Kapitana dostaje dodatkowy punkt zwycięstwa (★) przy pierwszym załadunku.',
       ),
       act(
         'Załaduj najmniejszy statek',
@@ -393,10 +444,10 @@ export const LESSONS: Lesson[] = [
       ),
       watch,
       inspectStock(
-        'Całe 4 kukurydze opuściły twój skład. Otwórz nabrzeże i sprawdź, że zapas jest pusty. Załadunek przyniósł 5 punktów.',
+        'Całe 4 kukurydze opuściły twój skład. Otwórz nabrzeże i sprawdź, że zapas jest pusty. Załadunek przyniósł 5 punktów zwycięstwa (★).',
       ),
       finish(
-        'Cztery towary i przywilej dają 5 punktów. Jeden statek przewozi jeden rodzaj towaru, a tego samego rodzaju nie rozdzielasz między różne wspólne statki. Pełny statek odpływa.',
+        'Cztery towary i przywilej dają 5 punktów zwycięstwa (★). Jeden statek przewozi jeden rodzaj towaru, a tego samego rodzaju nie rozdzielasz między różne wspólne statki. Pełne statki są opróżniane dopiero po całej fazie Kapitana, więc nie można użyć ich ponownie w jej trakcie.',
       ),
     ],
   },
@@ -433,6 +484,74 @@ export const LESSONS: Lesson[] = [
     ],
   },
   {
+    id: 'blockade',
+    title: 'Zablokuj port rywalowi',
+    description: 'Mniejszy zysk teraz, lepsza przewaga po całej fazie.',
+    group: 'basics',
+    minutes: 4,
+    steps: [
+      read(
+        'Najpierw spójrz na rywala',
+        'Masz 1 kukurydzę i 3 kawy. Inés ma 4 cukry; nikt nie ma magazynu ani własnego Nabrzeża. Statek 1 jest pusty, statek 2 wiezie indygo, a statek 3 kawę i ma 4 wolne miejsca. Tylko pusty statek może przyjąć nowy rodzaj towaru.',
+      ),
+      {
+        kind: 'inspect',
+        title: 'Sprawdź cztery cukry Inés',
+        text: 'Otwórz skład Inés przy jej pomoście. Te 4 cukry oznaczają potencjalnie 4 punkty zwycięstwa (★), jeśli zdąży zająć pusty statek.',
+        target: 'stock:player-1',
+        focus: 'player-1',
+        hint: 'Kliknij skrzynki TOWARY na wyspie Inés albo jej tabliczkę → Skład towarów przy porcie.',
+      },
+      {
+        kind: 'quiz',
+        title: 'Co wyślesz jako pierwsze?',
+        text: 'Kapitan da ci dodatkowy 1 punkt zwycięstwa (★) przy pierwszym załadunku. Sama kawa daje większy zysk od razu, ale sprawdź kolejkę: po tobie ładuje Inés.',
+        answers: [
+          { text: 'Kukurydzę na jedyny pusty statek.', correct: true, explanation: 'Zajmiesz statek innym towarem. Dla cukru zabraknie miejsca, a twoja kawa nadal ma swój statek.' },
+          { text: 'Trzy kawy — od razu dostanę więcej gwiazdek.', correct: false, explanation: 'Dostaniesz 4 punkty zwycięstwa (★) od razu, ale potem Inés wyśle 4 cukry pustym statkiem. Twoja kukurydza straci możliwość załadunku.' },
+        ],
+      },
+      role('Kapitan', 'captain', 'Wybierz Kapitana teraz, zanim rywal sprzeda cukier lub zabezpieczy zapas. Najpierw zablokujesz pusty statek, a potem wyślesz kawę.'),
+      act(
+        'Zajmij pusty statek kukurydzą',
+        'Wyślij 1 kukurydzę statkiem 1 (4 miejsca). Dostaniesz 2 punkty zwycięstwa (★): 1 za towar i 1 przywileju. Pozostałe miejsca na tym statku będą odtąd tylko na kukurydzę.',
+        'ship:0',
+        (a) => a.type === 'LOAD_SHIP' && shape(a).good === 'corn' && shape(a).target?.shipIndex === 0,
+        'Port → Statek 1 → Załaduj Kukurydza.',
+      ),
+      read(
+        'Inés nie ma dokąd załadować cukru',
+        'Wszystkie statki mają już rodzaj ładunku: kukurydza, indygo i kawa. Inés nie może wysłać cukru, więc gra pomija jej załadunek. Cukier jeszcze leży na jej wyspie: nadwyżka znika dopiero po zakończeniu całej fazy. Teraz znowu możesz ładować ty.',
+      ),
+      act(
+        'Teraz wyślij swoją kawę',
+        'Statek 3 nadal ma miejsce na wszystkie 3 kawy. Dostaniesz kolejne 3 punkty zwycięstwa (★). Przywilej Kapitana nie powtarza się przy każdym załadunku.',
+        'ship:2',
+        (a) => a.type === 'LOAD_SHIP' && shape(a).good === 'coffee' && shape(a).target?.shipIndex === 2,
+        'Port → Statek 3 z kawą → Załaduj Kawa.',
+      ),
+      watch,
+      {
+        kind: 'inspect',
+        title: 'Zobacz, co zostało Inés',
+        text: 'Faza się skończyła. Inés zachowała 1 cukier, a 3 wróciły do wspólnej puli. Nie zdobyła punktów zwycięstwa (★) za wysyłkę. Otwórz jej skład i sprawdź zmianę 4 → 1.',
+        target: 'stock:player-1',
+        focus: 'player-1',
+        hint: 'Skład TOWARY na wyspie Inés → Cukier: 1.',
+      },
+      {
+        ...read('Porównaj obie kolejności', 'To wynik całej fazy na tej przygotowanej planszy, z przywilejem Kapitana w twoim wyniku. Różnicę robi pierwszy załadunek.'),
+        comparison: [
+          { order: 'Najpierw kawa', you: 4, rival: 4, result: 'Inés wysyła cukier. Zachowujesz 1 niewysłaną kukurydzę.' },
+          { order: 'Najpierw kukurydza', you: 5, rival: 0, result: 'Wysyłasz także kawę. Inés zachowuje 1 cukier, traci 3.' },
+        ],
+      },
+      finish(
+        'Nie zawsze warto brać największy zysk w pierwszym ruchu. Tutaj blokada była pilna, a kawę można było bezpiecznie wysłać później w tej samej fazie. Oceniaj całą kolejkę oraz korzyści rywali. Magazyn chroni zapas, własne Nabrzeże umożliwia wysyłkę, a inny gracz może zająć potrzebne miejsce — taki manewr nie zawsze zadziała.',
+      ),
+    ],
+  },
+  {
     id: 'round',
     title: 'Kto wybiera następną rolę?',
     description: 'Runda, gubernator i monety na kartach.',
@@ -457,7 +576,7 @@ export const LESSONS: Lesson[] = [
       ),
       watch,
       finish(
-        'Gubernator przeszedł do następnego gracza. Karty znów są dostępne, a na niewybranych przybyło monet. Wybór roli może dać dochód, ale też uruchamia korzyści przeciwników.',
+        'Zakończyła się runda 4. Gubernator przeszedł z Inés do Mateo: to on pierwszy wybierze rolę w rundzie 5, potem ty, a następnie Inés. Karty znów są dostępne, a na niewybranych przybyło po monecie. Zmiana gubernatora zmienia pierwszeństwo w następnym zestawie wyborów.',
       ),
     ],
   },
@@ -500,7 +619,7 @@ export const LESSONS: Lesson[] = [
     steps: [
       read(
         'Twoja pierwsza samodzielna próba',
-        'Masz nieobsadzoną kukurydzę. Zorganizuj pracownika, doprowadź do produkcji i wyślij własny towar za punkty. Przeciwnicy normalnie uczestniczą w rolach. W razie potrzeby użyj „Podpowiedz”.',
+        'Masz nieobsadzoną kukurydzę. Zorganizuj pracownika, doprowadź do produkcji i wyślij własny towar za punkty zwycięstwa (★). Przeciwnicy normalnie uczestniczą w rolach. W razie potrzeby użyj „Podpowiedz”.',
       ),
       act(
         'Wyprodukuj i wyślij towar',
@@ -511,7 +630,7 @@ export const LESSONS: Lesson[] = [
         (_s, f) => f.produced && f.shipped > 0,
       ),
       finish(
-        'Potrafisz już zamienić pracownika i plantację w towary oraz punkty. Możesz rozpocząć zwykłą grę z opiekunem, który podpowiada przy twoich decyzjach, lub poznać dodatki.',
+        'Potrafisz już zamienić pracownika i plantację w towary oraz punkty zwycięstwa (★). Możesz rozpocząć zwykłą grę z opiekunem, który podpowiada przy twoich decyzjach, lub poznać dodatki.',
       ),
     ],
   },
@@ -547,14 +666,14 @@ export const LESSONS: Lesson[] = [
   {
     id: 'nobles',
     title: 'Szlachcic: inny pracownik',
-    description: 'Przydział szlachcica i jego punkt.',
+    description: 'Przydział szlachcica i jego punkt zwycięstwa (★).',
     group: 'expansions',
     minutes: 2,
     steps: [
       role(
         'Burmistrz',
         'mayor',
-        'W magistracie czeka również szlachcic. Może obsadzać dozwolone miejsca i daje punkt w końcowym rozliczeniu. Niektóre budynki mają różne efekty dla robotnika i szlachcica.',
+        'W magistracie czeka również szlachcic. Może obsadzać dozwolone miejsca i daje punkt zwycięstwa (★) w końcowym rozliczeniu. Niektóre budynki mają różne efekty dla robotnika i szlachcica.',
       ),
       act(
         'Przydziel szlachcica do indygo',
@@ -572,7 +691,7 @@ export const LESSONS: Lesson[] = [
       ),
       watch,
       finish(
-        'Szlachcic pracuje na twojej wyspie i daje 1 punkt końcowy. W tym dodatku wyczerpanie robotników nie jest warunkiem zakończenia gry. Sprawdzaj oba warianty zdolności nowych budynków.',
+        'Szlachcic pracuje na twojej wyspie i daje 1 punkt zwycięstwa (★) na koniec gry. W tym dodatku wyczerpanie robotników nie jest warunkiem zakończenia gry. Sprawdzaj oba warianty zdolności nowych budynków.',
       ),
     ],
   },

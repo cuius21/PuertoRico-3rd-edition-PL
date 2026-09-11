@@ -25,18 +25,18 @@ export function coachAdvice(state: GameState) {
         ? 'Masz towary. Co z nimi zrobisz?'
         : 'Zaplanuj następny etap rozwoju',
       text: goods
-        ? 'Skrzynki przy twoim pomoście pokazują zapas. Kupiec daje monety za sprzedaż, Kapitan punkty za wysyłkę. Sprawdź wolne miejsca na targu i statkach.'
+        ? 'Skrzynki przy twoim pomoście pokazują zapas. Kupiec daje monety za sprzedaż, Kapitan punkty zwycięstwa (★) za wysyłkę. Sprawdź wolne miejsca na targu i statkach.'
         : ready
           ? 'Masz obsadzone miejsca produkcji. Zarządca może dać towary, jeśli są dostępne w puli.'
           : 'Sprawdź brakujący element: plantację, zakład lub pracownika. Plantator, Budowniczy i Burmistrz pomagają rozwinąć wyspę.',
       detail:
-        'Wybrana rola pomaga również przeciwnikom. Obejrzyj ich wyspy przed wyborem. Na niewybranych kartach gromadzą się monety; sprawdź też przywilej wybierającego.',
+        'Gubernator zaczyna rundę; potem każdy wybiera jedną dostępną kartę. Wspólną akcję wykonują także rywale, lecz przywilej ma tylko wybierający. Sprawdź ich zapasy: czasem warto zająć ostatni pusty statek, zanim wyślą nim swój towar. Na niewybranych kartach gromadzą się monety.',
     };
   const tips: Record<string, { title: string; text: string; detail: string }> =
     {
       settler: {
         title: 'Dobierz plantację do swoich możliwości',
-        text: 'Kukurydza potrzebuje tylko pracownika. Indygo, cukier, tytoń i kawa wymagają też odpowiednich zakładów.',
+        text: 'Kukurydza potrzebuje tylko pracownika. Indygo wymaga także obsadzonej Małej Farbiarni lub Farbiarni. Cukier, tytoń i kawa mają własne zakłady.',
         detail:
           'Kamieniołomy dają zniżki na budowę. Wybierający Plantatora może wziąć kamieniołom dzięki przywilejowi. Liczba pól na wyspie jest ograniczona.',
       },
@@ -50,7 +50,7 @@ export function coachAdvice(state: GameState) {
         title: 'Kup budynek, który wykorzystasz',
         text: 'Zobacz cenę po zniżkach oraz potrzebnych pracowników. Sam zakup zwykle nie uruchamia zdolności budynku.',
         detail:
-          'Podstawowe punkty na budynkach liczą się także bez obsady. Bonusy końcowe dużych budynków wymagają aktywacji. Pełne miasto może zakończyć grę po rundzie.',
+          'Podstawowe punkty zwycięstwa (★) na budynkach liczą się także bez obsady. Bonusy końcowe dużych budynków wymagają aktywacji. Pełne miasto może zakończyć grę po rundzie.',
       },
       craftsman: {
         title: 'Sprawdź wynik produkcji',
@@ -67,12 +67,12 @@ export function coachAdvice(state: GameState) {
       captain: {
         title: state.captainStoragePending
           ? 'Wybierz towary do przechowania'
-          : 'Punkty za wysłane towary',
+          : 'Punkty zwycięstwa (★) za wysłane towary',
         text: state.captainStoragePending
           ? 'Twój magazyn pozwala zachować określone rodzaje towarów. Sprawdź wybór, zanim zatwierdzisz.'
           : 'Gdy możesz ładować, musisz wykonać załadunek. Jeden statek mieści jeden rodzaj towaru; ładujesz maksymalną możliwą ilość.',
         detail:
-          'Bez magazynu po wysyłce zachowujesz tylko jeden niewysłany towar. Załadunek daje zwykle 1 punkt za towar; sprawdź przywilej Kapitana i zdolności budynków.',
+          'Załadunek daje zwykle 1 punkt zwycięstwa (★) za towar. Zajęcie ostatniego pustego statku może zablokować inny rodzaj towaru rywala. Bez magazynu po całej fazie zachowuje on tylko 1 sztukę niewysłanego towaru. Sprawdź jego Nabrzeże i magazyny, zanim zaplanujesz blokadę.',
       },
     };
   return (

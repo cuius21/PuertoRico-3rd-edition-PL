@@ -8,6 +8,7 @@ import type { Building } from '../../domain/buildings/Building';
 export const HUMAN = 'player-0';
 export type ScenarioId =
   | 'welcome'
+  | 'turns'
   | 'plantation'
   | 'workers'
   | 'production'
@@ -17,6 +18,7 @@ export type ScenarioId =
   | 'trade'
   | 'shipping'
   | 'storage'
+  | 'blockade'
   | 'round'
   | 'ending'
   | 'trial'
@@ -78,8 +80,8 @@ export function createScenario(id: ScenarioId): GameState {
     human(state).island.addBuilding(b);
     return b;
   }
-  function goods(type: GoodType, count: number) {
-    human(state).addStoredGoods(type, count);
+  function goods(type: GoodType, count: number, playerIndex = 0) {
+    state.players[playerIndex]!.addStoredGoods(type, count);
     state.supply.goodsPool.set(type, state.supply.goodsPool.get(type)! - count);
   }
   function cargo(index: number, type: GoodType, count: number) {
@@ -121,6 +123,13 @@ export function createScenario(id: ScenarioId): GameState {
     cargo(0, GoodType.Corn, 3);
     cargo(1, GoodType.Indigo, 1);
     cargo(2, GoodType.Sugar, 1);
+  }
+  if (id === 'blockade') {
+    goods(GoodType.Corn, 1);
+    goods(GoodType.Coffee, 3);
+    goods(GoodType.Sugar, 4, 1);
+    cargo(1, GoodType.Indigo, 1);
+    cargo(2, GoodType.Coffee, 2);
   }
   if (id === 'forest') building('hut', true);
   if (id === 'nobles') {

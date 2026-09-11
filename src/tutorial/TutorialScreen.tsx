@@ -101,7 +101,7 @@ export function TutorialScreen({
         <div>
           <h2>Twoja pierwsza wyprawa</h2>
           <p>
-            Podstawy i samodzielna próba · około 20–30 minut ·{' '}
+            Podstawy i samodzielna próba · około 30–40 minut ·{' '}
             {basics.filter((l) => progress.completed.includes(l.id)).length}/
             {basics.length} rozdziałów ukończonych
           </p>
@@ -299,7 +299,46 @@ function LessonGame({
           {run.lesson.steps.length}
         </span>
         <h2>{step.title}</h2>
+        <small className="pr-tutor-legend">
+          <span aria-hidden="true">★</span> Gwiazdki = punkty zwycięstwa (PZ)
+        </small>
         <p>{step.text}</p>
+        {step.flow && (
+          <ol className="pr-tutor-flow" aria-label="Przykład przebiegu rundy">
+            {step.flow.map((item) => (
+              <li key={item.title}>
+                <strong>{item.title}</strong>
+                <p>{item.text}</p>
+              </li>
+            ))}
+          </ol>
+        )}
+        {step.comparison && (
+          <div className="pr-tutor-comparison">
+            <table>
+              <caption>Punkty zwycięstwa (★) po fazie</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Kolejność</th>
+                  <th scope="col">Ty</th>
+                  <th scope="col">Inés</th>
+                </tr>
+              </thead>
+              <tbody>
+                {step.comparison.map((row) => (
+                  <tr key={row.order}>
+                    <th scope="row">{row.order}</th>
+                    <td><GameValue value={row.you} kind="star" /></td>
+                    <td><GameValue value={row.rival} kind="star" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {step.comparison.map((row) => (
+              <p key={row.order}><strong>{row.order}:</strong> {row.result}</p>
+            ))}
+          </div>
+        )}
         {step.kind === 'inspect' && run.visited && (
           <p className="pr-tutor-success">
             ✓ Miejsce obejrzane. Możesz przejść dalej.

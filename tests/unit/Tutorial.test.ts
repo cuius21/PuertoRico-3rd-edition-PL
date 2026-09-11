@@ -7,7 +7,7 @@ import {
   saveTutorialProgress,
   TUTORIAL_SAVE_KEY,
 } from '../../src/tutorial/LessonRun';
-import { human, HUMAN } from '../../src/tutorial/scenarios';
+import { createScenario, human, HUMAN } from '../../src/tutorial/scenarios';
 import { serializeGameState } from '../../src/game/GameSerializer';
 import { GoodType } from '../../core/types';
 
@@ -110,6 +110,52 @@ describe('tutorial through the real rules engine', () => {
     expect(() => run.save()).toThrow();
     run.settle();
     expect(run.index).toBe(1);
+  });
+  it('demonstrates both shipping orders and discards blocked goods only at phase end', () => {
+    const state = createScenario('blockade');
+    const move = (matches: (a: any) => boolean) => {
+      const action = state.getValidActions(state.getCurrentPlayer().id).find(matches);
+      expect(action).toBeTruthy();
+      expect(state.apply(action!).ok).toBe(true);
+    };
+    move((a) => a.role === 'captain');
+    move((a) => a.good === GoodType.Coffee && a.target?.shipIndex === 2);
+    expect(human(state).victoryPointTokens).toBe(4);
+    expect(state.getCurrentPlayer().id).toBe('player-1');
+    move((a) => a.good === GoodType.Sugar && a.target?.shipIndex === 0);
+    expect(state.getCurrentPhase().type).toBe('roleSelection');
+    expect(state.players.map((p) => p.victoryPointTokens)).toEqual([4, 4, 0]);
+    expect(human(state).getStoredGoodCount(GoodType.Corn)).toBe(1);
+    expect(state.players[1]!.getTotalStoredGoods()).toBe(0);
+
+    const blocked = createScenario('blockade');
+    const apply = (matches: (a: any) => boolean) => {
+      const action = blocked.getValidActions(blocked.getCurrentPlayer().id).find(matches);
+      expect(action).toBeTruthy();
+      expect(blocked.apply(action!).ok).toBe(true);
+    };
+    apply((a) => a.role === 'captain');
+    apply((a) => a.good === GoodType.Corn && a.target?.shipIndex === 0);
+    expect(human(blocked).victoryPointTokens).toBe(2);
+    expect(blocked.getCurrentPlayer().id).toBe(HUMAN);
+    expect(blocked.players[1]!.getStoredGoodCount(GoodType.Sugar)).toBe(4);
+    apply((a) => a.good === GoodType.Coffee && a.target?.shipIndex === 2);
+    expect(blocked.getCurrentPhase().type).toBe('roleSelection');
+    expect(blocked.players.map((p) => p.victoryPointTokens)).toEqual([5, 0, 0]);
+    expect(blocked.players[1]!.getStoredGoodCount(GoodType.Sugar)).toBe(1);
+    expect(human(blocked).getTotalStoredGoods()).toBe(0);
+    const lessonState = complete('blockade').state;
+    expect(lessonState.players.map((p) => [p.victoryPointTokens, p.getTotalStoredGoods()]))
+      .toEqual(blocked.players.map((p) => [p.victoryPointTokens, p.getTotalStoredGoods()]));
+  });
+  it('shows the next governor choosing first and coins on unselected roles', () => {
+    const state = complete('round').state;
+    expect(state.roundNumber).toBe(5);
+    expect(state.governorIndex).toBe(2);
+    expect(state.getCurrentPlayer().name).toBe('Mateo');
+    expect(state.roleCards.every((card) => card.isAvailable())).toBe(true);
+    expect(state.roleCards.find((card) => card.type === 'captain')!.doubloonsOnCard).toBe(1);
+    expect(state.roleCards.find((card) => card.type === 'trader')!.doubloonsOnCard).toBe(0);
   });
   it('keeps incorrect quiz answers and unvisited inspection steps in place', () => {
     const run = new LessonRun('welcome');

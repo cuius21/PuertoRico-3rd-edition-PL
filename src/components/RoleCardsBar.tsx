@@ -32,7 +32,7 @@ export const ROLE_DESCRIPTIONS: Record<
   [RoleType.Mayor]: {
     privilege: 'Selektor dostaje +1 dodatkowego robotnika z puli globalnej.',
     action:
-      'Robotnicy z Magistratu rozdzielani po jednym, zaczynając od selektora. Każdy gracz rozmieszcza robotników lub oddaje pozostałych do puli.',
+      'Robotnicy z Magistratu są rozdzielani po jednym, zaczynając od wybierającego rolę. Każdy gracz rozmieszcza swoją załogę; niewykorzystani pracownicy pozostają w jego rezerwie.',
   },
   [RoleType.Builder]: {
     privilege:
@@ -44,7 +44,7 @@ export const ROLE_DESCRIPTIONS: Record<
     privilege:
       'Selektor wybiera 1 dodatkowy towar (spośród wyprodukowanych w tej turze).',
     action:
-      'Wszyscy gracze jednocześnie produkują towary: aktywne budynki produkcyjne × aktywne plantacje danego surowca.',
+      'Wszyscy gracze produkują towary. Ilość ogranicza liczba obsadzonych plantacji, obsadzonych miejsc w odpowiednich zakładach oraz dostępny zapas towaru. Kukurydza nie wymaga zakładu; indygo wymaga farbiarni.',
   },
   [RoleType.Trader]: {
     privilege: 'Selektor dostaje +1 dublon za sprzedaż na targowisku.',
@@ -52,9 +52,9 @@ export const ROLE_DESCRIPTIONS: Record<
       'Każdy gracz może sprzedać jeden towar na targowisku (4 sloty). Nie można sprzedać towaru który już tam leży (chyba że gracz ma Biuro Handlowe).',
   },
   [RoleType.Captain]: {
-    privilege: 'Selektor dostaje +1 PZ za swój pierwszy załadunek w tej fazie.',
+    privilege: 'Wybierający rolę dostaje +1 punkt zwycięstwa (★) za swój pierwszy załadunek w tej fazie.',
     action:
-      'Gracze kolejno ładują towary na statki i zdobywają PZ (1 PZ / ładunek). Gracz MUSI załadować jeśli może. Po fazie każdy może zachować max 1 rodzaj towaru.',
+      'Gracze kolejno ładują towary: zwykle 1 punkt zwycięstwa (★) za każdą sztukę. Musisz ładować, jeśli możesz. Kolejka powtarza się, dopóki ktoś może ładować. Po fazie bez magazynu zachowujesz tylko 1 sztukę niewysłanego towaru, nie cały rodzaj. Pełne statki są opróżniane po całej fazie.',
   },
   [RoleType.Prospector]: {
     privilege: 'Selektor dostaje 1 dublon z banku.',

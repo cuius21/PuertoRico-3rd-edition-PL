@@ -223,6 +223,33 @@
   gap: 8px;
   margin-top: 12px;
 }
+.pr-tutor-legend {
+  display: block;
+  color: #ffe1a0;
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 6px 0 10px;
+}
+.pr-tutor-legend > span { color: #f8d578; }
+.pr-tutor-flow {
+  padding-left: 23px;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.pr-tutor-flow li { padding: 4px 0 8px 4px; }
+.pr-tutor-flow li::marker { color: #ffe2a1; font-weight: bold; }
+.pr-tutor-flow li + li { border-top: 1px solid #e6bc7044; }
+.pr-tutor-comparison table {
+  width: 100%;
+  font-size: 11px;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+.pr-tutor-comparison caption { color: #ffe1a0; text-align: left; margin-bottom: 8px; }
+.pr-tutor-comparison th,
+.pr-tutor-comparison td { padding: 8px 4px; border-bottom: 1px solid #e6bc7044; text-align: left; }
+.pr-tutor-comparison .pr-value { white-space: nowrap; }
+.pr-tutor-comparison tbody tr:last-child { background: #244e3f66; }
 .pr-tutor-score small {
   display: block;
   font-size: 10px;

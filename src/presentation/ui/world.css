@@ -148,6 +148,22 @@
 .pr-player-name {
   min-width: 0;
 }
+.pr-avatar:has(.pr-governor-marker) { position: relative; }
+.pr-governor-marker {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #95611e;
+  border-radius: 50%;
+  background: #ffe09a;
+  box-shadow: 0 1px 2px #39251277;
+  color: #60401f;
+  font: bold 9px 'Trebuchet MS', sans-serif;
+}
 .pr-player-name strong {
   display: block;
   white-space: nowrap;

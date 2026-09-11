@@ -416,7 +416,19 @@ export function WorldGame({
                 go(p.id);
               }}
             >
-              <span className="pr-avatar">{i + 1}</span>
+              <span className="pr-avatar">
+                {i + 1}
+                {p.governor && (
+                  <span
+                    className="pr-governor-marker"
+                    role="img"
+                    aria-label="Gubernator — wybiera pierwszy w tej rundzie"
+                    title="Gubernator — wybiera pierwszy w tej rundzie"
+                  >
+                    G
+                  </span>
+                )}
+              </span>
               <span className="pr-player-name">
                 <strong>{p.name}</strong>
                 <small>
@@ -664,7 +676,7 @@ export function WorldGame({
                   </strong>
                 </span>
                 <span>
-                  Punkty
+                  Punkty zwycięstwa
                   <strong>
                     <GameValue value={building.victoryPoints} kind="star" />
                   </strong>
@@ -705,7 +717,7 @@ export function WorldGame({
                   </strong>
                 </span>
                 <span>
-                  Żetony punktów
+                  Żetony punktów zwycięstwa
                   <strong>
                     <GameValue value={selectedPlayer.vp} kind="star" />
                   </strong>
