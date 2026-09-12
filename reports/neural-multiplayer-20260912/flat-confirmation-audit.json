@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-12T14:48:25.803Z",
+  "completedGames": 60,
+  "sourceFilesVerified": 145,
+  "scoreAndInferenceAuditPassed": true,
+  "comparison": {
+    "pairedGames": 30,
+    "independentSeeds": 10,
+    "winRateDifference": -0.3444444444444444,
+    "meanScoreMarginDifference": -5.033333333333333,
+    "winRateDifference95": [
+      -0.47777777777777775,
+      -0.2111111111111111
+    ],
+    "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples"
+  },
+  "summaries": {
+    "control": {
+      "scheduled": 30,
+      "completed": 30,
+      "incomplete": 0,
+      "invalid": 0,
+      "outrightWins": 13,
+      "sharedWins": 1,
+      "winCredit": 13.333333333333332,
+      "winRate": 0.4444444444444444,
+      "outrightWinWilson95": null,
+      "meanScoreMargin": -0.6666666666666666,
+      "elapsedMs": 2501016.1300999993,
+      "winRateSeedBootstrap95": [
+        0.26666666666666666,
+        0.6333333333333333
+      ]
+    },
+    "flatNeural": {
+      "scheduled": 30,
+      "completed": 30,
+      "incomplete": 0,
+      "invalid": 0,
+      "outrightWins": 3,
+      "sharedWins": 0,
+      "winCredit": 3,
+      "winRate": 0.1,
+      "outrightWinWilson95": null,
+      "meanScoreMargin": -5.7,
+      "elapsedMs": 2464578.2592,
+      "winRateSeedBootstrap95": [
+        0.03333333333333333,
+        0.2
+      ]
+    }
+  },
+  "iterationsPerSearch": {
+    "control": 302.6617873651772,
+    "flatNeural": 187.4004739336493
+  },
+  "league": {
+    "stage": "generating",
+    "updatedAt": "2026-09-12T14:48:22.474Z",
+    "deadline": "2026-09-12T15:40:00Z",
+    "finished": 89,
+    "total": 180,
+    "typecheckPassed": true,
+    "sourceFilesVerified": 147,
+    "completedRecordsAudited": 89,
+    "counts": {
+      "3": 30,
+      "4": 30,
+      "5": 29
+    },
+    "modes": {
+      "hardcore": 30,
+      "mixed": 30,
+      "neural-self-play": 29
+    },
+    "samples": 2136,
+    "neuralCalls": 7231057,
+    "failureFilePresent": false,
+    "session": 1936,
+    "holdoutPerformanceScored": false
+  }
+}

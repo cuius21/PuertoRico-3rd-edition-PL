@@ -1,0 +1,216 @@
+{
+  "setup": {
+    "seed": 1551117757,
+    "rotations": 10,
+    "budgetMs": 650,
+    "iterations": 0,
+    "directory": "C:\\Users\\ambro\\Desktop\\puertoRico\\files2\\work\\neural-multiplayer-20260912\\nightly-v2\\confirmation",
+    "models": "C:\\Users\\ambro\\Desktop\\puertoRico\\files2\\work\\neural-multiplayer-20260912\\nightly-v2\\models"
+  },
+  "results": [
+    {
+      "players": 3,
+      "overall": {
+        "control": {
+          "scheduled": 30,
+          "completed": 30,
+          "incomplete": 0,
+          "invalid": 0,
+          "outrightWins": 13,
+          "sharedWins": 0,
+          "winCredit": 13,
+          "winRate": 0.43333333333333335,
+          "outrightWinWilson95": null,
+          "meanScoreMargin": -1.6666666666666667,
+          "elapsedMs": 2403828.0253,
+          "winRateSeedBootstrap95": [
+            0.26666666666666666,
+            0.6
+          ]
+        },
+        "q": {
+          "scheduled": 30,
+          "completed": 30,
+          "incomplete": 0,
+          "invalid": 0,
+          "outrightWins": 15,
+          "sharedWins": 0,
+          "winCredit": 15,
+          "winRate": 0.5,
+          "outrightWinWilson95": null,
+          "meanScoreMargin": -1.2333333333333334,
+          "elapsedMs": 2446227.745199997,
+          "winRateSeedBootstrap95": [
+            0.3333333333333333,
+            0.7
+          ]
+        }
+      },
+      "comparisons": {
+        "q": {
+          "pairedGames": 30,
+          "independentSeeds": 10,
+          "winRateDifference": 0.06666666666666667,
+          "meanScoreMarginDifference": 0.43333333333333335,
+          "winRateDifference95": [
+            -0.16666666666666666,
+            0.36666666666666664
+          ],
+          "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples"
+        }
+      },
+      "inference": {
+        "control": {
+          "policyCalls": 0,
+          "valueCalls": 0,
+          "iterations": 374146,
+          "searches": 1247
+        },
+        "q": {
+          "policyCalls": 2819438,
+          "valueCalls": 0,
+          "iterations": 392023,
+          "searches": 1247
+        }
+      }
+    },
+    {
+      "players": 4,
+      "overall": {
+        "control": {
+          "scheduled": 40,
+          "completed": 40,
+          "incomplete": 0,
+          "invalid": 0,
+          "outrightWins": 14,
+          "sharedWins": 0,
+          "winCredit": 14,
+          "winRate": 0.35,
+          "outrightWinWilson95": null,
+          "meanScoreMargin": -3.275,
+          "elapsedMs": 4430146.204000008,
+          "winRateSeedBootstrap95": [
+            0.225,
+            0.5
+          ]
+        },
+        "visits": {
+          "scheduled": 40,
+          "completed": 40,
+          "incomplete": 0,
+          "invalid": 0,
+          "outrightWins": 13,
+          "sharedWins": 0,
+          "winCredit": 13,
+          "winRate": 0.325,
+          "outrightWinWilson95": null,
+          "meanScoreMargin": -2.45,
+          "elapsedMs": 4299420.901400004,
+          "winRateSeedBootstrap95": [
+            0.2,
+            0.425
+          ]
+        }
+      },
+      "comparisons": {
+        "visits": {
+          "pairedGames": 40,
+          "independentSeeds": 10,
+          "winRateDifference": -0.025,
+          "meanScoreMarginDifference": 0.825,
+          "winRateDifference95": [
+            -0.25,
+            0.175
+          ],
+          "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples"
+        }
+      },
+      "inference": {
+        "control": {
+          "policyCalls": 0,
+          "valueCalls": 0,
+          "iterations": 286244,
+          "searches": 1696
+        },
+        "visits": {
+          "policyCalls": 3358121,
+          "valueCalls": 0,
+          "iterations": 346530,
+          "searches": 1661
+        }
+      }
+    },
+    {
+      "players": 5,
+      "overall": {
+        "control": {
+          "scheduled": 50,
+          "completed": 50,
+          "incomplete": 0,
+          "invalid": 0,
+          "outrightWins": 10,
+          "sharedWins": 0,
+          "winCredit": 10,
+          "winRate": 0.2,
+          "outrightWinWilson95": null,
+          "meanScoreMargin": -5.8,
+          "elapsedMs": 6836331.491800004,
+          "winRateSeedBootstrap95": [
+            0.1,
+            0.3
+          ]
+        },
+        "visitsValue": {
+          "scheduled": 50,
+          "completed": 50,
+          "incomplete": 0,
+          "invalid": 0,
+          "outrightWins": 11,
+          "sharedWins": 0,
+          "winCredit": 11,
+          "winRate": 0.22,
+          "outrightWinWilson95": null,
+          "meanScoreMargin": -5.32,
+          "elapsedMs": 6903365.3011,
+          "winRateSeedBootstrap95": [
+            0.08,
+            0.36
+          ]
+        }
+      },
+      "comparisons": {
+        "visitsValue": {
+          "pairedGames": 50,
+          "independentSeeds": 10,
+          "winRateDifference": 0.02,
+          "meanScoreMarginDifference": 0.48,
+          "winRateDifference95": [
+            -0.14,
+            0.2
+          ],
+          "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples"
+        }
+      },
+      "inference": {
+        "control": {
+          "policyCalls": 0,
+          "valueCalls": 0,
+          "iterations": 248552,
+          "searches": 2077
+        },
+        "visitsValue": {
+          "policyCalls": 3979172,
+          "valueCalls": 204592,
+          "iterations": 307460,
+          "searches": 2141
+        }
+      }
+    }
+  ],
+  "modelHashes": {
+    "visits": "0dc932988754425b86b75da821a14f1aec96b0d377cab7e4f1ded61995c2b75d",
+    "q": "f2db36f8236ef8089cea9d7fec9c9ab5c4233e9c64aecf6647190985ee77fbe8",
+    "value": "b13c79f9a2a8edb7f66018f2c2688d9652a1a56347ad5df01666ad5168c80467"
+  },
+  "complete": true
+}

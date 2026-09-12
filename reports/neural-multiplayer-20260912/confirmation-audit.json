@@ -1,0 +1,83 @@
+{
+  "date": "2026-09-12T13:49:23.980Z",
+  "completedGames": 240,
+  "sourceFilesVerified": 140,
+  "modelHashes": {
+    "visits": "0dc932988754425b86b75da821a14f1aec96b0d377cab7e4f1ded61995c2b75d",
+    "q": "f2db36f8236ef8089cea9d7fec9c9ab5c4233e9c64aecf6647190985ee77fbe8",
+    "value": "b13c79f9a2a8edb7f66018f2c2688d9652a1a56347ad5df01666ad5168c80467"
+  },
+  "sourcePlanVerified": true,
+  "scoreAndInferenceAuditPassed": true,
+  "valueHeadCorrectionZero": true,
+  "summaries": [
+    {
+      "players": 3,
+      "candidate": "q",
+      "candidateWins": 15,
+      "controlWins": 13,
+      "gamesPerArm": 30,
+      "pairedGames": 30,
+      "independentSeeds": 10,
+      "winRateDifference": 0.06666666666666667,
+      "meanScoreMarginDifference": 0.43333333333333335,
+      "winRateDifference95": [
+        -0.16666666666666666,
+        0.36666666666666664
+      ],
+      "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples",
+      "iterationsPerSearch": {
+        "candidate": 314.3728949478749,
+        "control": 300.036888532478
+      }
+    },
+    {
+      "players": 4,
+      "candidate": "visits",
+      "candidateWins": 13,
+      "controlWins": 14,
+      "gamesPerArm": 40,
+      "pairedGames": 40,
+      "independentSeeds": 10,
+      "winRateDifference": -0.025,
+      "meanScoreMarginDifference": 0.825,
+      "winRateDifference95": [
+        -0.25,
+        0.175
+      ],
+      "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples",
+      "iterationsPerSearch": {
+        "candidate": 208.62733293196868,
+        "control": 168.7759433962264
+      }
+    },
+    {
+      "players": 5,
+      "candidate": "visitsValue",
+      "candidateWins": 11,
+      "controlWins": 10,
+      "gamesPerArm": 50,
+      "pairedGames": 50,
+      "independentSeeds": 10,
+      "winRateDifference": 0.02,
+      "meanScoreMarginDifference": 0.48,
+      "winRateDifference95": [
+        -0.14,
+        0.2
+      ],
+      "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples",
+      "iterationsPerSearch": {
+        "candidate": 143.605791686128,
+        "control": 119.6687530091478
+      }
+    }
+  ],
+  "followup": {
+    "stage": "running",
+    "finished": 43,
+    "total": 60,
+    "typecheckPassed": true,
+    "session": 8563,
+    "partialOutcomesInspected": false
+  }
+}

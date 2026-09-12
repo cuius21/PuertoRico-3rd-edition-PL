@@ -1,0 +1,18 @@
+{
+  "date": "2026-09-12T15:50:52.656Z",
+  "games": 180,
+  "samples": 4320,
+  "counts": {
+    "3": 60,
+    "4": 60,
+    "5": 60
+  },
+  "modes": {
+    "hardcore": 60,
+    "mixed": 60,
+    "neural-self-play": 60
+  },
+  "sourceFilesVerified": 147,
+  "completedLegally": true,
+  "inputsAndTargetsValid": true
+}

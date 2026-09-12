@@ -1,73 +1,81 @@
-# Neural dla 3, 4 i 5 graczy — analiza i rozwój
+# Neural dla 3–5 graczy — raport zbiorczy, 12 września 2026
 
-Stan poranny, 12 września 2026. **Nie ma jeszcze potwierdzonego następcy Hardcore.** Kod obsługi sieci dla 3–5 graczy i nowa ścieżka treningowa działają eksperymentalnie. Produkcyjny bot, silnik i modele na Cloudflare pozostają niezmienione.
+**Cel — bot potwierdzony jako silniejszy od Hardcore przy każdej liczbie graczy — nie został jeszcze osiągnięty.** Działa już eksperymentalna sieć dla 3, 4 i 5 osób. Ukończono 1032 pełne partie w głównych seriach, 2562 mocniejsze analizy pozycji i pięć prób treningowych. Najnowsze uczenie wartości daje obiecujący sygnał dla 4–5 osób, lecz ten model nie został jeszcze sprawdzony w turnieju.
 
-## Co ograniczało obecną wersję
+## Wynik najważniejszego turnieju
 
-1. **Brak obsługi 4–5 graczy był rzeczywisty.** `NeuralBot` sprawdza `supportsNeuralState`; w tych wariantach wybiera dokładnego Hardcore. Dotychczasowy zapis ma trzy wyspy i nie zawiera kart Poszukiwacza. W grze pięcioosobowej trzeba rozróżnić dwie takie karty, również ich osobne monety.
-2. **Wersja w menu uczyła polityki, ale nie używała wyuczonej oceny pozycji.** Sieć wskazuje priorytety i ruchy podczas symulacji w czterech fazach. Po horyzoncie dwóch rund wynik ocenia `evaluateHardcoreState`; `evaluatorWeight` wynosi zero. Robotników rozmieszcza dotychczasowy algorytm.
-3. **Nauczyciel nie był wystarczająco wyraźnie mocniejszy od przeciwnika.** Stare etykiety pochodzą głównie z 96 iteracji. W wielu pozycjach najlepsze ruchy dzieliło niewiele wizyt. Podniesienie wizyt do czwartej potęgi wyostrza odpowiedź, lecz nie poprawia samej analizy. Starsza ponowna analiza 384×2 poprawiła stabilność części etykiet, ale obejmowała tylko 318 pozycji i sama nie przyniosła dowodu silniejszej gry.
-4. **Trener polityki pomijał zapisane oceny alternatyw i wyniki partii.** Uczył się rozkładu wizyt, a nie bezpośrednio poprawki do wyboru ruchu z jego ocen Q ani zwycięzcy. Samo dopisanie epok do tych samych danych nie rozwiązuje tego ograniczenia.
-5. **Koszt sieci to głównie przygotowanie jej wejścia.** W starym profilu sama warstwa neuronowa zajmowała około 39 µs, cała polityka około 427 µs. Najpierw warto ograniczać powtarzane odczyty i kosztowne obliczanie priorytetów; większa sieć nie jest automatycznie lepszym wydatkiem czasu.
+Kandydat grał przeciw pozostałym Hardcore; kontrola to Hardcore zajmujący jego miejsce w osobnej partii. Każda konfiguracja miała 10 nowych losowań początkowych i pełne rotacje miejsc. Wszystkie boty dostały taki sam limit 650 ms na decyzję wyszukiwania i maksymalnie 1500 iteracji. Nie zmieniano modeli w trakcie testu.
 
-Ostatni wcześniejszy pełny test wersji z cache obejmował 180 partii kandydata i 180 kontroli przy 650 ms. Uzyskano 66/180 kredytu zwycięstwa wobec 59,5/180: różnica +3,61 punktu procentowego, przedział 95% [−6,67; +13,61]. Wynik nie potwierdził przewagi. Źródło: `reports/neural-policy/policy-active-cached-production-result.json`.
+| Graczy | Wybrana polityka | Zwycięstwa kandydata | Kontrola Hardcore | Różnica | Sparowany przedział 95% |
+|---|---|---:|---:|---:|---|
+| 3 | Q | 15/30 — 50% | 13/30 — 43,3% | +6,7 pp | [−16,7; +36,7] pp |
+| 4 | wizyty | 13/40 — 32,5% | 14/40 — 35% | −2,5 pp | [−25; +17,5] pp |
+| 5 | wizyty + pierwotna wartość | 11/50 — 22% | 10/50 — 20% | +2 pp | [−14; +20] pp |
 
-## Nowe porównanie: MCTS czy przeszukiwanie tylko pierwszej decyzji
+**Wszystkie przedziały obejmują zero: nie ma wystarczającego potwierdzenia przewagi.** Wcześniejszy pilot 100 ms wskazywał dużo większe zyski (8/12 vs 3/12, 8/16 vs 2/16, 8/20 vs 5/20), ale służył wyborowi modeli na tylko czterech losowaniach. Jego wyników nie udało się odtworzyć przy pełnym czasie.
 
-Ukończono **204 partie**; dwa wątki, limit 24 symulacji, cztery nowe losowania na każdą liczbę graczy i pełna rotacja miejsc. To mały screening, a nie test siły przy docelowych 650 ms. Przed uruchomieniem zapisano konfigurację i skróty źródeł; po zakończeniu wszystkie zgadzały się z planem.
+Pierwotna sieć wartości zachowała zerową wyuczoną korektę. Jej użycie w wariancie pięcioosobowym dodawało obliczenia, lecz wyników nie wolno przypisywać nowej umiejętności oceny pozycji.
 
-| Graczy | Hardcore — kontrola | Obecny Neural | MCTS z mniejszą losowością | 1-ply z heurystyką | 1-ply z obecną siecią |
-|---|---:|---:|---:|---:|---:|
-| 3 | 3/12 | 3/12 | 2/12 | 2/12 | **6/12** |
-| 4 | 10/16 | 10/16 | 5/16 | 4,5/16 | nieobsługiwany stary model |
-| 5 | 1/20 | 1/20 | 2/20 | 5/20 | nieobsługiwany stary model |
+Dane: confirmation-result.json, confirmation-plan.json, confirmation-audit.json.
 
-Licznik oznacza udział w zwycięstwach, dzielony przy remisie. Każdy wariant gra przeciw pozostałym niezmienionym Hardcore. Wariant MCTS z mniejszą losowością używa Championa, który również usuwa identyczne akcje budowania; porównanie z kontrolą nie izoluje samej losowości. Wyjątkowo wysoki wynik kontroli przy 4 osobach i niski przy 5 pokazują, dlaczego nie wolno wnioskować z samych tych małych próbek. Wynik 1-ply + sieć przy 3 osobach ma różnicę +25 pp, lecz przedział 95% [−16,67; +58,33] nadal obejmuje zero. Dla 4–5 graczy przebiegi obecnego Neurala i kontroli były identyczne, a wywołań sieci było zero.
+## MCTS kontra testowany wariant 1-ply
 
-**1-ply nie oznacza tutaj oceny natychmiast po jednej akcji.** Rozgałęziamy tylko bieżący wybór, następnie symulujemy jego dalsze skutki do tego samego horyzontu rund co MCTS. Wszystkie alternatywy w kompletnym bloku dostają wspólne ziarno losowania i po jednej próbce; niekompletnego bloku nie używamy do rankingu. Pozostali gracze nadal wykonują swoje działania. Wybieramy średnią ocenę ruchu, bez rozbudowywania głębszego drzewa. To osobna metoda przeszukiwania; self-play jest sposobem tworzenia danych treningowych, więc oba pojęcia nie są zamienne.
+Na nowych losowaniach, przy 650 ms, wariant 1-ply z dotychczasową siecią dla 3 osób uzyskał **3/30**, a kontrola **13⅓/30** kredytu zwycięstwa. Kontrola miała 13 samodzielnych zwycięstw i udział ⅓ w remisie. Różnica −34,44 pp, przedział 95% [−47,78; −21,11] pp; średnia marża punktów gorsza o 5,03.
 
-Wniosek: warto dalej sprawdzić **1-ply + sieć dla 3 osób przy równym czasie**. Nie ma podstaw do zastępowania MCTS we wszystkich konfiguracjach. Przy 4 osobach prosty wariant 1-ply w tej próbie był gorszy.
+Ta wersja rozdzielała symulacje równomiernie między pierwsze decyzje, ze wspólnymi losowaniami alternatyw i horyzontem dwóch rund. Mieściła średnio 187 symulacji na wyszukiwanie wobec 303 kontroli. **Ten konkretny wariant odrzucam; zachowuję MCTS jako główny kierunek.** Nie jest to dowód przeciw wszystkim możliwym algorytmom 1-ply. Korzystny wynik małego screeningu 24 iteracji nie utrzymał się w rzeczywistym budżecie czasu.
 
-Wyniki, partie i plan: `reports/neural-multiplayer-20260912/screening/`. Zamrożona wersja sterownika z momentu badania: `work/neural-multiplayer-20260912/screening-driver-frozen.ts`. Po badaniu poprawiono w aktualnym sterowniku wyłącznie odczyt metadanych przez publiczny interfejs oraz jawne typy opcji dodatków; wcześniejsze raporty zachowują oryginalne hashe.
+Dane: flat-confirmation-result.json, flat-confirmation-plan.json, flat-confirmation-audit.json.
 
-## Co zostało zaimplementowane
+## Co zmieniło się w sieci
 
-- Osobny schemat **543 cech publicznych**: do pięciu wysp w kolejności względem gracza, maski nieobecnych miejsc, liczba graczy, pojemności statków oraz osobne karty Poszukiwacza.
-- Polityka **543 → 64 → 101 rodzajów akcji**, z normalizacją tylko wśród legalnych ruchów. Przenoszenie starych wag odbywa się po nazwach cech i akcji. Nowe wejścia zaczynają z wagą zero, a nowy optymalizator zaczyna od początku. Testy potwierdzają zachowanie starych przewidywań dla 3 osób przed dalszą nauką.
-- Oddzielna sieć wartości: wspólny model dla kolejnych perspektyw graczy i rozkład zwycięstwa o długości 3, 4 lub 5. Uczy korekty istniejącej oceny na podstawie rzeczywistych końcowych zwycięzców; remisy zachowują ułamkowy udział.
-- Eksperymentalny adapter faktycznie wywołujący politykę i opcjonalną sieć wartości przy każdej liczbie graczy. Nie jest podłączony do fabryki botów w menu.
-- Zapisywanie pełnych trajektorii, próbek stanu, źródeł, rozkładów wizyt, ocen Q oraz wyników końcowych. Ponowna analiza nie modyfikuje zapisanej pozycji. Dane są dzielone całymi partiami i osobno dla każdej liczby graczy.
-- Dwa oddzielne treningi polityki: dotychczasowy cel oparty na wizytach oraz cel oparty na ocenach alternatyw Q. Sieć wartości jest trzecią ablacją. To porównanie hipotez, nie deklaracja, że Q musi być lepsze.
-- Wznawialny sterownik pracy z zapisem każdej ukończonej partii i kontrolą niezmienności kodu. Modele i eksperymenty mają osobne formaty; stara wersja nie może przypadkowo załadować nowych wag.
+- Nowy opis pozycji: 543 cechy publiczne, do pięciu wysp, maski nieobecnych miejsc, liczba graczy, pojemności statków oraz rozróżnienie obu kart Poszukiwacza.
+- Polityka 543 → 64 → 101 rodzajów akcji. Stare wagi przeniesiono po nazwach cech; legalne ruchy są maskowane. Przy 4–5 osobach nowy adapter naprawdę wywołuje sieć. Wersja wydana wcześniej w tych konfiguracjach przechodziła na Hardcore.
+- 108 ukończonych partii dostarczyło 2562 pozycji ponownie ocenionych po 512 iteracji. Porównano uczenie z liczby wizyt i z ocen Q.
+- Polityki poprawiły dopasowanie do nauczyciela na walidacji, ale nie zapewniły potwierdzonego wzrostu liczby zwycięstw. Nauczyciel nadal korzysta z oceny Hardcore i horyzontu dwóch rund; sama liczba epok nie usuwa tego ograniczenia.
 
-Sprawdzenie typów aplikacji i nowych narzędzi zakończyło się powodzeniem. **506 testów w 44 plikach przechodzi**, w tym 17 nowych testów obsługi 3–5 graczy, przenoszenia wag, uczenia nowych akcji, sieci wartości, legalności i braku mutacji. Techniczna próba całego przepływu ukończyła 6 partii, ich analizę, trzy treningi oraz 40 krótkich gier testujących różne adaptery. Próbę przerwano świadomie przed pełnym turniejem; jej maleńkie modele nie są kandydatami do wydania.
+## Nowa liga self-play i działająca korekta wartości
 
-## Właściwa seria treningowa — stan i plan
+Po turniejach ukończono kolejne **180 partii**, po 60 dla każdej liczebności, przy stałych 64 iteracjach: 60 partii Hardcore, 60 mieszanych Hardcore/Q/wizyty oraz 60 self-play zamrożonych polityk. Zebrano 4320 przykładów oceniania zwycięzcy na granicach ról.
 
-Duża seria **nie rozpoczęła się przed końcem nocnego okna**. Pierwsze uruchomienie rano rozpoznało przekroczony termin i bezpiecznie zatrzymało się z zerem nowych partii. Ten fakt pozostaje zapisany w `nightly-v1/status.json`. Nie należy zaliczać planowanych gier do wykonanych.
+144 nowe gry dołączyły do dawnych 87 treningowych. Dawne 21 walidacyjnych służyło do wyboru epoki i jednej z dwóch zaplanowanych szybkości uczenia. **36 nowych całych partii, po 12 na liczebność, odłożono do niezależnej oceny dopiero po zapisaniu wyboru modelu.**
 
-Około 09:08 czasu Warszawy uruchomiono dalszą pracę w **`nightly-v2`**:
+Limit generowania zadań upłynął tuż przed treningiem. Nie zmieniono starego eksperymentu: uruchomiono osobną kontynuację samego treningu na wszystkich gotowych danych, bez dodatkowych partii i bez zmian parametrów uczenia. Obie próby treningowe zakończyły się o 17:50. Wybrano szybkość 0,0001 i epokę 3. Strata na walidacji spadła z 1,1819 do 1,1649; korekta sieci jest tym razem rzeczywiście niezerowa.
 
-1. 108 nowych pełnych partii — po 36 dla 3, 4 i 5 graczy; Hardcore po 64 iteracje generuje trajektorie.
-2. Do 24 pozycji z partii, równomiernie między czterema aktywnymi fazami. Każda dostaje niezależną analizę Championa po 512 iteracji, z niezmienioną oceną Hardcore. To mocniejsza analiza stanów, a nie 108 partii rozegranych w całości po 512 iteracji.
-3. Dwie polityki oraz korekcyjna sieć wartości, do 24 epok z early stopping. Wspólny model uczy się wszystkich liczebności; jakość raportujemy osobno dla każdej z nich.
-4. Pilot przy jednakowym limicie 100 ms: kontrola, przeniesiona stara polityka, nowa polityka wizyt, polityka Q i polityka wizyt z wartością. Cztery pełne rotacje na konfigurację — łącznie 240 partii.
-5. Wybrany według zapisanej reguły wariant, jeśli pokona kontrolę w pilocie, trafia do osobnego porównania przy 650 ms i nowych losowaniach. Po dziesięć rotacji daje 30/40/50 gier na ramię. Wynik nie jest podstawą automatycznego wdrożenia; potrzebne są ocena niepewności i potwierdzenie zakresu.
+| Graczy | Nowe partie odłożone do testu | Błąd oceny Hardcore | Błąd nowej sieci | Zmiana błędu |
+|---|---:|---:|---:|---:|
+| 3 | 12 | 0,9119 | 0,9333 | +2,35% — gorzej |
+| 4 | 12 | 1,1462 | 1,0789 | −5,88% — lepiej |
+| 5 | 12 | 1,5336 | 1,4644 | −4,51% — lepiej |
 
-Nowy limit uruchamiania pracy: 17:40 czasu Warszawy. Już rozpoczęte gry kończą się poprawnie. Aktualny stan należy odczytać z `work/neural-multiplayer-20260912/nightly-v2/status.json`; jeśli obliczenia zakończą się wcześniej, zostanie tam zapisany wynik. Limit chroni przed niekontrolowanym ciągłym obciążeniem; można wznowić kolejny etap na podstawie artefaktów.
+Błąd to entropia krzyżowa przewidywania zwycięzcy; mniej oznacza lepiej. **Te procenty nie są wzrostem odsetka wygranych.** Próba pozostaje niewielka, po 12 niezależnych partii; dla 4 osób sparowany przedział różnicy błędu sięga zera, dla 5 jest ujemny. To wskazówka do kolejnego turnieju, a nie podstawa publikacji.
 
-## Kolejność dalszych decyzji
+Krzywe uczenia pokazują też, dlaczego samo wydłużenie treningu szkodziło: błąd na danych treningowych nadal malał, ale po kilku epokach wynik walidacji pogarszał się. Więcej i bardziej różnorodnych partii pomogło bardziej niż kolejne epoki na małej bazie.
 
-1. Najpierw ocenić jakość mocniejszych etykiet i wyniki trzech nowych sieci, osobno dla 3/4/5 graczy.
-2. Równolegle koncepcyjnie zachować MCTS jako punkt odniesienia, a obiecujące 1-ply + sieć sprawdzić na nowych ziarnach i przy tym samym czasie. Nie mieszać jednocześnie zmian przeszukiwania, ocen i robotników w jednej nieczytelnej próbie.
-3. Po wybraniu działającej polityki generować następną ligę z nowym modelem, Hardcore i starszymi modelami. Nowe wyniki muszą wracać do treningu wartości, a mocniejsze przeszukiwanie dostarczać politykę. To właściwa pętla dalszego self-play.
-4. Dopiero po wykazaniu słabości konkretnej fazy poprawiać heurystykę robotników, handlu czy statków jako osobny wariant. Zwiększenie warstwy sieci i wydłużenie rolloutów mają niższy priorytet od jakości danych i rankingu legalnych ruchów.
-5. Za sukces uznać powtarzalną przewagę przy porównywalnym czasie dla każdej liczby graczy. Naturalny udział jednego z równych graczy w zwycięstwach wynosi około 1/3, 1/4 i 1/5; wygranie ponad połowy wszystkich gier przeciw kilku równoczesnym Hardcore byłoby znacznie silniejszym wymaganiem. Dodatki pozostają osobnym zakresem do nauki i weryfikacji.
+Dane: value-league-audit.json, value-retrain-result.json, value-retrain-audit.json, value-retrain-plan.json. Wybrany model: models/league-value.json; SHA-256 738c62b2b62452784776a77553a52c4d068eea315a079d21018b7b20fca71b01.
 
-Nie ma podstaw, aby ogłaszać sufit tej metody. Nie ma też gwarancji, że samo dłuższe trenowanie obecnych wag da przewagę. Najważniejsze zmiany to pełny opis pozycji dla 3–5 graczy, mocniejsze etykiety i połączenie uczenia decyzji z wynikiem partii.
+## Bilans i weryfikacja
 
-## Odniesienia metodyczne
+| Etap | Pełne partie |
+|---|---:|
+| Screening różnych metod | 204 |
+| Pierwsze dane treningowe | 108 |
+| Pilot 100 ms | 240 |
+| Niezależne potwierdzenie 650 ms | 240 |
+| Osobny test 1-ply 650 ms | 60 |
+| Nowa liga danych | 180 |
+| **Łącznie** | **1032** |
 
-Połączenie polityki, wartości i przeszukiwania uczonych w self-play jest opisane w pracy autorów [AlphaZero](https://arxiv.org/abs/1712.01815). Puerto Rico jest grą wieloosobową z częściowo ukrytym losowaniem, dlatego nie przenosimy automatycznie gwarancji lub wyników z szachów.
+Nie wliczam krótkich prób technicznych ani gier uruchamianych w testach jednostkowych. Mocniejsze etykiety 512-iteracyjne nie są dodatkowymi pełnymi partiami.
 
-[Policy improvement by planning with Gumbel](https://openreview.net/pdf?id=bERaNdoegnO) analizuje poprawę polityki przy małej liczbie symulacji. Może inspirować późniejszy wybór gałęzi, lecz nasz obecny eksperyment 1-ply nie implementuje Gumbel AlphaZero i nie dziedziczy jego gwarancji.
+506 testów w 44 plikach przeszło przy wdrażaniu modułów dla 3–5 osób, w tym 17 nowych testów. Sprawdzenia typów aplikacji i wszystkich nowych sterowników zakończyły się powodzeniem. Weryfikacja źródeł potwierdza zachowanie silnika, produkcyjnego Hardcore i interfejsu. Osobno sprawdzono kompletność zapisów obu turniejów, punktację, remisy, wywołania sieci i limity iteracji. Końcowy trening ma zweryfikowane 148 skrótów źródeł, 288 plików danych oraz rozłączne zbiory treningowe/walidacyjne/testowe.
+
+**Nie wdrożono eksperymentalnych modeli na Cloudflare ani do menu gry.** Kod i modele w tym katalogu są materiałem badawczym. Historia prac znajduje się w dziennik.md.
+
+## Dalszy kierunek
+
+1. Sprawdzić nową sieć wartości w MCTS przy 4 i 5 graczach, osobno porównując tę samą politykę z wyuczoną oceną i bez niej, plus kontrolę Hardcore. Użyć nowych losowań i równego czasu.
+2. Dla 3 osób zachować politykę Q jako kandydata, ale nie dokładać gorszej oceny wartości. Poprawiać nauczyciela i cel uczenia, również przez próbę dłuższego horyzontu jako osobne badanie.
+3. Rozbudować ligę różnorodnych przeciwników i badać generalizację całymi partiami. Większa sieć ma niższy priorytet niż lepsze etykiety i dane.
+4. Zmiany heurystyki robotników, handlu czy statków testować osobno, gdy diagnostyka wskaże konkretną słabość.
+
+Nie osiągnęliśmy dowiedzionego sufitu sieci. **Nie ma też gwarancji, że samo dalsze trenowanie da mocniejszego bota.** Dzisiejszy wynik zawęził kierunek: MCTS z lepszą wyuczoną oceną, szczególnie dla 4–5 osób, jest bardziej uzasadniony niż testowany płaski 1-ply.

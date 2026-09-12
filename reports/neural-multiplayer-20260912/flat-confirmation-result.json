@@ -1,0 +1,71 @@
+{
+  "complete": true,
+  "config": {
+    "seed": 912202619,
+    "rotations": 10,
+    "iterations": 0,
+    "budgetMs": 650,
+    "workers": 2
+  },
+  "sourcesVerified": true,
+  "summaries": {
+    "control": {
+      "scheduled": 30,
+      "completed": 30,
+      "incomplete": 0,
+      "invalid": 0,
+      "outrightWins": 13,
+      "sharedWins": 1,
+      "winCredit": 13.333333333333332,
+      "winRate": 0.4444444444444444,
+      "outrightWinWilson95": null,
+      "meanScoreMargin": -0.6666666666666666,
+      "elapsedMs": 2501016.1300999993,
+      "winRateSeedBootstrap95": [
+        0.26666666666666666,
+        0.6333333333333333
+      ]
+    },
+    "flatNeural": {
+      "scheduled": 30,
+      "completed": 30,
+      "incomplete": 0,
+      "invalid": 0,
+      "outrightWins": 3,
+      "sharedWins": 0,
+      "winCredit": 3,
+      "winRate": 0.1,
+      "outrightWinWilson95": null,
+      "meanScoreMargin": -5.7,
+      "elapsedMs": 2464578.2592,
+      "winRateSeedBootstrap95": [
+        0.03333333333333333,
+        0.2
+      ]
+    }
+  },
+  "comparison": {
+    "pairedGames": 30,
+    "independentSeeds": 10,
+    "winRateDifference": -0.3444444444444444,
+    "meanScoreMarginDifference": -5.033333333333333,
+    "winRateDifference95": [
+      -0.47777777777777775,
+      -0.2111111111111111
+    ],
+    "uncertaintyMethod": "paired-bootstrap-of-whole-environment-seed-groups-5000-resamples"
+  },
+  "inference": {
+    "control": {
+      "neuralCalls": 0,
+      "iterations": 392855,
+      "searches": 1298
+    },
+    "flatNeural": {
+      "neuralCalls": 1489251,
+      "iterations": 237249,
+      "searches": 1266
+    }
+  },
+  "conclusion": "Finite independent follow-up. Ten seed groups; assess uncertainty. No model promoted."
+}

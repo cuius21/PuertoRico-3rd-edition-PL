@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-12T15:52:54.516Z",
+  "complete": true,
+  "sourceFilesVerified": 148,
+  "dataFilesVerified": 288,
+  "splitSizes": [
+    231,
+    21,
+    36
+  ],
+  "splitDisjoint": true,
+  "selectedModelHash": "738c62b2b62452784776a77553a52c4d068eea315a079d21018b7b20fca71b01",
+  "learnedCorrectionNonzero": true,
+  "selectionRecordedBeforeHoldoutEvaluation": true,
+  "trainingBody": "Same previously planned two learning rates, network, data split and early stopping; no new games",
+  "heldout": [
+    {
+      "players": 3,
+      "games": 12,
+      "samples": 288,
+      "baselineLoss": 0.9119120723340942,
+      "learnedLoss": 0.9333344373911232,
+      "changePercent": 2.349170024934222,
+      "pairedMeanLossDifference": 0.02142236505702899,
+      "pairedBootstrap95": [
+        -0.03915738328894059,
+        0.08732258564238017
+      ]
+    },
+    {
+      "players": 4,
+      "games": 12,
+      "samples": 288,
+      "baselineLoss": 1.146203897877557,
+      "learnedLoss": 1.0788596697471222,
+      "changePercent": -5.875414335541618,
+      "pairedMeanLossDifference": -0.06734422813043484,
+      "pairedBootstrap95": [
+        -0.1343219900899683,
+        2.527759663343658e-7
+      ]
+    },
+    {
+      "players": 5,
+      "games": 12,
+      "samples": 288,
+      "baselineLoss": 1.5335994739938845,
+      "learnedLoss": 1.464412754696732,
+      "changePercent": -4.511394302775329,
+      "pairedMeanLossDifference": -0.06918671929715248,
+      "pairedBootstrap95": [
+        -0.12898911941587457,
+        -0.009686227325319078
+      ]
+    }
+  ],
+  "claim": "Prediction losses only; no arena evaluation of this new value model."
+}

@@ -1,0 +1,41 @@
+{
+  "createdAt": "2026-09-12T11:47:16.488Z",
+  "classification": "Preregistered separate follow-up to 24-iteration screening; not started",
+  "output": "work/neural-multiplayer-20260912/flat-650-v1",
+  "dependsOn": "nightly-v2 confirmation must finish, then source verification and driver typecheck",
+  "hypothesis": "The previously selected 3-player flatNeural configuration improves candidate win credit relative to frozen Hardcore under equal time.",
+  "config": {
+    "players": 3,
+    "variants": [
+      "control",
+      "flatNeural"
+    ],
+    "seed": 912202619,
+    "rotations": 10,
+    "gamesPerArm": 30,
+    "totalGames": 60,
+    "budgetMs": 650,
+    "maxIterations": 1500,
+    "workers": 2,
+    "deadline": "2026-09-12T15:40:00Z"
+  },
+  "model": "Unchanged released 3-player neural policy; no model tuning or new-model substitution",
+  "search": "Existing RootRolloutBot: equal root samples with common random numbers, two-round horizon, exploration 0.08, unchanged Hardcore evaluation",
+  "sourceHashes": {
+    "tools/experiments/RootRolloutBot.ts": "0042499a645459d8ac04cb93f545a3ce2b6c235fa0b1a07863b9dc77ecee1b99",
+    "tools/multiplayer-search-lab.ts": "2b7c65d59baaf2384ccc4f84220781e47a7ca83e0b0a108eae6081485efe8542",
+    "tools/multiplayer-search-worker.mjs": "e84ae273b31326a4c00417871a89fb0a923d62f4da61797cdb2f24fa63de7083",
+    "src/bots/NeuralBot.ts": "41106bbcd34a733aac8cad2bad977cae9d09e4f63b0a333d750bbd62446b4c98",
+    "src/bots/neural/releasedPolicy.ts": "c08e2d7e2ed567eca106d0cbd0321abb1b67577aeed6cf79710aa73c8c3d9f95",
+    "src/bots/neural/releaseModel.ts": "9eed1928d6836752b8d81f6cae30b8548cae07c5a5703954493a64a083be562e"
+  },
+  "validation": [
+    "Verify no source or model changes before and after the study",
+    "Check environment seeds against training, validation, screening and nightly arena seeds before dispatch",
+    "Require 60 legal completed records and nonzero neural calls in flatNeural, zero in control",
+    "Rotate candidate seat for each environment seed; pair comparison by environment group",
+    "No CPU-heavy work in parallel; no interim outcome-based changes",
+    "If deadline prevents completion, report incomplete; do not append games to chase significance"
+  ],
+  "analysis": "Report candidate/control win credits, paired cluster-bootstrap 95% interval for difference, score margin and search throughput. Ten independent groups are limited evidence. This compares the complete flatNeural configuration, not an isolated causal effect of its neural network."
+}
