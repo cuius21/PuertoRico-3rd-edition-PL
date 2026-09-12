@@ -1,0 +1,111 @@
+import { describe, expect, it, vi } from 'vitest';
+import { createGame, selectRole, giveGoods } from '../helpers';
+import { GoodType, RoleType } from '../../core/types';
+import { encodeNeuralPlayerState as oldEncode, NEURAL_FEATURE_NAMES as oldNames } from '../../src/bots/neural/features';
+import { encodeNeuralPlayerState, NEURAL_FEATURE_NAMES, supportsNeuralState } from '../../src/bots/neural/multiplayer/features';
+import { encodePolicyInput, neuralActionId } from '../../src/bots/neural/multiplayer/policyFeatures';
+import { NeuralPolicyNetwork } from '../../src/bots/neural/multiplayer/policyNetwork';
+import { getReleasedNeuralModel } from '../../src/bots/neural/releaseModel';
+import { transferLegacyPolicy } from '../../src/bots/neural/multiplayer/transfer';
+import { seededRandom, withRandom } from '../../tools/arena-core';
+import { RootRolloutBot } from '../../tools/experiments/RootRolloutBot';
+import { NeuralValueNetwork } from '../../src/bots/neural/multiplayer/valueNetwork';
+import { MultiplayerNeuralBot } from '../../src/bots/neural/multiplayer/MultiplayerNeuralBot';
+import { encodeNeuralState } from '../../src/bots/neural/multiplayer/features';
+import { evaluateHardcoreState } from '../../src/bots/hardcoreEvaluation';
+
+describe('experimental multiplayer neural schema', () => {
+  it.each([3,4,5] as const)('encodes every opponent and explicit empty seats for %i players without mutating state', n => {
+    const state = createGame(n), pid = state.players[0]!.id;
+    const before = JSON.stringify(state), row = encodeNeuralPlayerState(state,pid);
+    expect(supportsNeuralState(state)).toBe(true);
+    expect(row).toHaveLength(NEURAL_FEATURE_NAMES.length);
+    expect(row.every(Number.isFinite)).toBe(true);
+    expect(JSON.stringify(state)).toBe(before);
+    const at = (name: string) => NEURAL_FEATURE_NAMES.indexOf(name);
+    for(let i=0;i<5;i++) expect(row[at('seat'+i+':present')]).toBe(Number(i<n));
+    state.players[n-1]!.doubloons += 3;
+    expect(encodeNeuralPlayerState(state,pid)[at('seat'+(n-1)+':doubloons/20')]).toBeCloseTo(row[at('seat'+(n-1)+':doubloons/20')]! + 0.15);
+    const moved = encodeNeuralPlayerState(state,state.players[n-1]!.id);
+    expect(moved[at('seat0:doubloons/20')]).toBe(state.players[n-1]!.doubloons/20);
+    expect(moved[at('players:'+n)]).toBe(1);
+    const original = encodeNeuralPlayerState(state,pid);
+    state.supply.plantationDecks.forEach(deck=>deck.reverse());
+    expect(encodeNeuralPlayerState(state,pid)).toEqual(original);
+  });
+  it('distinguishes the two 5-player Prospector cards and their accumulated coins', () => {
+    const state = createGame(5), pid=state.players[0]!.id;
+    const cards=state.roleCards.filter(c=>c.type===RoleType.Prospector);
+    cards[0]!.doubloonsOnCard=1; cards[1]!.doubloonsOnCard=4;
+    const actions=state.getValidActions(pid).filter(a=>(a as any).role===RoleType.Prospector);
+    expect(actions).toHaveLength(2);
+    expect(new Set(actions.map(a=>neuralActionId(state,a))).size).toBe(2);
+    expect(encodePolicyInput(state,pid,state.getValidActions(pid))).not.toBeNull();
+    const row=encodeNeuralPlayerState(state,pid);
+    expect(row[NEURAL_FEATURE_NAMES.indexOf('prospector1:doubloons/6')]).toBeCloseTo(4/6);
+  });
+  it.each([null,RoleType.Builder,RoleType.Trader,RoleType.Settler])('preserves existing learned predictions on three players in %s', role=>{
+    const state=withRandom(seededRandom(271),()=>createGame());
+    giveGoods(state.players[0]!,GoodType.Coffee,2);
+    if(role)selectRole(state,role);
+    const pid=state.getCurrentPlayer().id, actions=state.getValidActions(pid);
+    const row=encodeNeuralPlayerState(state,pid), old=oldEncode(state,pid);
+    oldNames.forEach((name,i)=>expect(row[NEURAL_FEATURE_NAMES.indexOf(name)]).toBe(old[i]));
+    const legacy=getReleasedNeuralModel(), model=transferLegacyPolicy(legacy);
+    const wanted=legacy.policyForLegalActions(state,pid,actions);
+    model.policyForLegalActions(state,pid,actions).forEach((p,i)=>expect(p).toBeCloseTo(wanted[i]!,12));
+    const loaded=NeuralPolicyNetwork.fromJSON(model.toJSON());
+    expect(loaded.predict(encodePolicyInput(state,pid,actions)!)).toEqual(model.predict(encodePolicyInput(state,pid,actions)!));
+  });
+  it.each([4,5] as const)('actually invokes the new network with %i players', n=>{
+    const state=createGame(n),model=transferLegacyPolicy(getReleasedNeuralModel());
+    const predict=vi.spyOn(model,'predict');
+    const p=model.policyForLegalActions(state,state.players[0]!.id,state.getValidActions(state.players[0]!.id));
+    expect(predict).toHaveBeenCalledOnce();
+    expect(p.reduce((s,x)=>s+x,0)).toBeCloseTo(1,12);
+  });
+  it('learns a new Prospector output and rejects legacy model files',()=>{
+    const state=createGame(5),pid=state.players[0]!.id,actions=state.getValidActions(pid);
+    const input=encodePolicyInput(state,pid,actions)!;
+    const model=new NeuralPolicyNetwork({hiddenSize:8,seed:72});
+    const target=actions.map((_,i)=>Number(i===actions.length-1));
+    const sample={...input,target},before=model.loss([sample]);
+    for(let i=0;i<40;i++)model.trainBatch([sample],{learningRate:0.01});
+    expect(model.loss([sample])).toBeLessThan(before*0.3);
+    expect(()=>NeuralPolicyNetwork.fromJSON(getReleasedNeuralModel().toJSON())).toThrow();
+  });
+  it.each([3,4,5] as const)('learns winner credits across %i rows and runs policy plus value in search',n=>{
+    const state=createGame(n),inputs=encodeNeuralState(state),baseline=evaluateHardcoreState(state);
+    const value=new NeuralValueNetwork({hiddenSize:8,seed:72,valueMode:'residual'});
+    value.predict(inputs,baseline).forEach((p,i)=>expect(p).toBeCloseTo(baseline[i]!,12));
+    const target=state.players.map((_,i)=>Number(i===n-1)),sample={inputs,baseline,target};
+    const before=value.loss([sample]);
+    for(let i=0;i<30;i++)value.trainBatch([sample],{learningRate:0.01});
+    expect(value.loss([sample])).toBeLessThan(before*0.5);
+    expect(()=>value.loss([{...sample,target:[1,0]}])).toThrow();
+    const restored=NeuralValueNetwork.fromJSON(value.toJSON());
+    expect(restored.predict(inputs,baseline)).toEqual(value.predict(inputs,baseline));
+    const bot=new MultiplayerNeuralBot(transferLegacyPolicy(getReleasedNeuralModel()),{value:restored,maxIterations:8,timeBudgetMs:Infinity,random:seededRandom(81)});
+    const original=JSON.stringify(state),action=bot.chooseAction(state,state.players[0]!.id);
+    expect(action.validate(state).ok).toBe(true);
+    expect(bot.policyCalls).toBeGreaterThan(0);expect(bot.valueCalls).toBeGreaterThan(0);
+    expect(bot.lastSearchStats.evaluatorErrors).toBe(0);
+    expect(JSON.stringify(state)).toBe(original);
+  });
+});
+describe('experimental one-branch policy rollouts',()=>{
+  it.each([3,4,5] as const)('compares equal sample counts and leaves the %i-player game and RNG intact',n=>{
+    const state=withRandom(seededRandom(271),()=>createGame(n)),pid=state.players[0]!.id;
+    const before=JSON.stringify(state),hostRandom=Math.random;
+    const make=()=>new RootRolloutBot({random:seededRandom(8271),maxIterations:20,timeBudgetMs:Infinity});
+    const bot=make(),action=bot.chooseAction(state,pid),second=make();
+    expect(action.validate(state).ok).toBe(true);
+    expect(JSON.stringify(state)).toBe(before);
+    expect(Math.random).toBe(hostRandom);
+    second.chooseAction(state,pid);
+    expect(bot.lastSearchStats.rootActions).toEqual(second.lastSearchStats.rootActions);
+    expect(bot.lastSearchStats.rootActions.every(r=>r.visits===bot.completedBlocks)).toBe(true);
+    expect(bot.lastSearchStats.iterations).toBeLessThanOrEqual(20);
+    expect(bot.lastSearchStats.maxTreeDepth).toBe(1);
+  });
+});
