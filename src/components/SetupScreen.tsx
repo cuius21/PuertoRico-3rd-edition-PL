@@ -1,3 +1,4 @@
+import { STATS_ENABLED } from '../statistics/recorder';
 import { useState } from 'react';
 import { MenuShell } from '../presentation/menu/MenuShell';
 import { createBot } from '../bots/createBot';
@@ -17,6 +18,7 @@ interface Props {
   onLoad: () => void;
   onMultiplayer: () => void;
   onTutorial?: () => void;
+  onStatistics?: () => void;
 }
 
 type PlayerType = 'human' | 'bot';
@@ -98,6 +100,7 @@ export function SetupScreen({
   onLoad,
   onMultiplayer,
   onTutorial,
+  onStatistics,
 }: Props) {
   const [playerCount, setPlayerCount] = useState(3);
   const [expansions, setExpansions] = useState<ExpansionConfig>({
@@ -359,6 +362,8 @@ export function SetupScreen({
           </div>
         </div>
 
+        {STATS_ENABLED && <p className="neural-scope-note">Ukończone partie i ruchy zapisujemy anonimowo do statystyk. Nie wysyłamy imion graczy. Historie dostępne są tylko właścicielowi gry.</p>}
+
         {neuralSelected && (
           <p className="neural-scope-note" role="status">
             {neuralUsesHardcore
@@ -368,6 +373,7 @@ export function SetupScreen({
         )}
 
         <div className="pr-menu-submit">
+          {STATS_ENABLED && <button className="multiplayer-btn" onClick={onStatistics}>📊 Statystyki partii</button>}
           <button className="start-btn" onClick={handleStart}>
             Rozpocznij grę
           </button>

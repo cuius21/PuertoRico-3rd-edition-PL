@@ -1,3 +1,6 @@
+import { MatchRecorder, STATS_ENABLED } from '../statistics/recorder';
+import { enqueueMatch } from '../statistics/transport';
+import { serializeGame } from '../game/GameSerializer';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GameRunner, type PlayerSetup } from '../game/GameRunner';
 import { describeAction } from '../game/actionLabels';
@@ -23,7 +26,7 @@ export interface GamePresentation {
   observe: (action: Action, state: GameState, event: ActionFeedItem) => (state: GameState) => void;
 }
 
-export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, expansions?: ExpansionConfig, presentation?: GamePresentation) {
+export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, expansions?: ExpansionConfig, presentation?: GamePresentation, practice = false) {
   const presentationRef = useRef(presentation);
   presentationRef.current = presentation;
   const presentationBlocked = presentation?.blocked ?? false;
@@ -32,6 +35,32 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
     runnerRef.current = new GameRunner(setups, savedState, expansions ?? { festival: false, corsair: false, newBuildings: false, nobleBuildings: false });
   }
   const runner = runnerRef.current;
+  const recorderRef = useRef<MatchRecorder | null>(null);
+  if (STATS_ENABLED && !recorderRef.current) {
+    try {
+      recorderRef.current = new MatchRecorder(runner.state, setups,
+        { ...(expansions ?? { festival: false, corsair: false, newBuildings: false, nobleBuildings: false }) }, !!savedState, practice);
+    } catch { /* Statistics must never prevent play. */ }
+  }
+  useEffect(() => {
+    if (savedState && recorderRef.current) serializeGame(runner.state, runner.playerSetups);
+  }, [runner, savedState]);
+  const recordBefore = (action: Action, label: string) => {
+    try { return recorderRef.current?.before(action, label); } catch { return undefined; }
+  };
+  const recordAfter = (move: ReturnType<typeof recordBefore>) => {
+    try {
+      const recorder = recorderRef.current;
+      if (!recorder) return;
+      if (move) recorder.after(move);
+      else { recorder.data.historyComplete = false; recorder.data.historyReason = 'recording-error'; }
+      const report = recorder.report();
+      if (report) enqueueMatch(report);
+    } catch {
+      const data = recorderRef.current?.data;
+      if (data) { data.historyComplete = false; data.historyReason = 'recording-error'; }
+    }
+  };
 
   const [tick, setTick] = useState(0);
   const forceUpdate = useCallback(() => setTick(t => t + 1), []);
@@ -79,7 +108,9 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
         const label = describeAction(action, runner.state);
         const entry: ActionFeedItem = { playerName: setup.name, actionText: label, isBot: true };
         const present = presentationRef.current?.observe(action, runner.state, entry);
+        const recordedMove = recordBefore(action, label);
         if (!runner.applyAction(action, label)) throw new Error('Invalid bot action');
+        recordAfter(recordedMove);
         present?.(runner.state);
         setBotError(null);
         showFeed(entry, isMayorPhase ? BOT_DELAY_MAYOR_MS : ACTION_FEED_MS);
@@ -123,8 +154,10 @@ export function useGameRunner(setups: PlayerSetup[], savedState?: GameState, exp
     const label = describeAction(action, runner.state);
     const entry: ActionFeedItem = { playerName: setup.name, actionText: label, isBot: false };
     const present = presentationRef.current?.observe(action, runner.state, entry);
+    const recordedMove = recordBefore(action, label);
     const ok = runner.applyAction(action, label);
     if (ok) {
+      recordAfter(recordedMove);
       present?.(runner.state);
       showFeed(entry, HUMAN_FEED_MS);
       setRoundLog(prev => [entry, ...prev]);

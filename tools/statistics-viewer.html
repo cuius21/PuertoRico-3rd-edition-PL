@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Puerto Rico — analiza partii</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#153f45;color:#30271d;font:16px system-ui}main{max-width:1200px;margin:25px auto;background:#f4e4c0;padding:28px;border-radius:18px}h1{font-family:Georgia,serif}button,input{font:inherit}button{padding:9px 16px;border:1px solid #9f7e4f;border-radius:8px;background:#fff2d4;cursor:pointer}#controls{display:flex;gap:14px;align-items:center;flex-wrap:wrap}input{flex:1;min-width:160px}#islands{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:22px 0}article{background:#fff8e8;padding:15px;border-radius:12px;border:1px solid #c4a571}article.active{outline:3px solid #d6a531}#moves{max-height:300px;overflow:auto;background:#fff8e8;border-radius:10px;padding:15px 30px}#moves button{display:block;border:0;text-align:left;width:100%;background:transparent;padding:6px}#moves button[aria-current=true]{background:#e7ce87}pre{overflow:auto;font-size:13px;max-height:400px}small{opacity:.8}#notice{line-height:1.6}
+</style>
+<main><h1>Kronika partii</h1><p id="meta"></p><p id="notice"></p><div id="controls"><button id="prev">← Poprzedni</button><input id="position" type="range" min="0" value="0" aria-label="Numer ruchu"><button id="next">Następny →</button><button id="end">Wynik końcowy</button></div><h2 id="move"></h2><section id="islands"></section><p id="shared"></p><ol id="moves"></ol><details><summary>Pełny stan i dane ruchu</summary><pre id="raw"></pre></details></main>
+<script id="match-data" type="application/json"><!--MATCH_DATA--></script>
+<script>
+const report=JSON.parse(document.getElementById('match-data').textContent), history=report.history;
+const labels={human:'Człowiek',easy:'Losowy',hard:'Zachłanny',ai:'AI',hardcore:'Hardcore',neural:'Neural'};
+const goods={corn:'kukurydza',indigo:'indygo',sugar:'cukier',tobacco:'tytoń',coffee:'kawa'};
+const el=id=>document.getElementById(id), states=[structuredClone(history.initial)];
+function apply(state,changes){let s=structuredClone(state);for(const c of changes){if(c.path.some(k=>['__proto__','constructor','prototype'].includes(String(k))))throw Error('Nieprawidłowa ścieżka');if(!c.path.length){s=structuredClone(c.value);continue}let p=s;for(const k of c.path.slice(0,-1))p=p[k];const k=c.path.at(-1);if(c.remove)delete p[k];else p[k]=structuredClone(c.value)}return s}
+for(const move of history.moves)states.push(apply(states.at(-1),move.changes));
+el('meta').textContent=report.id+' · '+new Date(report.endedAt).toLocaleString('pl-PL')+' · '+report.playerCount+' graczy · '+report.rounds+' rund · '+report.actionCount+' akcji';
+el('notice').textContent=(history.complete?'Pełny przebieg partii.':'Historia niepełna: '+history.reason+'. Wynik końcowy jest dostępny osobno.')+' Nazwy graczy zastąpiono miejscami przy stole. Zmiany obejmują też automatyczne efekty faz. Wersja botów: '+report.botVersion+'.';
+el('position').max=history.moves.length;
+history.moves.forEach((m,i)=>{const li=document.createElement('li'),b=document.createElement('button');b.textContent='Runda '+(m.round+1)+' · Gracz '+(m.seat+1)+': '+m.label;b.onclick=()=>show(i+1);li.append(b);el('moves').append(li)});
+function show(index,final=false){el('position').value=index;const m=history.moves[index-1],s=final?history.final:states[index];el('move').textContent=final?'Wynik końcowy':m?'Ruch '+index+' / '+history.moves.length+' · '+m.label:'Stan początkowy';el('islands').replaceChildren();
+s.players.forEach((p,i)=>{const a=document.createElement('article');if(m?.seat===i&&!final)a.className='active';const who=report.players[i];const title=document.createElement('h3');title.textContent='Gracz '+(i+1)+' · '+labels[who.effective];a.append(title);
+const lines=['Monety: '+p.doubloons+' · Żetony ★: '+p.vp,'Towary: '+Object.entries(p.goods).map(([g,n])=>(goods[g]||g)+' '+n).join(', '),'Robotnicy: do przydzielenia '+p.pending+', wolni '+p.held,'Plantacje: '+p.plantations.filter(Boolean).map(v=>(goods[v.type]||v.type)+' ('+(v.workers+(v.nobles||0))+')').join(', '),'Budynki: '+p.buildingSlots.filter(v=>v&&!v.shared).map(v=>v.id+' ('+(v.workers+(v.nobles||0))+')').join(', ')];
+if(final)lines.unshift('Miejsce '+who.rank+' · '+who.total+' punktów zwycięstwa ★');for(const text of lines){const node=document.createElement('p');node.textContent=text;a.append(node)}el('islands').append(a)});
+el('shared').textContent='Faza: '+s.phaseType+' · Gubernator: gracz '+(s.governorIndex+1)+' · Statki: '+s.ships.map(v=>(goods[v.good]||v.good||'pusty')+' '+v.count+'/'+v.cap).join(' · ')+' · Targ: '+s.tradingHouse.map(v=>goods[v]||v||'—').join(', ');
+el('raw').textContent=JSON.stringify({move:final?null:m,state:s},null,2);[...el('moves').querySelectorAll('button')].forEach((b,i)=>b.setAttribute('aria-current',String(!final&&i+1===index)))}
+el('prev').onclick=()=>show(Math.max(0,Number(el('position').value)-1));el('next').onclick=()=>show(Math.min(history.moves.length,Number(el('position').value)+1));el('position').oninput=()=>show(Number(el('position').value));el('end').onclick=()=>show(Number(el('position').value),true);show(0);
+</script></html>
+

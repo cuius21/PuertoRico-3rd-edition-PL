@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { StatisticsScreen } from './statistics/StatisticsScreen';
+import { STATS_ENABLED } from './statistics/recorder';
+import { startStatisticsSync } from './statistics/transport';
+import { useEffect, useState } from 'react';
 import { TutorialScreen } from './tutorial/TutorialScreen';
 import { GreedyBot } from './bots/GreedyBot';
 import { SetupScreen } from './components/SetupScreen';
@@ -24,9 +27,13 @@ const IS_MULTIPLAYER =
     'multiplayer';
 
 export function App() {
+  const [showStatistics, setShowStatistics] = useState(false);
+  useEffect(() => STATS_ENABLED ? startStatisticsSync() : undefined, []);
   const [showTutorial, setShowTutorial] = useState(false);
   const [session, setSession] = useState<GameSession | null>(null);
   const [showMultiplayer, setShowMultiplayer] = useState(IS_MULTIPLAYER);
+
+  if (showStatistics) return <StatisticsScreen onBack={() => setShowStatistics(false)} />;
 
   // Multiplayer mode — full screen managed by MultiplayerGameScreen
   if (showMultiplayer) {
@@ -62,6 +69,7 @@ export function App() {
   if (!session) {
     return (
       <SetupScreen
+        onStatistics={() => setShowStatistics(true)}
         onTutorial={() => setShowTutorial(true)}
         onStart={(setups, expansions) => setSession({ setups, expansions })}
         onLoad={() => {

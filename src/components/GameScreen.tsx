@@ -45,7 +45,7 @@ export function GameScreen({
     actionFeed,
     botError,
     retryBot,
-  } = useGameRunner(setups, savedState, expansions, playback);
+  } = useGameRunner(setups, savedState, expansions, playback, coached);
   const [saveFlash, setSaveFlash] = useState(false);
   function save() {
     serializeGame(state, runner.playerSetups);

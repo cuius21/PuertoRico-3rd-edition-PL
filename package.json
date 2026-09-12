@@ -21,7 +21,11 @@
     "build:pages": "node --import ./tools/register-typescript.mjs tools/build-pages.mjs",
     "pages:upload": "node tools/deploy-pages-direct.mjs",
     "pages:verify": "node tools/verify-pages.mjs",
-    "deploy": "npm run check && npm test && npm run build:pages && npm run pages:upload && npm run pages:verify"
+    "deploy": "npm run check && npm run check:stats && npm test && npm run build:pages && npm run pages:upload && npm run pages:verify",
+    "stats:setup": "node tools/statistics-admin.mjs setup",
+    "stats:list": "node tools/statistics-admin.mjs list",
+    "stats:export": "node tools/statistics-admin.mjs export",
+    "check:stats": "tsc -p statistics-server/tsconfig.json"
   },
   "build": {
     "appId": "pl.puertorico.game",

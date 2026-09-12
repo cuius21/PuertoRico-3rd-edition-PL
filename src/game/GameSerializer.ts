@@ -49,6 +49,9 @@ import {
   Chancellery, Chapel, HuntingLodge, MasonsGuild, Treasury, Villa, JewelersWorkshop, PalaceGarden,
 } from '../../domain/buildings/catalog/NewBuildings2';
 
+import { recordings } from '../statistics/store';
+import type { Recording } from '../statistics/types';
+
 const STORAGE_KEY = 'puerto_rico_save';
 
 // ── Save/load types ───────────────────────────────────────────────────────────
@@ -107,6 +110,7 @@ interface SavedFestivalQuest {
 }
 
 interface SaveGame {
+  recording?: Recording;
   version: 1;
   savedAt: number;
   setups: SavedSetup[];
@@ -501,7 +505,17 @@ function restoreSetups(setups: SavedSetup[]): PlayerSetup[] {
 export function serializeGame(state: GameState, playerSetups: readonly PlayerSetup[]): void {
   try {
     const save = buildSaveGame(state, playerSetups);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+    const recording = recordings.get(state);
+    if (recording) save.recording = recording;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+    } catch {
+      // A large history must not displace the playable save or its deduplication ID.
+      if (save.recording) {
+        save.recording = { ...save.recording, moves: [], historyComplete: false, historyReason: 'storage-limit', historyBytes: 0 };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(save));
+      }
+    }
   } catch {
     // ignore storage errors (private mode, quota exceeded, etc.)
   }
@@ -526,6 +540,7 @@ export function clearSavedGame(): void {
 export function deserializeGame(save: SaveGame): { state: GameState; setups: PlayerSetup[] } {
   const setups = restoreSetups(save.setups);
   const state = restoreGameState(save.state);
+  if (save.recording?.schema === 1) recordings.set(state, save.recording);
   return { state, setups };
 }
 
